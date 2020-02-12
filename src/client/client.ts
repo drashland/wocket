@@ -3,17 +3,14 @@ import {
   isWebSocketCloseEvent,
   isWebSocketPingEvent,
   isWebSocketPongEvent
-} from "https://deno.land/std/ws/mod.ts";
-import { encode } from "https://deno.land/std/strings/mod.ts";
-import { BufReader } from "https://deno.land/std/io/bufio.ts";
-import { TextProtoReader } from "https://deno.land/std/textproto/mod.ts";
-import { blue, green, red, yellow } from "https://deno.land/std/fmt/colors.ts";
+} from "../../deps.ts";
+import { BufReader } from "../../deps.ts";
+import { TextProtoReader } from "../../deps.ts";
+import { blue, red, yellow } from "../../deps.ts";
 
 
-class SocketClient {
+export default class SocketClient {
   protected socket: any;
-
-  constructor() {}
   
   public async attach() {
     this.socket = await connectWebSocket("ws://127.0.0.1:3000");
@@ -46,5 +43,3 @@ class SocketClient {
     Deno.exit(0);
   }
 }
-
-export default SocketClient;

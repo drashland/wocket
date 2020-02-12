@@ -1,7 +1,7 @@
-import { serve } from "https://deno.land/std/http/server.ts";
+import { serve } from "../../deps.ts";
 import IOConnection from "./io.ts";
 
-class SocketServer {
+export default class SocketServer {
   protected configs: any;
   public connections: any = [];
 
@@ -22,5 +22,3 @@ class SocketServer {
     this.connections.push(connection);
   }
 }
-
-export default SocketServer;

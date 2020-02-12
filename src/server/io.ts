@@ -3,9 +3,9 @@ import {
   isWebSocketCloseEvent,
   isWebSocketPingEvent,
   WebSocket
-} from "https://deno.land/std/ws/mod.ts";
+} from "../../deps.ts";
 
-class IOConnection {
+export default class IOConnection {
   public clients: any = [];
   protected server: any = [];
 
@@ -62,5 +62,3 @@ class IOConnection {
     }
   }
 };
-
-export default IOConnection;
