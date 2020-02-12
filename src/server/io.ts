@@ -1,28 +1,32 @@
-import { serve } from "https://deno.land/std/http/server.ts";
 import {
   acceptWebSocket,
   isWebSocketCloseEvent,
   isWebSocketPingEvent,
   WebSocket
-} from "https://deno.land/std/ws/mod.ts";
+} from "../../deps.ts";
 
-let clients = [];
-/** websocket echo server */
-const port = Deno.args[1] || "1337";
-console.log(`websocket server is running on :${port}`);
-for await (const req of serve(`:${port}`)) {
-  const { headers, conn } = req;
-  acceptWebSocket({
-    conn,
-    headers,
-    bufReader: req.r,
-    bufWriter: req.w
-  })
-    .then(
-      async (sock: WebSocket): Promise<void> => {
+export default class IOConnection {
+  public clients: any = [];
+  protected server: any = [];
+
+  constructor(server: any) {
+    this.server = server;
+    this.attach();
+  }
+
+  public async attach() {
+    for await (const req of this.server) {
+      const { headers, conn } = req;
+      acceptWebSocket({
+        conn,
+        headers,
+        bufReader: req.r,
+        bufWriter: req.w
+      })
+      .then(async (socket: WebSocket): Promise<void> => {
         console.log("socket connected!");
-        clients.push(sock);
-        const it = sock.receive();
+        this.clients.push(socket);
+        const it = socket.receive();
         while (true) {
           try {
             const { done, value } = await it.next();
@@ -31,8 +35,8 @@ for await (const req of serve(`:${port}`)) {
             if (typeof ev === "string") {
               // text message
               console.log("ws:Text", ev);
-              for await (let client of clients) {
-                if (sock !== client) await client.send(ev);
+              for await (let client of this.clients) {
+                if (socket !== client) await client.send(ev);
               }
             } else if (ev instanceof Uint8Array) {
               // binary message
@@ -48,12 +52,13 @@ for await (const req of serve(`:${port}`)) {
             }
           } catch (e) {
             console.error(`failed to receive frame: ${e}`);
-            await sock.close(1000).catch(console.error);
+            await socket.close(1000).catch(console.error);
           }
         }
-      }
-    )
-    .catch((err: Error): void => {
-      console.error(`failed to accept websocket: ${err}`);
-    });
-}
+      })
+      .catch((err: Error): void => {
+        console.error(`failed to accept websocket: ${err}`);
+      });
+    }
+  }
+};
