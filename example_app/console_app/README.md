@@ -1,5 +1,7 @@
 # Drash Sockets: Console Chat App
 
+<img src="https://raw.githubusercontent.com/drashland/sockets/master/assets/img/screenshot_console_app.png">
+
 ## Getting Started
 
 1. [Download deno](https://deno.land/).
