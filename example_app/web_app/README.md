@@ -1,5 +1,7 @@
 # Drash Sockets: Mini Chat App
 
+<img src="https://raw.githubusercontent.com/drashland/sockets/master/assets/img/screenshot_web_app.png">
+
 ## Getting Started
 
 1. [Download deno](https://deno.land/).
