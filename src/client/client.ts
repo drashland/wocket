@@ -17,7 +17,7 @@ export default class SocketClient {
     (async function(socket): Promise<void> {
       for await (const msg of socket.receive()) {
         if (typeof msg === "string") {
-          console.log(yellow(`${socket.conn.remoteAddr.hostname}:${socket.conn.remoteAddr.port}: ${msg}`));
+          console.log(yellow(`Incoming message: ${msg}`));
         } else if (isWebSocketPingEvent(msg)) {
           console.log(blue("Pinging server ..."));
         } else if (isWebSocketPongEvent(msg)) {

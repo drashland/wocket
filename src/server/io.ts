@@ -24,7 +24,8 @@ export default class IOConnection {
         bufWriter: req.w
       })
       .then(async (socket: WebSocket): Promise<void> => {
-        console.log("socket connected!");
+        const clientId = "Socket rid #" + socket.conn.rid;
+        console.log(clientId + " connected.");
         this.clients.push(socket);
         const it = socket.receive();
         while (true) {
@@ -45,24 +46,24 @@ export default class IOConnection {
             const ev = value;
             if (typeof ev === "string") {
               // text message
-              console.log("ws:Text", ev);
+              console.log(clientId + ":", ev);
               for await (let client of this.clients) {
                 if (socket !== client) await client.send(ev);
               }
             } else if (ev instanceof Uint8Array) {
               // binary message
-              console.log("ws:Binary", ev);
+              console.log("Binary received:", ev);
             } else if (isWebSocketPingEvent(ev)) {
               const [, body] = ev;
               // ping
-              console.log("ws:Ping", body);
+              console.log("Ping received:", body);
             } else if (isWebSocketCloseEvent(ev)) {
               // close
               const { code, reason } = ev;
-              console.log("ws:Close", code, reason);
+              console.log("Close:", code, reason);
             }
           } catch (e) {
-            console.error(`failed to receive frame: ${e}`);
+            console.error(`Failed to receive frame: ${e}`);
             await socket.close(1000).catch(console.error);
           }
         }
