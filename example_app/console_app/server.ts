@@ -1,3 +1,3 @@
-import { SocketServer } from "../mod.ts";
+import { SocketServer } from "../../mod.ts";
 
 const io = new SocketServer();
