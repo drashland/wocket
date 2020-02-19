@@ -18,6 +18,7 @@ export default class SocketServer {
 
   public async connect() {
     const server = serve(`${this.configs.address}:${this.configs.port}`);
+    console.log(`Socket server started at ${this.configs.address}:${this.configs.port}`);
     const connection = new IOConnection(server);
     this.connections.push(connection);
   }

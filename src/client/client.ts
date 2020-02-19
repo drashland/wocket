@@ -17,13 +17,13 @@ export default class SocketClient {
     (async function(socket): Promise<void> {
       for await (const msg of socket.receive()) {
         if (typeof msg === "string") {
-          console.log(yellow("< " + msg));
+          console.log(yellow(`${socket.conn.remoteAddr.hostname}:${socket.conn.remoteAddr.port}: ${msg}`));
         } else if (isWebSocketPingEvent(msg)) {
-          console.log(blue("< ping"));
+          console.log(blue("Pinging server ..."));
         } else if (isWebSocketPongEvent(msg)) {
-          console.log(blue("< pong"));
+          console.log(blue("Server response: pong"));
         } else if (isWebSocketCloseEvent(msg)) {
-          console.log(red(`closed: code=${msg.code}, reason=${msg.reason}`));
+          console.log(red(`Connection closed: code=${msg.code}, reason=${msg.reason}`));
         }
       }
     })(this.socket);

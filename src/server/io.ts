@@ -30,7 +30,18 @@ export default class IOConnection {
         while (true) {
           try {
             const { done, value } = await it.next();
-            if (done) break;
+            if (done) {
+              let clients = [];
+              this.clients.forEach(async (client,index) => {
+                if (socket == client) {
+                  await socket.close(1000).catch(console.error);
+                  return;
+                }
+                clients.push(client);
+              });
+              this.clients = clients;
+              break;
+            }
             const ev = value;
             if (typeof ev === "string") {
               // text message
