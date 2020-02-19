@@ -1,0 +1,9 @@
+# files
+.DS_Store
+
+# directories
+tmp/*
+
+# exceptions
+!.gitkeep
+
