@@ -14,6 +14,7 @@ export default class SocketClient {
   
   public async attach() {
     this.socket = await connectWebSocket("ws://127.0.0.1:3000");
+    console.log("Connected to socket server.");
     (async function(socket): Promise<void> {
       for await (const msg of socket.receive()) {
         if (typeof msg === "string") {
