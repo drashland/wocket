@@ -8,7 +8,8 @@ export {
   isWebSocketPingEvent,
   isWebSocketPongEvent,
   acceptWebSocket,
-  WebSocket
+  WebSocket,
+  append
 } from "https://deno.land/std@v0.32.0/ws/mod.ts";
 
 export {
@@ -22,5 +23,6 @@ export {
 export {
   blue,
   red,
-  yellow
+  yellow,
+  green
 } from "https://deno.land/std@v0.32.0/fmt/colors.ts";
