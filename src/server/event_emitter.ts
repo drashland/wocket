@@ -7,29 +7,22 @@ export default class EventEmitter {
     this.clients = {};
   }
 
-  private addEvent(type: string, cb?: any) {
+  private addEvent(type: string, cb: any) {
     if (!this.events[type]) {
       this.events[type] = { listeners: [], callbacks: [] };
     }
 
     // this should maybe be simplified to just type and options?
-    const fn = (message) => cb(message);
-    this.events[type].callbacks.push(fn);
-    return this;
+    this.events[type].callbacks.push(cb);
   }
 
   private addListener(type: string, clientId: any) {
     if (!this.events[type]) {
-      this.events[type] = {
-        listeners: [],
-        callbacks: [],
-      };
+      this.events[type] = { listeners: [], callbacks: [] };
     }
-    console.log(this.events[type].listeners);
     if (!this.events[type].listeners.includes(clientId)) {
       this.events[type].listeners.push(clientId);
     }
-    console.log('inside of add listener:', type, clientId, this.events[type])
     return true;
   }
 
@@ -38,14 +31,17 @@ export default class EventEmitter {
     console.log("Number of sockets connected: ", Object.keys(this.clients));
   }
 
+  public removeClient(clientId) {
+    delete this.clients[clientId];
+    // remove reference in listeners... redo this struct.
+  }
+
   public on(type: string, cb: any) {
-    return this.addEvent(type, cb);
+    this.addEvent(type, cb);
   }
 
   public async to(type: string, message: string) {
-    for await (let listener of this.events[type].listeners) {
-      if (this.clients[listener]) this.clients[listener].send(message);
-    }
+    this.send(type, message);
   }
 
   public async checkEvent(message: any, clientId: any) {
@@ -54,51 +50,38 @@ export default class EventEmitter {
     try {
       parseMessage = JSON.parse(result);
     } catch(err) {
-      result = result.toString();
-      console.log(result);
-      const messages = result.split(/(}{})/);
-      console.log(messages);
-      for (let i of messages) {
-         const parsed = JSON.parse(messages[i]);
-         Object.assign(parseMessage, parsed);
-      }
+      throw new Error(err);
     }
-    console.log(parseMessage);
+
     for await (let type of Object.keys(parseMessage)) {
       if (type === 'eventType') {
-        console.log('adding listener', parseMessage[type], clientId);
         this.addListener(parseMessage[type], clientId);
       } else if (this.events[type]) {
-        console.log(type, parseMessage[type])
-        await this.send(type, parseMessage[type]);
+        await this.invokeCallback(type, parseMessage[type]);
       }
     }
-    return true;
   }
 
-  public async broadcast(message: string) {
-    const clients  = Object.keys(this.clients).map(client => this.clients[client]);
-    for await (let client of clients) {
-      await client.send(message);
+  // to do
+  // public async broadcast() {}
+
+  public async send(type: string, message: string): Promise<void> {
+    if (this.events[type].listeners) {
+      const encodedMessage = new TextEncoder().encode(JSON.stringify({ [type]: message }));
+      for await (let listener of this.events[type].listeners) {
+        if (this.clients[listener]) this.clients[listener].send(encodedMessage);
+      }
     }
   }
 
-  public async send(type: string, message: string): Promise<void> {
-    console.log('TRYING TO SEND"', type, message, this.events[type])
-    if (!this.events[type]) {
+  private async invokeCallback(type: string, message: string, ): Promise<void> {
+    if (type && !this.events[type]) {
       console.log(`This event does not exist: ${type}`);
       return;
     }
-    if (this.events[type].listeners.length) {
-      for await (let listener of this.events[type].listeners) {
-        const result = new TextEncoder().encode(JSON.stringify({ [type]: message }));
-        if (this.clients[listener]) this.clients[listener].send(result);
-      }
-    } else {
-      if (this.events[type].callbacks) {
-        for await (let cb of this.events[type].callbacks) {
-          await cb(message);
-        }
+    if (this.events[type].callbacks) {
+      for await (let cb of this.events[type].callbacks) {
+        await this.send(cb, message);
       }
     }
   }

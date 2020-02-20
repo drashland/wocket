@@ -36,21 +36,18 @@ export default class SocketServer extends EventEmitter {
         const clientId = conn.rid;
         super.addClient(socket, clientId);
         const it = socket.receive();
-        console.log("========== BFORE LOOP =============")
         while (true) {
           try {
             const { done, value } = await it.next();
-            console.log('IS IT DONE', value, done);
-            if (done) break;
+            if (done) {
+              super.removeClient(clientId);
+              break;
+            };
             const ev = value;
-            
-            if (typeof ev === "string") {
-              // text message
-              console.log("ws:Text", ev);
-            } else if (ev instanceof Uint8Array) {
+
+            if (ev instanceof Uint8Array || typeof ev === "string") {
               await super.checkEvent(ev, clientId);
             } else if (isWebSocketCloseEvent(ev)) {
-              // close
               const { code, reason } = ev;
               console.log("ws:Close", code, reason);
             }

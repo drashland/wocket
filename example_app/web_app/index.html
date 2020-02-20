@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html class="h-full w-full">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, user-scalable=no"/>
+  <title>Drash Sockets</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss/dist/tailwind.min.css">
+</head>
+<body class="h-full w-full">
+  <div id="app" class="flex h-full w-full items-center justify-center">
+    <div class="w-full max-w-lg p-6 rounded overflow-hidden shadow-lg">
+      <div class="px-6">
+      <div class="font-bold text-xl mt-4 mb-2">Drash Sockets</div>
+        <div class="mb-4">
+          <p class="mb-2"><strong>Chat:</strong></p>
+          <p
+            id="post_message" style="height: 300px; overflow: auto"
+            class="shadow appearance-none border rounded w-full py-2 px-3 text-grey-darker leading-tight focus:outline-none focus:shadow-outline"
+            v-html="chat"
+          ></p>
+        </div>
+        <hr class="border-b border-gray">
+        <div class="mb-4">
+          <label class="block text-grey-darker text-sm font-bold mb-2" for="name">Username</label>
+          <input
+            class="shadow appearance-none border rounded w-full py-2 px-3 text-grey-darker leading-tight focus:outline-none focus:shadow-outline"
+            id="name"
+            type="text"
+            placeholder="Name"
+            v-model="username"
+          >
+        </div>
+        <div class="mb-4">
+          <label class="block text-grey-darker text-sm font-bold mb-2" for="name">Message</label>
+          <input
+            class="shadow appearance-none border rounded w-full py-2 px-3 text-grey-darker leading-tight focus:outline-none focus:shadow-outline"
+            id="name"
+            type="text"
+            placeholder="Message"
+            v-model="message"
+          >
+        </div>
+        <div class="mb-4 text-right">
+          <button class="bg-black w-full text-white font-bold py-2 px-4 rounded-full" style="outline: none" @click="send()">Send Message</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+  <script>
+    const app = new Vue({
+      el: '#app',
+      data: {
+        socket: null,
+        chat: "",
+        message: "",
+        username: "",
+      },
+      mounted() {
+        this.socket = new WebSocket("ws://127.0.0.1:3000");
+        this.socket.onmessage = this.onMessage;
+      },
+      methods: {
+        onMessage(event) {
+          const data = JSON.parse(event.data);
+          this.chat += (`${data.username}: ${data.message}<br>`);
+        },
+        send() {
+          this.chat += (`${this.username}: ${this.message}<br>`);
+          this.socket.send(JSON.stringify({username: this.username, message: this.message}));
+        }
+      }
+    });
+  </script>
+</body>
+</html>

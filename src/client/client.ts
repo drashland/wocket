@@ -1,6 +1,8 @@
 import {
   connectWebSocket,
-  append
+  append,
+  TextProtoReader,
+  BufReader
 } from "../../deps.ts";
 
 class Socket {
@@ -41,14 +43,19 @@ class Socket {
     const toSend = JSON.stringify({ eventType: type });
     const encoded = new TextEncoder().encode(toSend);
     this.messageQueue.push(encoded);
-    return this.emit();
+    this.emit();
   }
 
   public send(type: string, message: string) {
-    const toSend = JSON.stringify({ [type]: message });
-    const encoded = new TextEncoder().encode(toSend);
-    this.messageQueue.push(encoded);
-    return this.emit();
+    let toSend = null;
+    if (type) {
+      const preparedString = JSON.stringify({ [type]: message });
+      toSend = new TextEncoder().encode(preparedString);
+    } else {
+      toSend = message;
+    }
+    this.messageQueue.push(toSend);
+    this.emit();
   }
 
   private async emit() {
@@ -72,5 +79,21 @@ export default class SocketClient {
     const socketConnection = await connectWebSocket("ws://127.0.0.1:3000");
     this.socket = new Socket(socketConnection);
     return this.socket;
+  }
+
+  public async initConsole(to: string) {
+    const tpr = new TextProtoReader(new BufReader(Deno.stdin));
+    while (true) {
+      const line: any = await tpr.readLine();
+      if (line === "close") {
+        break;
+      } else if (line === "ping") {
+        await this.socket.ping();
+      } else {
+        await this.socket.send(to, line);
+      }
+    }
+    await this.socket.close(1000);
+    Deno.exit(0);
   }
 }
