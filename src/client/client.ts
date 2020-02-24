@@ -22,7 +22,6 @@ class Socket {
   private async init() {
     for await (const msg of this.socket.receive()) {
       if (typeof msg === "string") {
-        console.log(msg);
       } else if (msg instanceof Uint8Array) {
         this.receiveEncodedMessage(msg);
       }
