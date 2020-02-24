@@ -19,7 +19,6 @@ class Sender {
     }
   }
 
-  // type: string, message: string
   public async send() {
     if (this.ready && this.messageQueue.length) {
       this.ready = false;
@@ -57,7 +56,6 @@ export default class EventEmitter {
       this.events[type] = { listeners: [], callbacks: [] };
     }
 
-    // this should maybe be simplified to just type and options?
     this.events[type].callbacks.push(cb);
   }
 
@@ -73,12 +71,11 @@ export default class EventEmitter {
 
   public addClient(socket, clientId) {
     this.clients[clientId] = socket;
-    console.log("Number of sockets connected: ", Object.keys(this.clients));
   }
 
   public removeClient(clientId) {
     delete this.clients[clientId];
-    // remove reference in listeners... redo this struct.
+    // todo: remove reference in this.events[event].listeners
   }
 
   public on(type: string, cb: any) {
