@@ -1,3 +1,5 @@
+import { MessasgeType } from "../lib/io_types.ts";
+
 class Sender {
   private messageQueue: any;
   private ready: boolean;
@@ -30,9 +32,17 @@ class Sender {
         listeners
       } = messageObj;
       console.log(message);
+
       const encodedMessage = new TextEncoder().encode(JSON.stringify({ [type]: message }));
       for await (let listener of listeners) {
-        if (listener.conn.rid !== from) listener.send(encodedMessage);
+        const [clientId, socketConn] = listener;
+        if (clientId !== from) {
+          try {
+            await socketConn.send(encodedMessage);
+          } catch (err) {
+            console.log(`Unable to send to client: ${clientId}`);
+          }
+        }
       }
       this.ready = true;
       this.send();
@@ -40,10 +50,12 @@ class Sender {
   }
 }
 
+export type IncomingMessageTypes = Uint8Array | String;
+
 export default class EventEmitter {
-  private events: any;
-  private clients: any;
-  private sender: any;
+  private events: Object;
+  private clients: Object;
+  private sender: Sender;
 
   constructor() {
     this.events = {};
@@ -53,7 +65,7 @@ export default class EventEmitter {
 
   private addEvent(type: string, cb: any) {
     if (!this.events[type]) {
-      this.events[type] = { listeners: [], callbacks: [] };
+      this.events[type] = { listeners: new Map(), callbacks: [] };
     }
 
     this.events[type].callbacks.push(cb);
@@ -61,24 +73,36 @@ export default class EventEmitter {
 
   private addListener(type: string, clientId: any) {
     if (!this.events[type]) {
-      this.events[type] = { listeners: [], callbacks: [] };
+      this.events[type] = { listeners: new Map(), callbacks: [] };
     }
-    if (!this.events[type].listeners.includes(this.clients[clientId])) {
-      this.events[type].listeners.push(this.clients[clientId]);
+    if (!this.events[type].listeners.has(clientId)) {
+      this.events[type].listeners.set(clientId, this.clients[clientId].socket);
+      this.clients[clientId].listeningTo.push(type);
     }
     return true;
   }
 
   public addClient(socket, clientId) {
-    this.clients[clientId] = socket;
+    this.clients[clientId] = {
+      socket,
+      listeningTo: [],
+    }
   }
-
-  public removeClient(clientId) {
+  
+  public async removeClient(clientId) {
+    if (!this.clients[clientId]) return;
+    if (this.clients[clientId].listeningTo) {
+      this.clients[clientId].listeningTo.forEach((to) => {
+        if (this.events[to]) {
+          this.events[to].listeners.delete(clientId);
+        }
+      });
+    };
+    await this.clients[clientId].socket.close(1000);
     delete this.clients[clientId];
-    // todo: remove reference in this.events[event].listeners
   }
 
-  public on(type: string, cb: any) {
+  public on(type: string, cb: Function) {
     this.addEvent(type, cb);
   }
 
@@ -100,7 +124,7 @@ export default class EventEmitter {
     this.sender.add(msg);
   }
 
-  public async checkEvent(message: any, clientId: any) {
+  public async checkEvent(message: MessasgeType, clientId: number) {
     let result = new TextDecoder().decode(message);
     let parseMessage = {};
     try {

@@ -1,3 +1,4 @@
+import { MessasgeType } from "../lib/io_types.ts";
 import {
   connectWebSocket,
   append,
@@ -28,7 +29,7 @@ class Socket {
     }
   }
 
-  private receiveEncodedMessage(encodedMessage: any) {
+  private receiveEncodedMessage(encodedMessage: MessasgeType) {
     const decodedMessage = new TextDecoder().decode(encodedMessage);
     const parsedMessage = JSON.parse(decodedMessage);
     Object.keys(parsedMessage).forEach((type) => {
@@ -36,7 +37,7 @@ class Socket {
     })
   }
 
-  public on(type: string, cb: any) {
+  public on(type: string, cb: Function) {
     if (!this.listening[type]) this.listening[type] = null;
     this.listening[type] = cb;
     const toSend = JSON.stringify({ eventType: type });
@@ -60,7 +61,7 @@ class Socket {
   private async emit() {
     if (this.ready && this.messageQueue.length) {
       this.ready = false;
-      let toSend = new Uint8Array(0);;
+      let toSend = new Uint8Array(0);
       while (this.messageQueue.length) {
         toSend = append(toSend, this.messageQueue.shift());
       }

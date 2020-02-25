@@ -40,20 +40,19 @@ export default class SocketServer extends EventEmitter {
           try {
             const { done, value } = await it.next();
             if (done) {
-              super.removeClient(clientId);
+              await super.removeClient(clientId);
               break;
             };
             const ev = value;
 
-            if (ev instanceof Uint8Array || typeof ev === "string") {
+            if (ev instanceof Uint8Array) {
               await super.checkEvent(ev, clientId);
             } else if (isWebSocketCloseEvent(ev)) {
               const { code, reason } = ev;
               console.log("ws:Close", code, reason);
             }
           } catch (e) {
-            console.error(`failed to receive frame: ${e}`);
-            await socket.close(1000).catch(console.error);
+            await super.removeClient(clientId);
           }
         }
       })
