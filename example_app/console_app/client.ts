@@ -1,7 +1,7 @@
 import { SocketClient } from "../../mod.ts";
 import { green } from "../../deps.ts";
 
-const ioClient = new SocketClient;
+const ioClient = new SocketClient({ port: 3000 });
 ioClient.initConsole('chatroom1');
 const io = await ioClient.attach();
 

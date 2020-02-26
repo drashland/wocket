@@ -21,7 +21,7 @@ class Sender {
     }
   }
 
-  public async send() {
+  private async send() {
     if (this.ready && this.messageQueue.length) {
       this.ready = false;
       const messageObj = this.messageQueue.shift();
@@ -50,8 +50,6 @@ class Sender {
   }
 }
 
-export type IncomingMessageTypes = Uint8Array | String;
-
 export default class EventEmitter {
   private events: Object;
   private clients: Object;
@@ -63,6 +61,14 @@ export default class EventEmitter {
     this.sender = new Sender();
   }
 
+  public getClients() {
+    return this.clients;
+  }
+
+  public getEvents() {
+    return this.events;
+  }
+
   private addEvent(type: string, cb: any) {
     if (!this.events[type]) {
       this.events[type] = { listeners: new Map(), callbacks: [] };
@@ -71,7 +77,7 @@ export default class EventEmitter {
     this.events[type].callbacks.push(cb);
   }
 
-  private addListener(type: string, clientId: any) {
+  public addListener(type: string, clientId: any) {
     if (!this.events[type]) {
       this.events[type] = { listeners: new Map(), callbacks: [] };
     }

@@ -26,3 +26,15 @@ export {
   yellow,
   green
 } from "https://deno.land/std@v0.32.0/fmt/colors.ts";
+
+// Tests
+
+export {
+  runTests,
+  test
+} from "https://deno.land/std@v0.32.0/testing/mod.ts";
+
+export {
+  assertEquals,
+  assert,
+} from "https://deno.land/std@v0.32.0/testing/asserts.ts";

@@ -74,9 +74,20 @@ class Socket {
 
 export default class SocketClient {
   public socket: any;
+  private options: any;
+  constructor(options: any = {}) {
+    this.options = {
+      address: options.address || "127.0.0.1",
+      port: options.port || 3000,
+    };
+  }
+
+  public getOptions() {
+    return this.options;
+  }
 
   public async attach() {
-    const socketConnection = await connectWebSocket("ws://127.0.0.1:3000");
+    const socketConnection = await connectWebSocket(`ws://${this.options.port}:${this.options.port}`);
     this.socket = new Socket(socketConnection);
     return this.socket;
   }
