@@ -1,34 +1,87 @@
+import { MessasgeType } from "../lib/io_types.ts";
 import {
   connectWebSocket,
-  isWebSocketCloseEvent,
-  isWebSocketPingEvent,
-  isWebSocketPongEvent
+  append,
+  TextProtoReader,
+  BufReader
 } from "../../deps.ts";
-import { BufReader } from "../../deps.ts";
-import { TextProtoReader } from "../../deps.ts";
-import { blue, red, yellow } from "../../deps.ts";
 
+class Socket {
+  protected socket: any;
+  protected listening: any;
+  protected messageQueue: any;
+  protected ready: any;
+
+  constructor(socket) {
+    this.socket = socket;
+    this.listening = {};
+    this.messageQueue = [];
+    this.ready = true;
+    this.init();
+  }
+
+  private async init() {
+    for await (const msg of this.socket.receive()) {
+      if (typeof msg === "string") {
+      } else if (msg instanceof Uint8Array) {
+        this.receiveEncodedMessage(msg);
+      }
+    }
+  }
+
+  private receiveEncodedMessage(encodedMessage: MessasgeType) {
+    const decodedMessage = new TextDecoder().decode(encodedMessage);
+    const parsedMessage = JSON.parse(decodedMessage);
+    Object.keys(parsedMessage).forEach((type) => {
+      if (this.listening[type]) this.listening[type](parsedMessage[type]);
+    })
+  }
+
+  public on(type: string, cb: Function) {
+    if (!this.listening[type]) this.listening[type] = null;
+    this.listening[type] = cb;
+    const toSend = JSON.stringify({ eventType: type });
+    const encoded = new TextEncoder().encode(toSend);
+    this.messageQueue.push(encoded);
+    this.emit();
+  }
+
+  public send(type: string, message: string) {
+    let toSend = null;
+    if (type) {
+      const preparedString = JSON.stringify({ [type]: message });
+      toSend = new TextEncoder().encode(preparedString);
+    } else {
+      toSend = message;
+    }
+    this.messageQueue.push(toSend);
+    this.emit();
+  }
+
+  private async emit() {
+    if (this.ready && this.messageQueue.length) {
+      this.ready = false;
+      let toSend = new Uint8Array(0);
+      while (this.messageQueue.length) {
+        toSend = append(toSend, this.messageQueue.shift());
+      }
+      await this.socket.send(toSend);
+      this.ready = true;
+      this.emit();
+    }
+  }
+}
 
 export default class SocketClient {
-  protected socket: any;
-  
+  public socket: any;
+
   public async attach() {
-    this.socket = await connectWebSocket("ws://127.0.0.1:3000");
-    console.log("Connected to socket server.");
-    (async function(socket): Promise<void> {
-      for await (const msg of socket.receive()) {
-        if (typeof msg === "string") {
-          console.log(yellow(`Incoming message: ${msg}`));
-        } else if (isWebSocketPingEvent(msg)) {
-          console.log(blue("Pinging server ..."));
-        } else if (isWebSocketPongEvent(msg)) {
-          console.log(blue("Server response: pong"));
-        } else if (isWebSocketCloseEvent(msg)) {
-          console.log(red(`Connection closed: code=${msg.code}, reason=${msg.reason}`));
-        }
-      }
-    })(this.socket);
-    
+    const socketConnection = await connectWebSocket("ws://127.0.0.1:3000");
+    this.socket = new Socket(socketConnection);
+    return this.socket;
+  }
+
+  public async initConsole(to: string) {
     const tpr = new TextProtoReader(new BufReader(Deno.stdin));
     while (true) {
       const line: any = await tpr.readLine();
@@ -37,7 +90,7 @@ export default class SocketClient {
       } else if (line === "ping") {
         await this.socket.ping();
       } else {
-        await this.socket.send(line);
+        await this.socket.send(to, line);
       }
     }
     await this.socket.close(1000);

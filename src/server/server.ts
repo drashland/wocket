@@ -1,11 +1,16 @@
 import { serve } from "../../deps.ts";
-import IOConnection from "./io.ts";
+import {
+  acceptWebSocket,
+  isWebSocketCloseEvent,
+  WebSocket,
+} from "../../deps.ts";
+import EventEmitter  from "./event_emitter.ts";
 
-export default class SocketServer {
+export default class SocketServer extends EventEmitter {
   protected configs: any;
-  public connections: any = [];
 
   constructor(configs: any = {}) {
+    super();
     if (!configs.address) {
       configs.address = "127.0.0.1";
     }
@@ -18,8 +23,42 @@ export default class SocketServer {
 
   public async connect() {
     const server = serve(`${this.configs.address}:${this.configs.port}`);
-    console.log(`Socket server started at ${this.configs.address}:${this.configs.port}`);
-    const connection = new IOConnection(server);
-    this.connections.push(connection);
+
+    for await (const req of server) {
+      const { headers, conn } = req;
+      acceptWebSocket({
+        conn,
+        headers,
+        bufReader: req.r,
+        bufWriter: req.w
+      })
+      .then(async (socket: WebSocket): Promise<void> => {
+        const clientId = conn.rid;
+        super.addClient(socket, clientId);
+        const it = socket.receive();
+        while (true) {
+          try {
+            const { done, value } = await it.next();
+            if (done) {
+              await super.removeClient(clientId);
+              break;
+            };
+            const ev = value;
+
+            if (ev instanceof Uint8Array) {
+              await super.checkEvent(ev, clientId);
+            } else if (isWebSocketCloseEvent(ev)) {
+              const { code, reason } = ev;
+              console.log("ws:Close", code, reason);
+            }
+          } catch (e) {
+            await super.removeClient(clientId);
+          }
+        }
+      })
+      .catch((err: Error): void => {
+        console.error(`failed to accept websocket: ${err}`);
+      });
+    }
   }
 }
