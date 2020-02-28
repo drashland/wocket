@@ -7,22 +7,26 @@ import {
 import EventEmitter  from "./event_emitter.ts";
 
 export default class SocketServer extends EventEmitter {
-  protected configs: any;
+  private config: any;
 
-  constructor(configs: any = {}) {
+  constructor(config: any = {}) {
     super();
-    if (!configs.address) {
-      configs.address = "127.0.0.1";
+    if (!config.address) {
+      config.address = "127.0.0.1";
     }
-    if (!configs.port) {
-      configs.port = "3000";
+    if (!config.port) {
+      config.port = "3000";
     }
-    this.configs = configs;
+    this.config = config;
     this.connect();
   }
 
+  public getConfig() {
+    return this.config;
+  }
+
   public async connect() {
-    const server = serve(`${this.configs.address}:${this.configs.port}`);
+    const server = serve(`${this.config.address}:${this.config.port}`);
 
     for await (const req of server) {
       const { headers, conn } = req;

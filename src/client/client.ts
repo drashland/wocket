@@ -11,7 +11,7 @@ export default class SocketClient {
   constructor(options: any = {}) {
     this.options = {
       address: options.address || "127.0.0.1",
-      port: options.port || 3000,
+      port: options.port || "3000",
     };
   }
 

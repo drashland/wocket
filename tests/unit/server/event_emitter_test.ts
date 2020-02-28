@@ -3,7 +3,6 @@ import {
   test,
   assertEquals,
   assert,
-  assertThrows,
 } from "../../test.ts";
 
 let io = new EventEmitter();
