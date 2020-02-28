@@ -42,7 +42,8 @@ export default class EventEmitter {
 
   private handleReservedEventTypes(type: string, clientId: number) {
     switch(type) {
-      case 'connection' || 'disconnect':
+      case 'connection':
+      case 'disconnect':
         if (this.events[type]) {
           this.events[type].callbacks.forEach((cb) => {
             cb();
