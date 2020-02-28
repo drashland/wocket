@@ -87,7 +87,7 @@ export default class SocketClient {
   }
 
   public async attach() {
-    const socketConnection = await connectWebSocket(`ws://${this.options.port}:${this.options.port}`);
+    const socketConnection = await connectWebSocket(`ws://${this.options.address}:${this.options.port}`);
     this.socket = new Socket(socketConnection);
     return this.socket;
   }
