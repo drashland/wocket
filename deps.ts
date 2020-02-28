@@ -22,8 +22,6 @@ export {
 
 export {
   blue,
-  red,
-  yellow,
   green
 } from "https://deno.land/std@v0.32.0/fmt/colors.ts";
 
