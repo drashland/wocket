@@ -49,10 +49,6 @@ test("should add events for server to listen to", () => {
   assert(expect.every((val) => events[val]));
 });
 
-test("should throw an error if reserved event types are used", () => {
-  assertThrows(() => io.on('disconnect', () => true));
-});
-
 test("should detect same event name and push cb into callbacks array of event", () => {
   const expect = ['chat', 'room'];
   io.on('chat', () => true);

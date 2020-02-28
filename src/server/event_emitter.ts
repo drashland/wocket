@@ -1,6 +1,6 @@
 import Sender from "./sender.ts";
 import { MESSAGE_TYPE } from "../lib/io_types.ts";
-import { RESERVED_EVENTS } from "../lib/reserved_event_types.ts";
+import { RESERVED_EVENT_TYPES } from "../lib/reserved_event_types.ts";
 
 export default class EventEmitter {
   private events: Object;
@@ -40,11 +40,29 @@ export default class EventEmitter {
     return true;
   }
 
+  private handleReservedEventTypes(type: string, clientId: number) {
+    switch(type) {
+      case 'connection' || 'disconnect':
+        if (this.events[type]) {
+          this.events[type].callbacks.forEach((cb) => {
+            cb();
+          });
+        }
+        break;
+      case 'listeningTo':
+        this.addListener(type, clientId);
+        break;
+      default:
+        break;
+    }
+  }
+
   public addClient(socket, clientId) {
     this.clients[clientId] = {
       socket,
       listeningTo: [],
     }
+    this.handleReservedEventTypes('connection', clientId);
   }
   
   public async removeClient(clientId) {
@@ -58,12 +76,10 @@ export default class EventEmitter {
     };
     await this.clients[clientId].socket.close(1000);
     delete this.clients[clientId];
+    this.handleReservedEventTypes('disconnect', clientId);
   }
 
   public on(type: string, cb: Function) {
-    if (RESERVED_EVENTS.includes(type)) {
-      throw new Error(`${RESERVED_EVENTS} are reserved event types.`);
-    }
     this.addEvent(type, cb);
   }
 
@@ -95,8 +111,8 @@ export default class EventEmitter {
     }
 
     for await (let type of Object.keys(parseMessage)) {
-      if (type === 'listeningTo') {
-        this.addListener(parseMessage[type], clientId);
+      if (RESERVED_EVENT_TYPES.includes(type)) {
+        this.handleReservedEventTypes(parseMessage[type], clientId);
       } else if (this.events[type]) {
         await this.sender.invokeCallback({
           ...this.events[type],

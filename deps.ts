@@ -21,7 +21,6 @@ export {
 } from "https://deno.land/std@v0.32.0/textproto/mod.ts";
 
 export {
-  blue,
   green
 } from "https://deno.land/std@v0.32.0/fmt/colors.ts";
 
@@ -35,5 +34,4 @@ export {
 export {
   assertEquals,
   assert,
-  assertThrows,
 } from "https://deno.land/std@v0.32.0/testing/asserts.ts";

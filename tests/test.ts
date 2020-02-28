@@ -6,7 +6,6 @@ export {
   runTests,
   assertEquals,
   assert,
-  assertThrows,
 } from "../deps.ts";
 
 // Server
