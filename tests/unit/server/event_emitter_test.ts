@@ -1,5 +1,10 @@
 import EventEmitter from "../../../src/server/event_emitter.ts";
-import { test, assertEquals, assert } from "../../test.ts";
+import {
+  test,
+  assertEquals,
+  assert,
+  assertThrows,
+} from "../../test.ts";
 
 let io = new EventEmitter();
 
@@ -42,6 +47,10 @@ test("should add events for server to listen to", () => {
 
   const events = io.getEvents();
   assert(expect.every((val) => events[val]));
+});
+
+test("should throw an error if reserved event types are used", () => {
+  assertThrows(() => io.on('disconnect', () => true));
 });
 
 test("should detect same event name and push cb into callbacks array of event", () => {

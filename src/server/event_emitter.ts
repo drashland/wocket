@@ -1,4 +1,5 @@
-import { MessasgeType } from "../lib/io_types.ts";
+import { MESSAGE_TYPE } from "../lib/io_types.ts";
+import { RESERVED_EVENTS } from "../lib/reserved_event_types.ts"
 
 class Sender {
   private messageQueue: any;
@@ -109,6 +110,9 @@ export default class EventEmitter {
   }
 
   public on(type: string, cb: Function) {
+    if (RESERVED_EVENTS.includes(type)) {
+      throw new Error(`${RESERVED_EVENTS} are reserved event types.`);
+    }
     this.addEvent(type, cb);
   }
 
@@ -130,7 +134,7 @@ export default class EventEmitter {
     this.sender.add(msg);
   }
 
-  public async checkEvent(message: MessasgeType, clientId: number) {
+  public async checkEvent(message: MESSAGE_TYPE, clientId: number) {
     let result = new TextDecoder().decode(message);
     let parseMessage = {};
     try {
@@ -140,7 +144,7 @@ export default class EventEmitter {
     }
 
     for await (let type of Object.keys(parseMessage)) {
-      if (type === 'eventType') {
+      if (type === 'listeningTo') {
         this.addListener(parseMessage[type], clientId);
       } else if (this.events[type]) {
         await this.sender.invokeCallback({
