@@ -1,9 +1,4 @@
-Deno.env().DRASH_PROCESS = "test";
-
-import { runTests } from "../deps.ts";
 export {
-  test,
-  runTests,
   assertEquals,
   assert,
 } from "../deps.ts";
@@ -16,4 +11,4 @@ import "./unit/server/server_test.ts";
 import "./unit/client/client_test.ts";
 
 
-runTests();
+Deno.runTests();

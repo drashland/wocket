@@ -29,7 +29,6 @@ export default class Sender {
         from,
         listeners
       } = messageObj;
-      console.log(message);
 
       const encodedMessage = new TextEncoder().encode(JSON.stringify({ [type]: message }));
       for await (let listener of listeners) {

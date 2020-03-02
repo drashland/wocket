@@ -7,7 +7,7 @@ export default class Socket {
   protected messageQueue: any;
   protected ready: any;
 
-  constructor(socket) {
+  constructor(socket: any) {
     this.socket = socket;
     this.listening = {};
     this.messageQueue = [];

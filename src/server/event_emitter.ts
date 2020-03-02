@@ -3,8 +3,8 @@ import { MESSAGE_TYPE } from "../lib/io_types.ts";
 import { RESERVED_EVENT_TYPES } from "../lib/reserved_event_types.ts";
 
 export default class EventEmitter {
-  private events: Object;
-  private clients: Object;
+  private events: any;
+  private clients: any;
   private sender: Sender;
 
   constructor() {
@@ -29,15 +29,15 @@ export default class EventEmitter {
     this.events[type].callbacks.push(cb);
   }
 
-  public addListener(type: string, clientId: any) {
+  public addListener(type: string, clientId: number) {
     if (!this.events[type]) {
       this.events[type] = { listeners: new Map(), callbacks: [] };
     }
+
     if (!this.events[type].listeners.has(clientId)) {
       this.events[type].listeners.set(clientId, this.clients[clientId].socket);
       this.clients[clientId].listeningTo.push(type);
     }
-    return true;
   }
 
   private handleReservedEventTypes(type: string, clientId: number) {
@@ -45,20 +45,18 @@ export default class EventEmitter {
       case 'connection':
       case 'disconnect':
         if (this.events[type]) {
-          this.events[type].callbacks.forEach((cb) => {
+          this.events[type].callbacks.forEach((cb: Function) => {
             cb();
           });
         }
         break;
-      case 'listeningTo':
-        this.addListener(type, clientId);
-        break;
-      default:
+        default:
+          this.addListener(type, clientId);
         break;
     }
   }
 
-  public addClient(socket, clientId) {
+  public addClient(socket: any, clientId: number) {
     this.clients[clientId] = {
       socket,
       listeningTo: [],
@@ -66,10 +64,10 @@ export default class EventEmitter {
     this.handleReservedEventTypes('connection', clientId);
   }
   
-  public async removeClient(clientId) {
+  public async removeClient(clientId: number) {
     if (!this.clients[clientId]) return;
     if (this.clients[clientId].listeningTo) {
-      this.clients[clientId].listeningTo.forEach((to) => {
+      this.clients[clientId].listeningTo.forEach((to: string) => {
         if (this.events[to]) {
           this.events[to].listeners.delete(clientId);
         }
@@ -104,21 +102,21 @@ export default class EventEmitter {
 
   public async checkEvent(message: MESSAGE_TYPE, clientId: number) {
     let result = new TextDecoder().decode(message);
-    let parseMessage = {};
+    let parseMessaged = <any>{};
     try {
-      parseMessage = JSON.parse(result);
+      parseMessaged = JSON.parse(result);
     } catch(err) {
       throw new Error(err);
     }
 
-    for await (let type of Object.keys(parseMessage)) {
+    for await (let type of Object.keys(parseMessaged)) {
       if (RESERVED_EVENT_TYPES.includes(type)) {
-        this.handleReservedEventTypes(parseMessage[type], clientId);
+        this.handleReservedEventTypes(parseMessaged[type], clientId);
       } else if (this.events[type]) {
         await this.sender.invokeCallback({
           ...this.events[type],
           type,
-          message: parseMessage[type],
+          message: parseMessaged[type],
           from: clientId
         });
       }
