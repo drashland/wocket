@@ -5,6 +5,6 @@ const ioClient = new SocketClient({ port: 3000 });
 ioClient.initConsole('chatroom1');
 const io = await ioClient.attach();
 
-io.on('chatroom1', (incomingMessage) => {
+io.on('chatroom1', (incomingMessage: any) => {
   console.log(green(`Incoming message: ${incomingMessage}`));
 });

@@ -1,5 +1,5 @@
-type MessasgeType = Uint8Array;
+type MESSAGE_TYPE = Uint8Array;
 
 export {
-  MessasgeType,
+  MESSAGE_TYPE,
 }

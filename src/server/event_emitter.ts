@@ -1,58 +1,10 @@
-import { MessasgeType } from "../lib/io_types.ts";
-
-class Sender {
-  private messageQueue: any;
-  private ready: boolean;
-
-  constructor() {
-    this.messageQueue = [];
-    this.ready = true;
-  }
-
-  public add(message: any) {
-    this.messageQueue.push(message);
-    this.send();
-  }
-
-  public async invokeCallback(msgObj: any): Promise<void> {
-    const args = Array.prototype.slice.call(arguments);
-    for await (let cb of msgObj.callbacks) {
-      cb.apply(this, args);
-    }
-  }
-
-  private async send() {
-    if (this.ready && this.messageQueue.length) {
-      this.ready = false;
-      const messageObj = this.messageQueue.shift();
-      const {
-        type,
-        message,
-        from,
-        listeners
-      } = messageObj;
-      console.log(message);
-
-      const encodedMessage = new TextEncoder().encode(JSON.stringify({ [type]: message }));
-      for await (let listener of listeners) {
-        const [clientId, socketConn] = listener;
-        if (clientId !== from) {
-          try {
-            await socketConn.send(encodedMessage);
-          } catch (err) {
-            console.log(`Unable to send to client: ${clientId}`);
-          }
-        }
-      }
-      this.ready = true;
-      this.send();
-    }
-  }
-}
+import Sender from "./sender.ts";
+import { MESSAGE_TYPE } from "../lib/io_types.ts";
+import { RESERVED_EVENT_TYPES } from "../lib/reserved_event_types.ts";
 
 export default class EventEmitter {
-  private events: Object;
-  private clients: Object;
+  private events: any;
+  private clients: any;
   private sender: Sender;
 
   constructor() {
@@ -77,28 +29,45 @@ export default class EventEmitter {
     this.events[type].callbacks.push(cb);
   }
 
-  public addListener(type: string, clientId: any) {
+  public addListener(type: string, clientId: number) {
     if (!this.events[type]) {
       this.events[type] = { listeners: new Map(), callbacks: [] };
     }
+
     if (!this.events[type].listeners.has(clientId)) {
       this.events[type].listeners.set(clientId, this.clients[clientId].socket);
       this.clients[clientId].listeningTo.push(type);
     }
-    return true;
   }
 
-  public addClient(socket, clientId) {
+  private handleReservedEventTypes(type: string, clientId: number) {
+    switch(type) {
+      case 'connection':
+      case 'disconnect':
+        if (this.events[type]) {
+          this.events[type].callbacks.forEach((cb: Function) => {
+            cb();
+          });
+        }
+        break;
+        default:
+          this.addListener(type, clientId);
+        break;
+    }
+  }
+
+  public addClient(socket: any, clientId: number) {
     this.clients[clientId] = {
       socket,
       listeningTo: [],
     }
+    this.handleReservedEventTypes('connection', clientId);
   }
   
-  public async removeClient(clientId) {
+  public async removeClient(clientId: number) {
     if (!this.clients[clientId]) return;
     if (this.clients[clientId].listeningTo) {
-      this.clients[clientId].listeningTo.forEach((to) => {
+      this.clients[clientId].listeningTo.forEach((to: string) => {
         if (this.events[to]) {
           this.events[to].listeners.delete(clientId);
         }
@@ -106,6 +75,7 @@ export default class EventEmitter {
     };
     await this.clients[clientId].socket.close(1000);
     delete this.clients[clientId];
+    this.handleReservedEventTypes('disconnect', clientId);
   }
 
   public on(type: string, cb: Function) {
@@ -130,31 +100,28 @@ export default class EventEmitter {
     this.sender.add(msg);
   }
 
-  public async checkEvent(message: MessasgeType, clientId: number) {
+  public async checkEvent(message: MESSAGE_TYPE, clientId: number) {
     let result = new TextDecoder().decode(message);
-    let parseMessage = {};
+    let parseMessaged = <any>{};
     try {
-      parseMessage = JSON.parse(result);
+      parseMessaged = JSON.parse(result);
     } catch(err) {
       throw new Error(err);
     }
 
-    for await (let type of Object.keys(parseMessage)) {
-      if (type === 'eventType') {
-        this.addListener(parseMessage[type], clientId);
+    for await (let type of Object.keys(parseMessaged)) {
+      if (RESERVED_EVENT_TYPES.includes(type)) {
+        this.handleReservedEventTypes(parseMessaged[type], clientId);
       } else if (this.events[type]) {
         await this.sender.invokeCallback({
           ...this.events[type],
           type,
-          message: parseMessage[type],
+          message: parseMessaged[type],
           from: clientId
         });
       }
     }
   }
-
-  // to do
-  // public async broadcast() {}
 
   public send(type: string, message: string) {
     this._addToMessageQueue(type, message);

@@ -1,5 +1,8 @@
 import EventEmitter from "../../../src/server/event_emitter.ts";
-import { test, assertEquals, assert } from "../../test.ts";
+import {
+  assertEquals,
+  assert,
+} from "../../test.ts";
 
 let io = new EventEmitter();
 
@@ -10,12 +13,12 @@ const ClientSocket = () => {
   }
 };
 
-test("should have Events, Clients, and Sender on class init", () => {
+Deno.test("should have Events, Clients, and Sender on class init", () => {
   const expect = ['events', 'clients', 'sender'];
-  assert(expect.every((val) => io[val]));
+  assert(expect.every((val) => io.hasOwnProperty(val)));
 });
 
-test("should connect a client", () => {
+Deno.test("should connect a client", () => {
   const clientId = 1;
   const clientSocket = ClientSocket();
   io.addClient(clientSocket, clientId);
@@ -23,7 +26,7 @@ test("should connect a client", () => {
   assertEquals(connectedClients[clientId].socket, clientSocket);
 });
 
-test("should remove client", async () => {
+Deno.test("should remove client", async () => {
   const clientId = 1;
   const clientSocket = ClientSocket();
   await io.removeClient(clientId);
@@ -35,7 +38,7 @@ test("should remove client", async () => {
   assertEquals(connectedClients[newClientId].socket, clientSocket);
 });
 
-test("should add events for server to listen to", () => {
+Deno.test("should add events for server to listen to", () => {
   const expect = ['chat', 'room'];
   io.on('chat', () => true);
   io.on('room', () => true);
@@ -44,9 +47,9 @@ test("should add events for server to listen to", () => {
   assert(expect.every((val) => events[val]));
 });
 
-test("should detect same event name and push cb into callbacks array of event", () => {
+Deno.test("should detect same event name and push cb into callbacks array of event", () => {
   const expect = ['chat', 'room'];
-  io.on('chat', () => true);
+  io.on("chat", () => true);
 
   const events = io.getEvents();
   assert(expect.every((val) => events[val]));
@@ -54,8 +57,7 @@ test("should detect same event name and push cb into callbacks array of event", 
   assertEquals(events['chat'].callbacks.length, 2);
 });
 
-test("should register which clients are listening to what event", () => {
-  const expect = ['chat', 'room'];
+Deno.test("should register which clients are listening to what event", () => {
   io.addListener('chat', 2);
   const events = io.getEvents();
   assert(events['chat'].listeners.has(2));
@@ -67,7 +69,7 @@ test("should register which clients are listening to what event", () => {
   assertEquals(events['chat'].listeners.size, 2);
 });
 
-test("should remove client from events[type].listeners", async () => {
+Deno.test("should remove client from events[type].listeners", async () => {
   await io.removeClient(2);
   const clientsConnected = io.getClients();
   const events = io.getEvents();
