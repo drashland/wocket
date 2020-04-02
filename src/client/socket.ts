@@ -1,4 +1,4 @@
-import { append } from "../../deps.ts";
+import { concat } from "../../deps.ts";
 import { MESSAGE_TYPE } from "../lib/io_types.ts";
 
 export default class Socket {
@@ -58,7 +58,7 @@ export default class Socket {
       this.ready = false;
       let toSend = new Uint8Array(0);
       while (this.messageQueue.length) {
-        toSend = append(toSend, this.messageQueue.shift());
+        toSend = concat(toSend, this.messageQueue.shift());
       }
       await this.socket.send(toSend);
       this.ready = true;
