@@ -68,9 +68,12 @@ Start sending messages to the server. To connect more clients, open additional s
 ## Features
 
 - Binary-support
-- 
 
 ## Testing
 ```
 $ deno --allow-net --allow-env tests/test.ts
 ```
+
+## What to expect
+
+- Auto-reconnection support
