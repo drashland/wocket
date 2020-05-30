@@ -4,7 +4,7 @@ import {
   isWebSocketCloseEvent,
   WebSocket,
 } from "../../deps.ts";
-import EventEmitter  from "./event_emitter.ts";
+import EventEmitter from "./event_emitter.ts";
 
 export default class SocketServer extends EventEmitter {
   private config: any;
@@ -30,39 +30,36 @@ export default class SocketServer extends EventEmitter {
 
     for await (const req of server) {
       const { headers, conn } = req;
-      acceptWebSocket({
-        conn,
-        headers,
-        bufReader: req.r,
-        bufWriter: req.w
-      })
-      .then(async (socket: WebSocket): Promise<void> => {
+      try {
+        const socket = await acceptWebSocket({
+          conn,
+          headers,
+          bufReader: req.r,
+          bufWriter: req.w,
+        });
         const clientId = conn.rid;
         super.addClient(socket, clientId);
-        const it = socket.receive();
-        while (true) {
-          try {
-            const { done, value } = await it.next();
-            if (done) {
-              await super.removeClient(clientId);
-              break;
-            };
-            const ev = value;
 
+        try {
+          for await (const ev of socket) {
             if (ev instanceof Uint8Array) {
               await super.checkEvent(ev, clientId);
             } else if (isWebSocketCloseEvent(ev)) {
               const { code, reason } = ev;
               console.log("ws:Close", code, reason);
             }
-          } catch (e) {
+          }
+        } catch (err) {
+          console.error(`failed to receive frame: ${err}`);
+
+          if (!socket.isClosed) {
             await super.removeClient(clientId);
           }
         }
-      })
-      .catch((err: Error): void => {
+      } catch (err) {
         console.error(`failed to accept websocket: ${err}`);
-      });
+        await req.respond({ status: 400 });
+      }
     }
   }
 }

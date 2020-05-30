@@ -25,10 +25,6 @@ export class SocketClient {
     })
   }
 
-  checkReadyState() {
-    return this.conn.readyState === 1;
-  }
-
   receiveEncodedMessage(encodedMessage) {
     encodedMessage.arrayBuffer().then(buffer => {
       const decodedMessage = new TextDecoder().decode(buffer);
@@ -41,16 +37,17 @@ export class SocketClient {
   }
 
   on(type, cb) {
-    if (this.checkReadyState()) {
+    if (this.conn.readyState === 1) {
       if (!this.listening[type]) this.listening[type] = null;
       this.listening[type] = cb;
       const toSend = JSON.stringify({ listeningTo: type });
       const encoded = new TextEncoder().encode(toSend);
       this.messageQueue.push(encoded);
       this.emit();
-    } else {
-      setTimeout(() => this.on(type,cb), 5);
+      return;
     }
+
+    setTimeout(() => this.on(type,cb), 5);
   }
 
   send(type, message) {
