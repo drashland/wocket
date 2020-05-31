@@ -7,11 +7,27 @@ export default class Sender {
     this.ready = true;
   }
 
+  /**
+   * @description
+   *     Adds a new message to the message queue to be sent.
+   * 
+   * @param message any
+   * 
+   * @return void
+   */
   public add(message: any) {
     this.messageQueue.push(message);
     this.send();
   }
 
+  /**
+   * @description
+   *     Invokes event callbacks.
+   * 
+   * @param msgObj any
+   * 
+   * @return void
+   */
   public async invokeCallback(msgObj: any): Promise<void> {
     const args = Array.prototype.slice.call(arguments);
     for await (let cb of msgObj.callbacks) {
@@ -19,6 +35,11 @@ export default class Sender {
     }
   }
 
+  /**
+   * @description
+   *     Encodes messages and sends event to all clients listening
+   *     to the event except for the sender.
+   */
   private async send() {
     if (this.ready && this.messageQueue.length) {
       this.ready = false;

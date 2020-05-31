@@ -21,6 +21,12 @@ export default class SocketServer extends EventEmitter {
     return this.config;
   }
 
+  /**
+   * @description
+   *    Handles websocket connection.
+   *    After a successful connection, the client will be added to EventEmitter.clients
+   *    and the server will start listening to events.
+   */
   public async connect() {
     const server = serve(`${this.config.address}:${this.config.port}`);
 

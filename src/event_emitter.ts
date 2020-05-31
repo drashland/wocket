@@ -13,14 +13,31 @@ export default class EventEmitter {
     this.sender = new Sender();
   }
 
+  /**
+   * @return All clients.
+   */
   public getClients() {
     return this.clients;
   }
 
+   /**
+   * @return All events.
+   */
   public getEvents() {
     return this.events;
   }
 
+   /**
+   * @description
+   *     Adds a new event.
+   * 
+   * @param type string
+   *      Event name.
+   * @param cb callback
+   *      Callback to be invoked when event is detected.
+   * 
+   * @return void
+   */
   private addEvent(type: string, cb: any) {
     if (!this.events[type]) {
       this.events[type] = { listeners: new Map(), callbacks: [] };
@@ -29,6 +46,17 @@ export default class EventEmitter {
     this.events[type].callbacks.push(cb);
   }
 
+   /**
+   * @description
+   *     Adds a new listener to an event.
+   * 
+   * @param type string
+   *      Event name.
+   * @param clientId number
+   *      Client's socket connection id.
+   * 
+   * @return void
+   */
   public addListener(type: string, clientId: number) {
     if (!this.events[type]) {
       this.events[type] = { listeners: new Map(), callbacks: [] };
@@ -56,14 +84,34 @@ export default class EventEmitter {
     }
   }
 
-  public addClient(socket: any, clientId: number) {
+  /**
+   * @description
+   *     Adds a new client.
+   * 
+   * @param socket WebSocket
+   * @param clientId int
+   *      Client's socket connection id.
+   * 
+   * @return void
+   */
+  public addClient(socket: WebSocket, clientId: number) {
     this.clients[clientId] = {
       socket,
       listeningTo: [],
     }
     this.handleReservedEventTypes('connection', clientId);
   }
-  
+
+   /**
+   * @description
+   *     Removes an existing client from server and
+   *     any events that the client subscribed to.
+   * 
+   * @param clientId int
+   *      Client's socket connection id.
+   * 
+   * @return void
+   */
   public async removeClient(clientId: number) {
     if (!this.clients[clientId]) return;
     if (this.clients[clientId].listeningTo) {
@@ -78,10 +126,32 @@ export default class EventEmitter {
     this.handleReservedEventTypes('disconnect', clientId);
   }
 
+   /**
+   * @description
+   *     Adds a new event.
+   * 
+   * @param type string
+   *      Event name.
+   * @param cb callback function
+   *     Callback to be invoked when event is detected.
+   * 
+   * @return void
+   */
   public on(type: string, cb: Function) {
     this.addEvent(type, cb);
   }
 
+  /**
+   * @description
+   *     Adds a new event.
+   * 
+   * @param type string
+   *      Event name.
+   * @param message any
+   *     Message to be sent.
+   * 
+   * @return void
+   */
   public async to(type: string, message: any) {
     this.sender.add({
       ...this.events[type],
@@ -100,6 +170,17 @@ export default class EventEmitter {
     this.sender.add(msg);
   }
 
+  /**
+   * @description
+   *    Decodes and validates incoming messages.
+   * 
+   * @param message MESSAGE_TYPE
+   *     Uint8Array
+   * @param clientId int
+   *     Client's socket connection id.
+   * 
+   * @return void
+   */
   public async checkEvent(message: MESSAGE_TYPE, clientId: number) {
     let result = new TextDecoder().decode(message);
     let parseMessaged = <any>{};
@@ -123,6 +204,17 @@ export default class EventEmitter {
     }
   }
 
+   /**
+   * @description
+   *    Pushes a new message to the message queue.
+   * 
+   * @param type string
+   *      Event name.
+   * @param message any
+   *     Message to be sent.
+   * 
+   * @return void
+   */
   public send(type: string, message: string) {
     this._addToMessageQueue(type, message);
   }
