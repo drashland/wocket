@@ -1,6 +1,6 @@
 import Sender from "./sender.ts";
 import { MESSAGE_TYPE } from "./lib/io_types.ts";
-import { RESERVED_EVENT_TYPES } from "./lib/reserved_event_types.ts";
+import { RESERVED_EVENT_NAMES } from "./lib/reserved_event_names.ts";
 
 export default class EventEmitter {
   private events: any;
@@ -31,55 +31,53 @@ export default class EventEmitter {
    * @description
    *     Adds a new event.
    * 
-   * @param type string
-   *      Event name.
+   * @param eventName string
    * @param cb callback
    *      Callback to be invoked when event is detected.
    * 
    * @return void
    */
-  private addEvent(type: string, cb: any) {
-    if (!this.events[type]) {
-      this.events[type] = { listeners: new Map(), callbacks: [] };
+  private addEvent(eventName: string, cb: any) {
+    if (!this.events[eventName]) {
+      this.events[eventName] = { listeners: new Map(), callbacks: [] };
     }
 
-    this.events[type].callbacks.push(cb);
+    this.events[eventName].callbacks.push(cb);
   }
 
    /**
    * @description
    *     Adds a new listener to an event.
    * 
-   * @param type string
-   *      Event name.
+   * @param eventName string
    * @param clientId number
    *      Client's socket connection id.
    * 
    * @return void
    */
-  public addListener(type: string, clientId: number) {
-    if (!this.events[type]) {
-      this.events[type] = { listeners: new Map(), callbacks: [] };
+  public addListener(eventName: string, clientId: number) {
+    if (!this.events[eventName]) {
+      this.events[eventName] = { listeners: new Map(), callbacks: [] };
     }
 
-    if (!this.events[type].listeners.has(clientId)) {
-      this.events[type].listeners.set(clientId, this.clients[clientId].socket);
-      this.clients[clientId].listeningTo.push(type);
+    if (!this.events[eventName].listeners.has(clientId)) {
+      this.events[eventName].listeners.set(clientId, this.clients[clientId].socket);
+      this.clients[clientId].listeningTo.push(eventName);
     }
   }
 
-  private handleReservedEventTypes(type: string, clientId: number) {
-    switch(type) {
+  private handleReservedEventNames(eventName: string, clientId: number) {
+    switch(eventName) {
       case 'connection':
       case 'disconnect':
-        if (this.events[type]) {
-          this.events[type].callbacks.forEach((cb: Function) => {
+        if (this.events[eventName]) {
+          this.events[eventName].callbacks.forEach((cb: Function) => {
             cb();
           });
         }
         break;
         default:
-          this.addListener(type, clientId);
+          this.addListener(eventName, clientId);
         break;
     }
   }
@@ -99,7 +97,7 @@ export default class EventEmitter {
       socket,
       listeningTo: [],
     }
-    this.handleReservedEventTypes('connection', clientId);
+    this.handleReservedEventNames('connection', clientId);
   }
 
    /**
@@ -123,48 +121,46 @@ export default class EventEmitter {
     };
 
     delete this.clients[clientId];
-    this.handleReservedEventTypes('disconnect', clientId);
+    this.handleReservedEventNames('disconnect', clientId);
   }
 
    /**
    * @description
    *     Adds a new event.
    * 
-   * @param type string
-   *      Event name.
+   * @param eventName string
    * @param cb callback function
    *     Callback to be invoked when event is detected.
    * 
    * @return void
    */
-  public on(type: string, cb: Function) {
-    this.addEvent(type, cb);
+  public on(eventName: string, cb: Function) {
+    this.addEvent(eventName, cb);
   }
 
   /**
    * @description
    *     Adds a new event.
    * 
-   * @param type string
-   *      Event name.
+   * @param eventName string
    * @param message any
    *     Message to be sent.
    * 
    * @return void
    */
-  public async to(type: string, message: any) {
+  public async to(eventName: string, message: any) {
     this.sender.add({
-      ...this.events[type],
-      type,
+      ...this.events[eventName],
+      eventName,
       message: typeof message === 'string' ? message : message.message,
       from: typeof message === 'string' ? undefined : message.from,
     });
   }
 
-  private async _addToMessageQueue(type: string, message: string) {
+  private async _addToMessageQueue(eventName: string, message: string) {
     const msg = {
-      ...this.events[type],
-      type,
+      ...this.events[eventName],
+      eventName,
       message,
     };
     this.sender.add(msg);
@@ -183,21 +179,21 @@ export default class EventEmitter {
    */
   public async checkEvent(message: MESSAGE_TYPE, clientId: number) {
     let result = new TextDecoder().decode(message);
-    let parseMessaged = <any>{};
+    let parsedMessage = <any>{};
     try {
-      parseMessaged = JSON.parse(result);
+      parsedMessage = JSON.parse(result);
     } catch(err) {
       throw new Error(err);
     }
 
-    for await (let type of Object.keys(parseMessaged)) {
-      if (RESERVED_EVENT_TYPES.includes(type)) {
-        this.handleReservedEventTypes(parseMessaged[type], clientId);
-      } else if (this.events[type]) {
+    for await (let eventName of Object.keys(parsedMessage)) {
+      if (RESERVED_EVENT_NAMES.includes(eventName)) {
+        this.handleReservedEventNames(parsedMessage[eventName], clientId);
+      } else if (this.events[eventName]) {
         await this.sender.invokeCallback({
-          ...this.events[type],
-          type,
-          message: parseMessaged[type],
+          ...this.events[eventName],
+          eventName,
+          message: parsedMessage[eventName],
           from: clientId
         });
       }
@@ -208,14 +204,13 @@ export default class EventEmitter {
    * @description
    *    Pushes a new message to the message queue.
    * 
-   * @param type string
-   *      Event name.
+   * @param eventName string
    * @param message any
    *     Message to be sent.
    * 
    * @return void
    */
-  public send(type: string, message: string) {
-    this._addToMessageQueue(type, message);
+  public send(eventName: string, message: string) {
+    this._addToMessageQueue(eventName, message);
   }
 }

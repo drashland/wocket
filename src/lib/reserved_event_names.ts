@@ -1,9 +1,9 @@
-const RESERVED_EVENT_TYPES = [
+const RESERVED_EVENT_NAMES = [
   'connection',
   'disconnect',
   'listeningTo'
 ];
 
 export {
-  RESERVED_EVENT_TYPES,
+  RESERVED_EVENT_NAMES,
 }

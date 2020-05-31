@@ -45,13 +45,13 @@ export default class Sender {
       this.ready = false;
       const messageObj = this.messageQueue.shift();
       const {
-        type,
+        eventName,
         message,
         from,
         listeners
       } = messageObj;
 
-      const encodedMessage = new TextEncoder().encode(JSON.stringify({ [type]: message }));
+      const encodedMessage = new TextEncoder().encode(JSON.stringify({ [eventName]: message }));
       for await (let listener of listeners) {
         const [clientId, socketConn] = listener;
         if (clientId !== from) {
