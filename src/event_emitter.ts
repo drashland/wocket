@@ -1,5 +1,4 @@
 import Sender from "./sender.ts";
-import { WebSocket } from "../deps.ts";
 import { MESSAGE_TYPE } from "./lib/io_types.ts";
 import { RESERVED_EVENT_TYPES } from "./lib/reserved_event_types.ts";
 
@@ -95,7 +94,7 @@ export default class EventEmitter {
    * 
    * @return void
    */
-  public addClient(socket: WebSocket, clientId: number) {
+  public addClient(socket: any, clientId: number) {
     this.clients[clientId] = {
       socket,
       listeningTo: [],
