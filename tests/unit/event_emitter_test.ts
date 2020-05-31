@@ -1,8 +1,8 @@
-import EventEmitter from "../../../src/server/event_emitter.ts";
+import EventEmitter from "../../src/event_emitter.ts";
 import {
   assertEquals,
   assert,
-} from "../../test.ts";
+} from "../test.ts";
 
 let io = new EventEmitter();
 

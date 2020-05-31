@@ -1,6 +1,6 @@
 import Sender from "./sender.ts";
-import { MESSAGE_TYPE } from "../lib/io_types.ts";
-import { RESERVED_EVENT_TYPES } from "../lib/reserved_event_types.ts";
+import { MESSAGE_TYPE } from "./lib/io_types.ts";
+import { RESERVED_EVENT_TYPES } from "./lib/reserved_event_types.ts";
 
 export default class EventEmitter {
   private events: any;
@@ -73,7 +73,7 @@ export default class EventEmitter {
         }
       });
     };
-    await this.clients[clientId].socket.close(1000);
+
     delete this.clients[clientId];
     this.handleReservedEventTypes('disconnect', clientId);
   }

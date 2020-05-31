@@ -1,5 +1,5 @@
-import SocketServer from "../../../src/server/server.ts";
-import { assertEquals } from "../../test.ts";
+import SocketServer from "../../src/server.ts";
+import { assertEquals } from "../test.ts";
 
 SocketServer.prototype.connect = (): Promise<void> => { return Promise.resolve(); };
 

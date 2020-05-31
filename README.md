@@ -71,7 +71,7 @@ Start sending messages to the server. To connect more clients, open additional s
 
 ## Testing
 ```
-$ deno --allow-net --allow-env tests/test.ts
+$ deno test tests/test.ts --allow-net --allow-env
 ```
 
 ## What to expect

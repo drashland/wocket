@@ -1,9 +1,5 @@
-import { serve } from "../../deps.ts";
-import {
-  acceptWebSocket,
-  isWebSocketCloseEvent,
-  WebSocket,
-} from "../../deps.ts";
+import { serve } from "../deps.ts";
+import { acceptWebSocket, isWebSocketCloseEvent, WebSocket } from "../deps.ts";
 import EventEmitter  from "./event_emitter.ts";
 
 export default class SocketServer extends EventEmitter {
@@ -29,33 +25,29 @@ export default class SocketServer extends EventEmitter {
     const server = serve(`${this.config.address}:${this.config.port}`);
 
     for await (const req of server) {
-      const { headers, conn } = req;
+      const { conn, r: bufReader, w: bufWriter, headers } = req;
+
       acceptWebSocket({
         conn,
         headers,
-        bufReader: req.r,
-        bufWriter: req.w
+        bufReader,
+        bufWriter,
       })
       .then(async (socket: WebSocket): Promise<void> => {
         const clientId = conn.rid;
         super.addClient(socket, clientId);
-        const it = socket.receive();
-        while (true) {
-          try {
-            const { done, value } = await it.next();
-            if (done) {
-              await super.removeClient(clientId);
-              break;
-            };
-            const ev = value;
 
+        try {
+          for await (const ev of socket) {
             if (ev instanceof Uint8Array) {
               await super.checkEvent(ev, clientId);
             } else if (isWebSocketCloseEvent(ev)) {
-              const { code, reason } = ev;
-              console.log("ws:Close", code, reason);
+              await super.removeClient(clientId);
             }
-          } catch (e) {
+          }
+        } catch (e) {
+          if (!socket.isClosed) {
+            await socket.close(1000).catch(console.error);
             await super.removeClient(clientId);
           }
         }

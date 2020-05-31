@@ -1,7 +1,5 @@
-import SocketServer from "./src/server/server.ts";
-import SocketClient from "./src/server-client/client.ts";
+import SocketServer from "./src/server.ts";
 
 export {
   SocketServer,
-  SocketClient,
 }
