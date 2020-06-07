@@ -6,3 +6,6 @@ tmp/*
 
 # exceptions
 !.gitkeep
+
+# example app
+example_app/config.ts
