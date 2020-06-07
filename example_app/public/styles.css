@@ -1,0 +1,69 @@
+* {
+  font-family: 'Courier';
+}
+
+#banner {
+  text-align: center;
+  background-color: black;
+  color: white;
+}
+
+#container {
+  width: 50vw;
+  height: 60vh;
+  padding: 5px;
+  border: 1px solid black;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+#messages-container {
+  height: 55vh;
+  overflow: hidden;
+  overflow-y: scroll;
+}
+
+li {
+  padding: 5px;
+}
+
+.message {
+  border-bottom: 1px solid black;
+  word-wrap: break-word;
+}
+
+#input-container {
+  height: 10vh;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+}
+
+#messageToSend {
+  width: 100%;
+}
+
+#submitMessage {
+  padding: 5px;
+  cursor: pointer;
+  background-color: #ddd;
+}
+
+#username, #messageToSend {
+  border: 1px solid black;
+  outline: none;
+  padding: 5px;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: black;
+}
+
+::-webkit-scrollbar-track {
+  background: #eee;
+}
