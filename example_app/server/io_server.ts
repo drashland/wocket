@@ -6,6 +6,7 @@ export default class IO {
 
   constructor(SocketServer: any) {
     this.io = this.init(SocketServer)
+    console.log(`Socket server started on ${config.hostname}:${config.socketPort}`);
     this.messages = [];
 
     this.io.on('connection', () => {
@@ -26,7 +27,8 @@ export default class IO {
   
   init(SocketServer: any) {
     return new SocketServer({
-      address: config.hostname
+      address: config.hostname,
+      port: config.socketPort
     });
   }
 }

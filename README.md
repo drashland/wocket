@@ -17,53 +17,16 @@
 ---
 
 ## Getting Started
+ 
+Instructions to start a simple chatroom web application is located in `/example_app`.
 
-### Console Chatroom
-
-```typescript
-// File: server.ts
-
-import { SocketServer } from "../../mod.ts";
-
-const io = new SocketServer();
-
-io.on('connection', () => {
-  console.log('A user connected.');
-});
-
-io.on('chatroom1', function (incomingMessage: any) {
-  io.to('chatroom1', incomingMessage);
-});
-
-io.on('disconnect', () => {
-  console.log('A user disconnected.');
-});
-```
-
-```typescript
-// File: client.ts
-import { SocketClient } from "../../mod.ts";
-import { green } from "../../deps.ts";
-
-const ioClient = new SocketClient({ port: 3000 });
-// inits a chat console
-ioClient.initConsole('chatroom1');
-const io = await ioClient.attach();
-
-io.on('chatroom1', (incomingMessage: any) => {
-  console.log(green(`Incoming message: ${incomingMessage}`));
-});
-```
+<img src="https://raw.githubusercontent.com/drashland/sockets/master/assets/img/screenshot_example_app.png">
 
 ```
-$ deno --allow-net --allow-env server.ts
+A user connected.
+A user connected.
+A user connected.
 ```
-
-```
-$ deno --allow-net --allow-env client.ts
-```
-
-Start sending messages to the server. To connect more clients, open additional sessions to connect to existing server.
 
 ## Features
 

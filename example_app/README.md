@@ -1,13 +1,5 @@
 # Drash Sockets: Mini Chat Web App
 
-<img src="https://raw.githubusercontent.com/drashland/sockets/master/assets/img/screenshot_example_app.png">
-
-```
-A user connected.
-A user connected.
-A user connected.
-```
-
 ## Getting Started
 
 1. [Download deno](https://deno.land/).
@@ -26,7 +18,7 @@ cd example_app
 deno run --allow-net --allow-read server/app.ts
 ```
 
-4. Navigate to localhost:8888 in your browser. Open two clients.
+4. Navigate to localhost:8888 in your browser. Open additoinal browser windows to act as multiple clients.
 
-5. Start sending messages between both.
+5. Start sending messages between clients.
 

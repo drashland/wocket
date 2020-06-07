@@ -14,12 +14,12 @@ let server = new Drash.Http.Server({
   resources: [ChatResource]
 });
 
-
 const io = new ioServer(SocketServer);
-
 export { io };
 
 server.run({
   hostname: config.hostname,
   port: config.port,
 });
+
+console.log(`Drash server started on ${config.hostname}:${config.port}`);
