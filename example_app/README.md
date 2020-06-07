@@ -8,13 +8,12 @@
 
 ```
 git clone https://github.com/drashland/sockets.git
-cd sockets
+cd sockets/example_app/
 ```
 
 3. Start your server.
 
 ```
-cd example_app
 deno run --allow-net --allow-read server/app.ts
 ```
 

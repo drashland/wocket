@@ -1,3 +1,9 @@
+/**
+ * @description
+ *    This SocketClient uses native WebSocket.
+ *    It starts a connection and handles messages with the socket server.
+ */
+
 export class SocketClient {
   constructor(options) {
     this.conn = null;
@@ -33,29 +39,29 @@ export class SocketClient {
       const decodedMessage = new TextDecoder().decode(buffer);
       const parsedMessage = JSON.parse(decodedMessage);
 
-      Object.keys(parsedMessage).forEach((type) => {
-        if (this.listening[type]) this.listening[type](parsedMessage[type]);
+      Object.keys(parsedMessage).forEach((eventName) => {
+        if (this.listening[eventName]) this.listening[eventName](parsedMessage[eventName]);
       })
     });
   }
 
-  on(type, cb) {
+  on(eventName, cb) {
     if (this.checkReadyState()) {
-      if (!this.listening[type]) this.listening[type] = null;
-      this.listening[type] = cb;
-      const toSend = JSON.stringify({ listeningTo: type });
+      if (!this.listening[eventName]) this.listening[eventName] = null;
+      this.listening[eventName] = cb;
+      const toSend = JSON.stringify({ listeningTo: eventName });
       const encoded = new TextEncoder().encode(toSend);
       this.messageQueue.push(encoded);
       this.emit();
     } else {
-      setTimeout(() => this.on(type,cb), 5);
+      setTimeout(() => this.on(eventName,cb), 5);
     }
   }
 
-  send(type, message) {
+  send(eventName, message) {
     let toSend = null;
-    if (type) {
-      const preparedString = JSON.stringify({ [type]: message });
+    if (eventName) {
+      const preparedString = JSON.stringify({ [eventName]: message });
       toSend = new TextEncoder().encode(preparedString);
     } else {
       toSend = message;
