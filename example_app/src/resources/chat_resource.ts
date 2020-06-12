@@ -9,7 +9,6 @@ export default class ChatResource extends Drash.Http.Resource {
 
   public GET() {
     const plugName = decodeURIComponent(this.request.getPathParam("room"));
-    console.log(plugName);
     this.response.body = socketServer.plugs[plugName].messages;
     return this.response;
   }
