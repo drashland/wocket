@@ -1,5 +1,7 @@
 export {
-  serve
+  HTTPOptions,
+  Server as DenoServer,
+  serve,
 } from "https://deno.land/std@v0.54.0/http/server.ts";
 
 export {

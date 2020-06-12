@@ -6,11 +6,13 @@
   text-align: center;
   background-color: black;
   color: white;
+  margin: 5px;
 }
 
 #container {
-  width: 50vw;
-  height: 60vh;
+  margin: 10px auto;
+  width: 75vw;
+  height: 90vh;
   padding: 5px;
   border: 1px solid black;
   display: flex;
@@ -22,6 +24,7 @@
   height: 55vh;
   overflow: hidden;
   overflow-y: scroll;
+  margin: 5px;
 }
 
 li {
@@ -34,26 +37,53 @@ li {
 }
 
 #input-container {
-  height: 10vh;
+  padding: 5px;
   display: flex;
   align-items: center;
   justify-content: space-around;
+}
+
+#input-container-create-room {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  padding: 5px;
+}
+
+#rooms {
+  padding: 5px;
+}
+
+#rooms .header {
+  text-align: center;
+  background-color: black;
+  color: white;
+  margin-bottom: 5px;
+}
+
+#rooms #rooms-dropdown {
+  border: 1px solid #000;
+  padding: 5px;
+  width: 100%;
 }
 
 #messageToSend {
   width: 100%;
 }
 
-#submitMessage {
+#submitMessage,
+#submitMessageCreateRoom {
   padding: 5px;
+  border: 1px solid #000;
   cursor: pointer;
   background-color: #ddd;
 }
 
-#username, #messageToSend {
+#username, #messageToSend, #create-room-name {
   border: 1px solid black;
   outline: none;
   padding: 5px;
+  margin-right: 5px;
 }
 
 ::-webkit-scrollbar {

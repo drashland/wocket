@@ -4,11 +4,11 @@
  *    It starts a connection and handles messages with the socket server.
  */
 
-export class SocketClient {
+class SocketClient {
   constructor(options) {
     this.conn = null;
     this.options = {
-      address: options.address || "localhost",
+      hostname: options.hostname || "localhost",
       port: options.port || "3000",
     };
     this.listening = {};
@@ -23,9 +23,9 @@ export class SocketClient {
   }
 
   init(options) {
-    const { address, port } = options;
-    this.conn = new WebSocket(`ws://${address}:${port}`);
-    this.conn.addEventListener('message', (event) => {
+    const { hostname, port } = options;
+    this.conn = new WebSocket(`ws://${hostname}:${port}`);
+    this.conn.addEventListener("message", (event) => {
       this.receiveEncodedMessage(event.data);
     });
   }
@@ -35,13 +35,15 @@ export class SocketClient {
   }
 
   receiveEncodedMessage(encodedMessage) {
-    encodedMessage.arrayBuffer().then(buffer => {
+    encodedMessage.arrayBuffer().then((buffer) => {
       const decodedMessage = new TextDecoder().decode(buffer);
       const parsedMessage = JSON.parse(decodedMessage);
 
       Object.keys(parsedMessage).forEach((eventName) => {
-        if (this.listening[eventName]) this.listening[eventName](parsedMessage[eventName]);
-      })
+        if (this.listening[eventName]) {
+          this.listening[eventName](parsedMessage[eventName]);
+        }
+      });
     });
   }
 
@@ -54,7 +56,7 @@ export class SocketClient {
       this.messageQueue.push(encoded);
       this.emit();
     } else {
-      setTimeout(() => this.on(eventName,cb), 5);
+      setTimeout(() => this.on(eventName, cb), 5);
     }
   }
 
@@ -75,7 +77,7 @@ export class SocketClient {
       this.ready = false;
       let toSend = null;
       while (this.messageQueue.length) {
-        toSend = new Uint8Array(this.messageQueue[0].length)
+        toSend = new Uint8Array(this.messageQueue[0].length);
         toSend.set(this.messageQueue.pop());
       }
       this.conn.send(toSend);
