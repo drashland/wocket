@@ -4,7 +4,7 @@ import { socketServer } from "../../app.ts";
 export default class ChatResource extends Drash.Http.Resource {
   static paths = [
     "/chat",
-    "/chat/:channel"
+    "/chat/:channel",
   ];
 
   public GET() {
@@ -26,10 +26,12 @@ export default class ChatResource extends Drash.Http.Resource {
             .createChannel(channelName)
             .onMessage((incomingEvent: any) => {
               const { message } = incomingEvent;
-              socketServer.getChannel(channelName).messages.push({ ...message });
+              socketServer.getChannel(channelName).messages.push(
+                { ...message },
+              );
               socketServer.to(channelName, incomingEvent);
             });
-            console.log(socketServer.getChannels());
+          console.log(socketServer.getChannels());
           this.response.body = `Channel "${channelName}" created!`;
         } catch (error) {
           throw new Drash.Exceptions.HttpException(400, error);
@@ -38,8 +40,8 @@ export default class ChatResource extends Drash.Http.Resource {
       default:
         this.response.body = {
           errors: {
-            action: "Field `action` is required."
-          }
+            action: "Field `action` is required.",
+          },
         };
         break;
     }

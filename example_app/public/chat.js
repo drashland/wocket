@@ -41,16 +41,19 @@ const createChannel = async () => {
     alert("Channel name is required!");
   }
   console.log("Creating channel.");
-  const response = await fetch(`http://${WEB_SERVER.hostname}:${WEB_SERVER.port}/chat`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
+  const response = await fetch(
+    `http://${WEB_SERVER.hostname}:${WEB_SERVER.port}/chat`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        action: "create_channel",
+        channel_name: createChannelName.value,
+      }),
     },
-    body: JSON.stringify({
-      action: "create_channel",
-      channel_name: createChannelName.value
-    })
-  });
+  );
   if (response.status === 200) {
     console.log("Channel created.");
     let option = document.createElement("option");
@@ -68,7 +71,10 @@ const sendMessage = () => {
   const message = messageInput.value;
   const messageString = `${username}: ${message}`;
 
-  socket.send(channelsDropdown.value, { channel: channelsDropdown.value, username: username, text: message });
+  socket.send(
+    channelsDropdown.value,
+    { channel: channelsDropdown.value, username: username, text: message },
+  );
   messageInput.value = "";
   addMessageToChat(channelsDropdown.value, messageString);
   scrollToBottom();
@@ -87,8 +93,9 @@ const loadMessages = (messages) => {
 };
 
 const fetchChat = async (channel) => {
-  const url = `http://${WEB_SERVER.hostname}:${WEB_SERVER.port}/chat/${channel}`;
-  const response = await fetch(url)
+  const url =
+    `http://${WEB_SERVER.hostname}:${WEB_SERVER.port}/chat/${channel}`;
+  const response = await fetch(url);
   const messages = await response.json();
   loadMessages(messages.length ? messages : []);
 };
@@ -96,15 +103,18 @@ const fetchChat = async (channel) => {
 const fetchChannels = async () => {
   const url = `http://${WEB_SERVER.hostname}:${WEB_SERVER.port}/chat`;
   console.log("Fetching channels.");
-  const response = await fetch(`http://${WEB_SERVER.hostname}:${WEB_SERVER.port}/chat`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
+  const response = await fetch(
+    `http://${WEB_SERVER.hostname}:${WEB_SERVER.port}/chat`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        action: "get_channels",
+      }),
     },
-    body: JSON.stringify({
-      action: "get_channels",
-    })
-  });
+  );
   if (response.status === 200) {
     const channels = await response.json();
     console.log(`Channels: ${channels.join(", ")}`);
@@ -142,6 +152,5 @@ messageInput.addEventListener("keyup", (event) => {
     sendMessage();
   }
 });
-
 
 init();
