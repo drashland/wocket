@@ -7,7 +7,6 @@ import {
   serve,
 } from "../deps.ts";
 import EventEmitter from "./event_emitter.ts";
-import Plug from "./plug.ts";
 
 export default class SocketServer extends EventEmitter {
   public deno_server: any;
