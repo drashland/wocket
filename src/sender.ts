@@ -1,9 +1,9 @@
 export default class Sender {
-  private messageQueue: any;
+  private packageQueue: any;
   private ready: boolean;
 
   constructor() {
-    this.messageQueue = [];
+    this.packageQueue = [];
     this.ready = true;
   }
 
@@ -15,8 +15,8 @@ export default class Sender {
    * 
    * @return void
    */
-  public add(message: any) {
-    this.messageQueue.push(message);
+  public add(pkg: any) {
+    this.packageQueue.push(pkg);
     this.send();
   }
 
@@ -41,18 +41,18 @@ export default class Sender {
    *     to the event except for the sender.
    */
   private async send() {
-    if (this.ready && this.messageQueue.length) {
+    if (this.ready && this.packageQueue.length) {
       this.ready = false;
-      const messageObj = this.messageQueue.shift();
+      const pkg = this.packageQueue.shift();
       const {
-        eventName,
+        channelName,
         message,
         from,
         listeners,
-      } = messageObj;
+      } = pkg;
 
       const encodedMessage = new TextEncoder().encode(
-        JSON.stringify({ [eventName]: message }),
+        JSON.stringify({ [channelName]: message }),
       );
       for await (let listener of listeners) {
         const [clientId, socketConn] = listener;

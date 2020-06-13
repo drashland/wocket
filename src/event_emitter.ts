@@ -224,37 +224,39 @@ export default class EventEmitter {
 
   /**
    * @description
-   *    Pushes a new message to the message queue.
-   * 
+   *    Broadcasts a message to all receivers of a channel.
+   *    pkgOrMessage does not contain "from" key.
    * @param string channelName
    * @param any message
    *     Message to be sent.
    * 
    * @return void
    */
-  public send(channelName: string, message: string): void {
-    this._addToMessageQueue(channelName, message);
+  public broadcast(channelName: string, pkgOrMessage: any): void {
+    if (pkgOrMessage.from) delete pkgOrMessage.from;
+    this.to(channelName, pkgOrMessage);
   }
 
   /**
    * @description
-   *     Send a message to an event or channel.
+   *     Send a message to a channel, excluding the sender.
    *
-   * @param string eventName
+   * @param string channelName
    *     The channel to send the message to.
    * @param any message
    *     Message to be sent.
    * 
    * @return void
    */
-  public to(eventName: string, message: any): void {
-    console.log(this.channels[eventName]);
-    this.sender.add({
-      ...this.channels[eventName],
-      eventName,
-      message: typeof message === "string" ? message : message.message,
-      from: typeof message === "string" ? undefined : message.from,
-    });
+  public to(channelName: string, pkgOrMessage: any): void {
+    let pkg: any = {}
+    if (typeof pkgOrMessage === 'string') {
+      pkg.message = {};
+      pkg.message = { text: pkgOrMessage };
+    } else {
+      pkg = pkgOrMessage;
+    }
+    this._addToPackageQueue(channelName, pkg);
   }
 
   // FILE MARKER - METHODS - PRIVATE ///////////////////////////////////////////
@@ -265,16 +267,12 @@ export default class EventEmitter {
    *
    * @return void
    */
-  private _addToMessageQueue(
-    channelName: string,
-    message: string,
-  ): void {
-    const msg = {
+  private _addToPackageQueue(channelName: string, pkg: any): void {
+    this.sender.add({
       ...this.channels[channelName],
       channelName,
-      message,
-    };
-    this.sender.add(msg);
+      ...pkg,
+    });
   }
 
   /**
@@ -289,7 +287,7 @@ export default class EventEmitter {
       case "disconnect":
         if (this.channels[eventName]) {
           this.channels[eventName].callbacks.forEach((cb: Function) => {
-            cb();
+            cb(clientId);
           });
         }
         break;
