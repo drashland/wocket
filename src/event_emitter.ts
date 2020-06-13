@@ -230,18 +230,18 @@ export default class EventEmitter {
   // FILE MARKER - METHODS - PRIVATE ///////////////////////////////////////////
 
   /**
-   * @param string eventName
+   * @param string channelName
    * @param string message
    *
    * @return void
    */
   private _addToMessageQueue(
-    eventName: string,
+    channelName: string,
     message: string,
   ): void {
     const msg = {
-      ...this.channels[eventName],
-      eventName,
+      ...this.channels[channelName],
+      channelName,
       message,
     };
     this.sender.add(msg);
