@@ -2,77 +2,82 @@ import EventEmitter from "../../src/event_emitter.ts";
 import {
   assertEquals,
   assert,
-} from "../test.ts";
-
-let io = new EventEmitter();
+} from "../../deps.ts";
 
 const ClientSocket = () => {
   return {
     send: () => true,
     close: () => true,
-  }
+  };
 };
 
-Deno.test("should have Events, Clients, and Sender on class init", () => {
-  const expect = ['events', 'clients', 'sender'];
+Deno.test("should have Channels, Clients, and Sender on class init", () => {
+  const io = new EventEmitter();
+  const expect = ["channels", "clients", "sender"];
   assert(expect.every((val) => io.hasOwnProperty(val)));
 });
 
 Deno.test("should connect a client", () => {
-  const clientId = 1;
+  const io = new EventEmitter();
   const clientSocket = ClientSocket();
-  io.addClient(clientSocket, clientId);
+  const client = io.addClient(1, clientSocket);
   const connectedClients = io.getClients();
-  assertEquals(connectedClients[clientId].socket, clientSocket);
+  assertEquals(connectedClients[client.id].socket, clientSocket);
 });
 
 Deno.test("should remove client", async () => {
+  const io = new EventEmitter();
   const clientId = 1;
   const clientSocket = ClientSocket();
   await io.removeClient(clientId);
   const connectedClients = io.getClients();
   assertEquals(connectedClients, []);
 
-  const newClientId = 2;
-  io.addClient(clientSocket, newClientId);
-  assertEquals(connectedClients[newClientId].socket, clientSocket);
+  const newClient = io.addClient(2, clientSocket);
+  assertEquals(connectedClients[newClient.id].socket, clientSocket);
 });
 
-Deno.test("should add events for server to listen to", () => {
-  const expect = ['chat', 'room'];
-  io.on('chat', () => true);
-  io.on('room', () => true);
+Deno.test("should add channels for server to listen to", () => {
+  const io = new EventEmitter();
+  const expect = ["chat", "room"];
+  io.on("chat", () => true);
+  io.on("room", () => true);
 
-  const events = io.getEvents();
-  assert(expect.every((val) => events[val]));
+  const channels = io.getChannels();
+  assertEquals(expect, channels);
 });
 
-Deno.test("should detect same event name and push cb into callbacks array of event", () => {
-  const expect = ['chat', 'room'];
+Deno.test("should detect same channel name and push cb into callbacks array of channel", () => {
+  const io = new EventEmitter();
+  const expect = ["chat"];
   io.on("chat", () => true);
 
-  const events = io.getEvents();
-  assert(expect.every((val) => events[val]));
-  assertEquals(Object.keys(events).length, expect.length);
-  assertEquals(events['chat'].callbacks.length, 2);
+  const channels = io.getChannels();
+  assertEquals(expect, channels);
+  assertEquals(Object.keys(channels).length, expect.length);
+  assertEquals(io.getChannel("chat").callbacks.length, 1);
 });
 
-Deno.test("should register which clients are listening to what event", () => {
-  io.addListener('chat', 2);
-  const events = io.getEvents();
-  assert(events['chat'].listeners.has(2));
-  
-  const newClientId = 3;
-  const clientSocket = ClientSocket();
-  io.addClient(clientSocket, newClientId);
-  io.addListener('chat', newClientId);
-  assertEquals(events['chat'].listeners.size, 2);
+Deno.test("should register which clients are listening to what channel", () => {
+  const io = new EventEmitter();
+  const client1 = io.addClient(1337, ClientSocket());
+  io.addListener("chat", client1.id);
+  assert(io.getChannel("chat").listeners.has(1337));
+  assertEquals(io.getChannel("chat").listeners.size, 1);
+
+  const client2 = io.addClient(1447, ClientSocket());
+  io.addListener("chat", client2.id);
+  assertEquals(io.getChannel("chat").listeners.size, 2);
 });
 
-Deno.test("should remove client from events[type].listeners", async () => {
+Deno.test("should remove client from channels[channelName].listeners", async () => {
+  const io = new EventEmitter();
+  const client1 = io.addClient(1, ClientSocket());
+  io.addListener("chat", client1.id);
+  const client2 = io.addClient(2, ClientSocket());
+  io.addListener("chat", client2.id);
   await io.removeClient(2);
   const clientsConnected = io.getClients();
-  const events = io.getEvents();
-  assert(!clientsConnected[2])
-  assertEquals(events['chat'].listeners.size, 1);
+  assert(!clientsConnected[2]);
+  assertEquals(io.getChannel("chat").listeners.size, 1);
 });

@@ -1,216 +1,301 @@
 import Sender from "./sender.ts";
-import { MESSAGE_TYPE } from "./lib/io_types.ts";
-import { RESERVED_EVENT_NAMES } from "./lib/reserved_event_names.ts";
+import Channel from "./channel.ts";
+import Client from "./client.ts";
+import { MESSAGE_TYPE } from "./io_types.ts";
+import { RESERVED_EVENT_NAMES } from "./reserved_event_names.ts";
 
 export default class EventEmitter {
-  private events: any;
-  private clients: any;
+  public clients: any = {};
+  private channels: any = {};
   private sender: Sender;
+  private channel_being_created: string = "";
+
+  // FILE MARKER - CONSTRUCTOR /////////////////////////////////////////////////
 
   constructor() {
-    this.events = {};
-    this.clients = {};
     this.sender = new Sender();
   }
 
-  /**
-   * @return All clients.
-   */
-  public getClients() {
-    return this.clients;
-  }
-
-   /**
-   * @return All events.
-   */
-  public getEvents() {
-    return this.events;
-  }
-
-   /**
-   * @description
-   *     Adds a new event.
-   * 
-   * @param eventName string
-   * @param cb callback
-   *      Callback to be invoked when event is detected.
-   * 
-   * @return void
-   */
-  private addEvent(eventName: string, cb: any) {
-    if (!this.events[eventName]) {
-      this.events[eventName] = { listeners: new Map(), callbacks: [] };
-    }
-
-    this.events[eventName].callbacks.push(cb);
-  }
-
-   /**
-   * @description
-   *     Adds a new listener to an event.
-   * 
-   * @param eventName string
-   * @param clientId number
-   *      Client's socket connection id.
-   * 
-   * @return void
-   */
-  public addListener(eventName: string, clientId: number) {
-    if (!this.events[eventName]) {
-      this.events[eventName] = { listeners: new Map(), callbacks: [] };
-    }
-
-    if (!this.events[eventName].listeners.has(clientId)) {
-      this.events[eventName].listeners.set(clientId, this.clients[clientId].socket);
-      this.clients[clientId].listeningTo.push(eventName);
-    }
-  }
-
-  private handleReservedEventNames(eventName: string, clientId: number) {
-    switch(eventName) {
-      case 'connection':
-      case 'disconnect':
-        if (this.events[eventName]) {
-          this.events[eventName].callbacks.forEach((cb: Function) => {
-            cb();
-          });
-        }
-        break;
-        default:
-          this.addListener(eventName, clientId);
-        break;
-    }
-  }
+  // FILE MARKER - METHODS - PUBLIC ////////////////////////////////////////////
 
   /**
    * @description
    *     Adds a new client.
    * 
-   * @param socket WebSocket
    * @param clientId int
    *      Client's socket connection id.
+   * @param WebSocket socket
    * 
    * @return void
    */
-  public addClient(socket: any, clientId: number) {
-    this.clients[clientId] = {
-      socket,
-      listeningTo: [],
-    }
-    this.handleReservedEventNames('connection', clientId);
-  }
-
-   /**
-   * @description
-   *     Removes an existing client from server and
-   *     any events that the client subscribed to.
-   * 
-   * @param clientId int
-   *      Client's socket connection id.
-   * 
-   * @return void
-   */
-  public async removeClient(clientId: number) {
-    if (!this.clients[clientId]) return;
-    if (this.clients[clientId].listeningTo) {
-      this.clients[clientId].listeningTo.forEach((to: string) => {
-        if (this.events[to]) {
-          this.events[to].listeners.delete(clientId);
-        }
-      });
-    };
-
-    delete this.clients[clientId];
-    this.handleReservedEventNames('disconnect', clientId);
-  }
-
-   /**
-   * @description
-   *     Adds a new event.
-   * 
-   * @param eventName string
-   * @param cb callback function
-   *     Callback to be invoked when event is detected.
-   * 
-   * @return void
-   */
-  public on(eventName: string, cb: Function) {
-    this.addEvent(eventName, cb);
+  public addClient(clientId: number, clientSocket: any) {
+    const client = new Client(clientId, clientSocket);
+    this.clients[clientId] = client;
+    this._handleReservedEventNames("connection", clientId);
+    return client;
   }
 
   /**
    * @description
-   *     Adds a new event.
-   * 
-   * @param eventName string
-   * @param message any
-   *     Message to be sent.
-   * 
+   *     Adds a new listener to an event.
+   *
+   * @param string channelName
+   * @param number clientId
+   *      Client's socket connection id.
+   *
    * @return void
    */
-  public async to(eventName: string, message: any) {
-    this.sender.add({
-      ...this.events[eventName],
-      eventName,
-      message: typeof message === 'string' ? message : message.message,
-      from: typeof message === 'string' ? undefined : message.from,
-    });
-  }
+  public addListener(channelName: string, clientId: number): void {
+    if (!this.channels[channelName]) {
+      this.channels[channelName] = new Channel(channelName);
+    }
 
-  private async _addToMessageQueue(eventName: string, message: string) {
-    const msg = {
-      ...this.events[eventName],
-      eventName,
-      message,
-    };
-    this.sender.add(msg);
+    if (!this.channels[channelName].listeners.has(clientId)) {
+      this.channels[channelName].listeners.set(
+        clientId,
+        this.clients[clientId].socket,
+      );
+      this.clients[clientId].listening_to.push(channelName);
+    }
   }
 
   /**
    * @description
    *    Decodes and validates incoming messages.
    * 
-   * @param message MESSAGE_TYPE
+   * @param MESSAGE_TYPE message
    *     Uint8Array
-   * @param clientId int
+   * @param number clientId
    *     Client's socket connection id.
    * 
-   * @return void
+   * @return Promise<void>
    */
-  public async checkEvent(message: MESSAGE_TYPE, clientId: number) {
+  public async checkEvent(
+    message: MESSAGE_TYPE,
+    clientId: number,
+  ): Promise<void> {
     let result = new TextDecoder().decode(message);
-    let parsedMessage = <any>{};
+    let parsedMessage = <any> {};
     try {
       parsedMessage = JSON.parse(result);
-    } catch(err) {
+    } catch (err) {
       throw new Error(err);
     }
 
-    for await (let eventName of Object.keys(parsedMessage)) {
-      if (RESERVED_EVENT_NAMES.includes(eventName)) {
-        this.handleReservedEventNames(parsedMessage[eventName], clientId);
-      } else if (this.events[eventName]) {
+    for await (let channelName of Object.keys(parsedMessage)) {
+      if (RESERVED_EVENT_NAMES.includes(channelName)) {
+        this._handleReservedEventNames(parsedMessage[channelName], clientId);
+      } else if (this.channels[channelName]) {
         await this.sender.invokeCallback({
-          ...this.events[eventName],
-          eventName,
-          message: parsedMessage[eventName],
-          from: clientId
+          ...this.channels[channelName],
+          channelName,
+          message: parsedMessage[channelName],
+          from: clientId,
         });
       }
     }
   }
 
-   /**
+  /**
+   * @description
+   *     Close a channel.
+   *
+   * @param string channelName
+   */
+  public closeChannel(channelName: string): void {
+    delete this.channels[channelName];
+  }
+
+  /**
+   * @return any
+   *     Return all clients.
+   */
+  public getClients(): any {
+    return this.clients;
+  }
+
+  /**
+   * @return Channel
+   *     Return the specified channel.
+   */
+  public getChannel(name: string): Channel {
+    return this.channels[name];
+  }
+
+  /**
+   * @return any
+   *     Return all channels.
+   */
+  public getChannels(): any {
+    let channels = [];
+    for (let name in this.channels) {
+      // Ignore the following channels
+      if (
+        name === "connection" ||
+        name === "disconnect"
+      ) {
+        continue;
+      }
+      channels.push(name);
+    }
+    return channels;
+  }
+
+  /**
+   * @description
+   *     Create a new channel. Basically, this creates a new event that clients
+   *     can listen to. Ther server can also send messages to this new
+   *     event/channel.
+   *
+   * @param string name
+   *
+   * @return this
+   */
+  public createChannel(name: string): this {
+    this.channel_being_created = name;
+    if (!this.channels[name]) {
+      this.channels[name] = new Channel(name);
+      return this;
+    }
+
+    throw new Error(`Channel "${name}" already exists!`);
+  }
+
+  /**
+   * @description
+   *     This method should only be chained after createChannel(). This allows
+   *     for better semantics when creating channels. For example:
+   *
+   *         socketServer.createChannel("channel").onMessage(() => { ... });
+   *
+   * @param Function cb
+   *     The callback to invoke when the channel this method is chained to
+   *     receives a message.
+   *
+   * @return this
+   */
+  public onMessage(cb: Function): this {
+    this.channels[this.channel_being_created].callbacks.push(cb);
+    return this;
+  }
+
+  /**
+   * @description
+   *     This is the same as creating a new channel (createChannel()), but for
+   *     internal use.
+   * 
+   * @param string channelName
+   *     The name of the channel.
+   * @param Function cb
+   *     Callback to be invoked when a message is sent to the channel.
+   * 
+   * @return void
+   */
+  public on(name: string, cb: Function): void {
+    if (!this.channels[name]) {
+      this.channels[name] = new Channel(name);
+    }
+    this.channels[name].callbacks.push(cb);
+  }
+
+  /**
+   * @description
+   *     Removes an existing client from server and any channels that the client
+   *     subscribed to.
+   * 
+   * @param number clientId
+   *      Client's socket connection id.
+   * 
+   * @return void
+   */
+  public removeClient(clientId: number): void {
+    if (!this.clients[clientId]) return;
+    if (this.clients[clientId].listening_to) {
+      this.clients[clientId].listening_to.forEach((to: string) => {
+        if (this.channels[to]) {
+          this.channels[to].listeners.delete(clientId);
+        }
+      });
+    }
+
+    delete this.clients[clientId];
+    this._handleReservedEventNames("disconnect", clientId);
+  }
+
+  /**
    * @description
    *    Pushes a new message to the message queue.
    * 
-   * @param eventName string
-   * @param message any
+   * @param string channelName
+   * @param any message
    *     Message to be sent.
    * 
    * @return void
    */
-  public send(eventName: string, message: string) {
-    this._addToMessageQueue(eventName, message);
+  public send(channelName: string, message: string): void {
+    this._addToMessageQueue(channelName, message);
+  }
+
+  /**
+   * @description
+   *     Send a message to an event or channel.
+   *
+   * @param string eventName
+   *     The channel to send the message to.
+   * @param any message
+   *     Message to be sent.
+   * 
+   * @return void
+   */
+  public to(eventName: string, message: any): void {
+    console.log(this.channels[eventName]);
+    this.sender.add({
+      ...this.channels[eventName],
+      eventName,
+      message: typeof message === "string" ? message : message.message,
+      from: typeof message === "string" ? undefined : message.from,
+    });
+  }
+
+  // FILE MARKER - METHODS - PRIVATE ///////////////////////////////////////////
+
+  /**
+   * @param string channelName
+   * @param string message
+   *
+   * @return void
+   */
+  private _addToMessageQueue(
+    channelName: string,
+    message: string,
+  ): void {
+    const msg = {
+      ...this.channels[channelName],
+      channelName,
+      message,
+    };
+    this.sender.add(msg);
+  }
+
+  /**
+   * @param string eventName
+   * @param number clientId
+   *
+   * @return void
+   */
+  private _handleReservedEventNames(eventName: string, clientId: number): void {
+    switch (eventName) {
+      case "connection":
+      case "disconnect":
+        if (this.channels[eventName]) {
+          this.channels[eventName].callbacks.forEach((cb: Function) => {
+            cb();
+          });
+        }
+        break;
+      default:
+        this.addListener(eventName, clientId);
+        break;
+    }
   }
 }
