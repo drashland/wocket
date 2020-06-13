@@ -12,12 +12,13 @@ const userInput = document.getElementById("username");
 const channelsDropdown = document.getElementById("channelsDropdown");
 const createChannelName = document.getElementById("createChannelName");
 
-/**
- * Scroll the messages container to its last message.
- */
-const scrollToLastMessage = () => {
-  messagesContainer.scrollTop = messagesContainer.scrollHeight;
-};
+submitMessageButton.addEventListener("click", sendMessage);
+messageInput.addEventListener("keyup", (event) => {
+  if (event.keyCode === 13) {
+    event.preventDefault();
+    sendMessage();
+  }
+});
 
 /**
  * Append a message to the specified channel's message container.
@@ -80,43 +81,8 @@ const createChannel = async () => {
 };
 
 /**
- * Send a message to the socket server.
+ * Fetch all channels from the server.
  */
-const sendMessage = () => {
-  const username = userInput.value;
-  if (!username) return alert("Enter username!");
-  const message = messageInput.value;
-  const messageString = `${username}: ${message}`;
-
-  socket.send(
-    channelsDropdown.value,
-    { channel: channelsDropdown.value, username: username, text: message },
-  );
-  messageInput.value = "";
-  addMessageToChat(channelsDropdown.value, messageString);
-  scrollToLastMessage();
-};
-
-// loads messages that are sent by server
-const loadMessages = (messages) => {
-  messagesInChannel.innerHTML = "";
-  if (Array.isArray(messages)) {
-    messages.forEach((message) => {
-      const messageString = `${message.username}: ${message.text}`;
-      addMessageToChat(channelsDropdown.value, messageString);
-    });
-    scrollToLastMessage();
-  }
-};
-
-const fetchMessages = async (channel) => {
-  const url =
-    `http://${WEB_SERVER.hostname}:${WEB_SERVER.port}/chat/${channel}`;
-  const response = await fetch(url);
-  const messages = await response.json();
-  loadMessages(messages.length ? messages : []);
-};
-
 const fetchChannels = async () => {
   const url = `http://${WEB_SERVER.hostname}:${WEB_SERVER.port}/chat`;
   console.log("Fetching channels.");
@@ -158,6 +124,19 @@ const fetchChannels = async () => {
 };
 
 /**
+ * Fetch the specified channel's messages from the server.
+ *
+ * @param {String} channelName
+ */
+const fetchMessages = async (channelName) => {
+  const url =
+    `http://${WEB_SERVER.hostname}:${WEB_SERVER.port}/chat/${channelName}`;
+  const response = await fetch(url);
+  const messages = await response.json();
+  loadMessages(messages.length ? messages : []);
+};
+
+/**
  * Listen to the specified channel for any incoming messages.
  *
  * @param {String} channelName
@@ -170,23 +149,55 @@ const listenToChannel = (channelName) => {
 };
 
 /**
+ * Load messages that are sent by the server.
+ *
+ * @param {Array} messages
+ */
+const loadMessages = (messages) => {
+  messagesInChannel.innerHTML = "";
+  if (Array.isArray(messages)) {
+    messages.forEach((message) => {
+      const messageString = `${message.username}: ${message.text}`;
+      addMessageToChat(channelsDropdown.value, messageString);
+    });
+    scrollToLastMessage();
+  }
+};
+
+/**
+ * Scroll the messages container to its last message.
+ */
+const scrollToLastMessage = () => {
+  messagesContainer.scrollTop = messagesContainer.scrollHeight;
+};
+
+/**
+ * Send a message to the socket server.
+ */
+const sendMessage = () => {
+  const username = userInput.value;
+  if (!username) return alert("Enter username!");
+  const message = messageInput.value;
+  const messageString = `${username}: ${message}`;
+
+  socket.send(
+    channelsDropdown.value,
+    { channel: channelsDropdown.value, username: username, text: message },
+  );
+  messageInput.value = "";
+  addMessageToChat(channelsDropdown.value, messageString);
+  scrollToLastMessage();
+};
+
+/**
  * Initialize this file.
  */
-const init = async () => {
+(async () => {
   await fetchMessages("Channel 1");
   await fetchChannels();
+  // Listen for when channels are created
   socket.on("create_channel", async (message) => {
     alert(message);
     await fetchChannels();
   });
-};
-
-submitMessageButton.addEventListener("click", sendMessage);
-messageInput.addEventListener("keyup", (event) => {
-  if (event.keyCode === 13) {
-    event.preventDefault();
-    sendMessage();
-  }
-});
-
-init();
+})();
