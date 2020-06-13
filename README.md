@@ -1,6 +1,6 @@
 <p align="center">
   <a href="https://drash.io">
-    <img height="200" src="https://raw.githubusercontent.com/drashland/sockets-website/master/public/img/sockets.png" alt="Sockets">
+    <img height="200" src="logo.svg" alt="Sockets">
   </a>
   <h1 align="center">Sockets</h1>
 </p>
