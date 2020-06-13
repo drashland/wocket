@@ -143,11 +143,13 @@ export default class EventEmitter {
 
   /**
    * @description
-   *     Adds a new event.
+   *     Create a new channel. Basically, this creates a new event that clients
+   *     can listen to. Ther server can also send messages to this new
+   *     event/channel.
    *
    * @param string name
    *
-   * @return void
+   * @return this
    */
   public createChannel(name: string): this {
     this.channel_being_created = name;
@@ -159,6 +161,19 @@ export default class EventEmitter {
     throw new Error(`Channel "${name}" already exists!`);
   }
 
+  /**
+   * @description
+   *     This method should only be chained after createChannel(). This allows
+   *     for better semantics when creating channels. For example:
+   *
+   *         socketServer.createChannel("channel").onMessage(() => { ... });
+   *
+   * @param Function cb
+   *     The callback to invoke when the channel this method is chained to
+   *     receives a message.
+   *
+   * @return this
+   */
   public onMessage(cb: Function): this {
     this.channels[this.channel_being_created].callbacks.push(cb);
     return this;
@@ -166,11 +181,13 @@ export default class EventEmitter {
 
   /**
    * @description
-   *     Adds a new event.
+   *     This is the same as creating a new channel (createChannel()), but for
+   *     internal use.
    * 
    * @param string channelName
+   *     The name of the channel.
    * @param Function cb
-   *     Callback to be invoked when event is detected.
+   *     Callback to be invoked when a message is sent to the channel.
    * 
    * @return void
    */
@@ -221,15 +238,17 @@ export default class EventEmitter {
 
   /**
    * @description
-   *     Adds a new event.
-   * 
-   * @param string channelName
+   *     Send a message to an event or channel.
+   *
+   * @param string eventName
+   *     The channel to send the message to.
    * @param any message
    *     Message to be sent.
    * 
    * @return void
    */
   public to(eventName: string, message: any): void {
+    console.log(this.channels[eventName]);
     this.sender.add({
       ...this.channels[eventName],
       eventName,
