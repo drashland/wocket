@@ -11,6 +11,7 @@ const messageInput = document.getElementById("messageToSend");
 const userInput = document.getElementById("username");
 const channelsDropdown = document.getElementById("channelsDropdown");
 const createChannelName = document.getElementById("createChannelName");
+const notificationBanner = document.getElementById("notification");
 
 /**
  * Append a message to the specified channel's message container.
@@ -190,7 +191,10 @@ const sendMessage = () => {
   // Listen for when channels are created
   socket.on("create_channel", async (message) => {
     createChannelName.value = "";
-    alert(message);
+    notificationBanner.style.visibility = "visible";
+    notificationBanner.innerHTML =  message.text;
+    setTimeout(() => notificationBanner.style.visibility = "hidden", 1000);
+
     await fetchChannels();
   });
 })();
