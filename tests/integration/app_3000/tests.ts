@@ -40,7 +40,6 @@ Deno.test("Channel 2 should be closed", () => {
   assertEquals(undefined, server.getChannel("Channel 2"));
 });
 
-
 Deno.test({
   name: "Stop the server",
   async fn() {
@@ -49,4 +48,3 @@ Deno.test({
   sanitizeResources: false,
   sanitizeOps: false,
 });
-

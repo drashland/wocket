@@ -30,7 +30,10 @@ export default class ChatResource extends Drash.Http.Resource {
               );
               socketServer.to(channelName, incomingMessage);
             });
-            socketServer.to("create_channel", `Channel "${channelName}" created!`);
+          socketServer.to(
+            "create_channel",
+            `Channel "${channelName}" created!`,
+          );
           this.response.body = `Channel "${channelName}" created!`;
         } catch (error) {
           throw new Drash.Exceptions.HttpException(400, error);
