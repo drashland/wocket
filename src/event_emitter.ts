@@ -5,7 +5,7 @@ import { RESERVED_EVENT_NAMES } from "./reserved_event_names.ts";
 
 export default class EventEmitter {
   private clients: any = {};
-  private events: any = {};
+  private channels: any = {};
   private sender: Sender;
   private channel_being_created: string = "";
 
@@ -46,12 +46,12 @@ export default class EventEmitter {
    * @return void
    */
   public addListener(eventName: string, clientId: number): void {
-    if (!this.events[eventName]) {
-      this.events[eventName] = { listeners: new Map(), callbacks: [] };
+    if (!this.channels[eventName]) {
+      this.channels[eventName] = { listeners: new Map(), callbacks: [] };
     }
 
-    if (!this.events[eventName].listeners.has(clientId)) {
-      this.events[eventName].listeners.set(
+    if (!this.channels[eventName].listeners.has(clientId)) {
+      this.channels[eventName].listeners.set(
         clientId,
         this.clients[clientId].socket,
       );
@@ -85,9 +85,9 @@ export default class EventEmitter {
     for await (let eventName of Object.keys(parsedMessage)) {
       if (RESERVED_EVENT_NAMES.includes(eventName)) {
         this._handleReservedEventNames(parsedMessage[eventName], clientId);
-      } else if (this.events[eventName]) {
+      } else if (this.channels[eventName]) {
         await this.sender.invokeCallback({
-          ...this.events[eventName],
+          ...this.channels[eventName],
           eventName,
           message: parsedMessage[eventName],
           from: clientId,
@@ -109,16 +109,16 @@ export default class EventEmitter {
    *     Return the specified channel.
    */
   public getChannel(name: string): Channel {
-    return this.events[name];
+    return this.channels[name];
   }
 
   /**
    * @return any
-   *     Return all events.
+   *     Return all channels.
    */
   public getChannels(): any {
     let channels = [];
-    for (let name in this.events) {
+    for (let name in this.channels) {
       if (
         name === "connection"
         || name === "disconnect"
@@ -140,8 +140,8 @@ export default class EventEmitter {
    */
   public createChannel(name: string): this {
     this.channel_being_created = name;
-    if (!this.events[name]) {
-      this.events[name] = new Channel(name);
+    if (!this.channels[name]) {
+      this.channels[name] = new Channel(name);
       return this;
     }
 
@@ -149,7 +149,7 @@ export default class EventEmitter {
   }
 
   public onMessage(cb: Function): this {
-    this.events[this.channel_being_created].callbacks.push(cb);
+    this.channels[this.channel_being_created].callbacks.push(cb);
     return this;
   }
 
@@ -164,15 +164,15 @@ export default class EventEmitter {
    * @return void
    */
   public on(name: string, cb: Function): void {
-    if (!this.events[name]) {
-      this.events[name] = new Channel(name);
+    if (!this.channels[name]) {
+      this.channels[name] = new Channel(name);
     }
-    this.events[name].callbacks.push(cb);
+    this.channels[name].callbacks.push(cb);
   }
 
   /**
    * @description
-   *     Removes an existing client from server and any events that the client
+   *     Removes an existing client from server and any channels that the client
    *     subscribed to.
    * 
    * @param number clientId
@@ -184,8 +184,8 @@ export default class EventEmitter {
     if (!this.clients[clientId]) return;
     if (this.clients[clientId].listeningTo) {
       this.clients[clientId].listeningTo.forEach((to: string) => {
-        if (this.events[to]) {
-          this.events[to].listeners.delete(clientId);
+        if (this.channels[to]) {
+          this.channels[to].listeners.delete(clientId);
         }
       });
     }
@@ -220,7 +220,7 @@ export default class EventEmitter {
    */
   public async to(eventName: string, message: any): Promise<void> {
     this.sender.add({
-      ...this.events[eventName],
+      ...this.channels[eventName],
       eventName,
       message: typeof message === "string" ? message : message.message,
       from: typeof message === "string" ? undefined : message.from,
@@ -240,7 +240,7 @@ export default class EventEmitter {
     message: string,
   ): Promise<void> {
     const msg = {
-      ...this.events[eventName],
+      ...this.channels[eventName],
       eventName,
       message,
     };
@@ -257,8 +257,8 @@ export default class EventEmitter {
     switch (eventName) {
       case "connection":
       case "disconnect":
-        if (this.events[eventName]) {
-          this.events[eventName].callbacks.forEach((cb: Function) => {
+        if (this.channels[eventName]) {
+          this.channels[eventName].callbacks.forEach((cb: Function) => {
             cb();
           });
         }
