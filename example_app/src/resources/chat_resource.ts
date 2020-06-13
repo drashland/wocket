@@ -24,7 +24,7 @@ export default class ChatResource extends Drash.Http.Resource {
         try {
           socketServer
             .createChannel(channelName)
-            .on(channelName, (incomingEvent: any) => {
+            .onMessage((incomingEvent: any) => {
               const { message } = incomingEvent;
               socketServer.getChannel(channelName).messages.push({ ...message });
               socketServer.to(channelName, incomingEvent);

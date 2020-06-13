@@ -127,8 +127,6 @@ export default class EventEmitter {
       }
       channels.push(name);
     }
-    console.log(channels);
-    console.log(this.events);
     return channels;
   }
 
@@ -141,12 +139,18 @@ export default class EventEmitter {
    * @return void
    */
   public createChannel(name: string): this {
+    this.channel_being_created = name;
     if (!this.events[name]) {
       this.events[name] = new Channel(name);
       return this;
     }
 
     throw new Error(`Channel "${name}" already exists!`);
+  }
+
+  public onMessage(cb: Function): this {
+    this.events[this.channel_being_created].callbacks.push(cb);
+    return this;
   }
 
   /**
