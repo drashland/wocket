@@ -30,6 +30,14 @@ console.log(
   `Socket server started on ${socketServer.hostname}:${socketServer.port}`,
 );
 
+socketServer.on("connection", () => {
+  console.log("A user connected.");
+});
+
+socketServer.on("disconnect", () => {
+  console.log("A user disconnected.");
+});
+
 export {
   socketServer,
 };

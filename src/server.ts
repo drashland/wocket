@@ -52,14 +52,6 @@ export default class SocketServer extends EventEmitter {
 
     this.deno_server = serve(`${this.hostname}:${this.port}`);
 
-    this.on("connection", () => {
-      console.log("A user connected.");
-    });
-
-    this.on("disconnect", () => {
-      console.log("A user disconnected.");
-    });
-
     (async () => {
       for await (const req of this.deno_server) {
         const { conn, r: bufReader, w: bufWriter, headers } = req;
