@@ -69,6 +69,8 @@ const createChannel = async () => {
     option.value = createChannelName.value;
     channelsDropdown.add(option);
     listenToChannel(createChannelName.value);
+  } else {
+    alert(await response.json());
   }
 };
 
@@ -110,8 +112,6 @@ const fetchChannels = async () => {
       channelsDropdown.add(option);
       listenToChannel(channel);
     });
-  } else {
-    alert("There was an error creating the channel!");
   }
 };
 
@@ -189,6 +189,7 @@ const sendMessage = () => {
   await fetchChannels();
   // Listen for when channels are created
   socket.on("create_channel", async (message) => {
+    createChannelName.value = "";
     alert(message);
     await fetchChannels();
   });
