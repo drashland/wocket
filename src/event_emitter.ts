@@ -1,4 +1,5 @@
 import Sender from "./sender.ts";
+import Channel from "./channel.ts";
 import { MESSAGE_TYPE } from "./io_types.ts";
 import { RESERVED_EVENT_NAMES } from "./reserved_event_names.ts";
 
@@ -6,6 +7,7 @@ export default class EventEmitter {
   private clients: any = {};
   private events: any = {};
   private sender: Sender;
+  private channel_being_created: string = "";
 
   // FILE MARKER - CONSTRUCTOR /////////////////////////////////////////////////
 
@@ -103,11 +105,48 @@ export default class EventEmitter {
   }
 
   /**
+   * @return Channel
+   *     Return the specified channel.
+   */
+  public getChannel(name: string): Channel {
+    return this.events[name];
+  }
+
+  /**
    * @return any
    *     Return all events.
    */
-  public getEvents(): any {
-    return this.events;
+  public getChannels(): any {
+    let channels = [];
+    for (let name in this.events) {
+      if (
+        name === "connection"
+        || name === "disconnect"
+      ) {
+        continue;
+      }
+      channels.push(name);
+    }
+    console.log(channels);
+    console.log(this.events);
+    return channels;
+  }
+
+  /**
+   * @description
+   *     Adds a new event.
+   *
+   * @param string name
+   *
+   * @return void
+   */
+  public createChannel(name: string): this {
+    if (!this.events[name]) {
+      this.events[name] = new Channel(name);
+      return this;
+    }
+
+    throw new Error(`Channel "${name}" already exists!`);
   }
 
   /**
@@ -120,8 +159,11 @@ export default class EventEmitter {
    * 
    * @return void
    */
-  public on(eventName: string, cb: Function): void {
-    this._addEvent(eventName, cb);
+  public on(name: string, cb: Function): void {
+    if (!this.events[name]) {
+      this.events[name] = new Channel(name);
+    }
+    this.events[name].callbacks.push(cb);
   }
 
   /**
@@ -182,24 +224,6 @@ export default class EventEmitter {
   }
 
   // FILE MARKER - METHODS - PRIVATE ///////////////////////////////////////////
-
-  /**
-   * @description
-   *     Adds a new event.
-   *
-   * @param string eventName
-   * @param Function callback
-   *      Callback to be invoked when event is detected.
-   *
-   * @return void
-   */
-  private _addEvent(eventName: string, cb: any): void {
-    if (!this.events[eventName]) {
-      this.events[eventName] = { listeners: new Map(), callbacks: [] };
-    }
-
-    this.events[eventName].callbacks.push(cb);
-  }
 
   /**
    * @param string eventName

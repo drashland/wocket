@@ -13,7 +13,6 @@ export default class SocketServer extends EventEmitter {
   public deno_server: any;
   public hostname: string = "localhost";
   public port: number = 1557;
-  public plugs: {[key: string]: Plug} = {};
 
   // FILE MARKER - CONSTRUCTOR /////////////////////////////////////////////////
 
@@ -22,22 +21,6 @@ export default class SocketServer extends EventEmitter {
   }
 
   // FILE MARKER - METHODS - PUBLIC ////////////////////////////////////////////
-
-  public addPlug(name: string) {
-    // If the plug already exists, then we want to error out so we don't create
-    // duplicate plugs.
-    if (this.plugs[name]) {
-      throw new Error(`Server already has a plug named "${name}". Please specify a different name.`);
-    }
-
-    this.plugs[name] = new Plug(name);
-
-    this.on(name, (incomingEvent: any) => {
-      const { message } = incomingEvent;
-      this.plugs[name].messages.push({ ...message });
-      this.to(name, incomingEvent);
-    });
-  }
 
   /**
    * @description

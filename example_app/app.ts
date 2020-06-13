@@ -30,7 +30,12 @@ console.log(
   `Socket server started on ${socketServer.hostname}:${socketServer.port}`,
 );
 
-socketServer.addPlug("General");
+socketServer.createChannel("Channel 1");
+socketServer.on("Channel 1", (incomingEvent: any) => {
+  const { message } = incomingEvent;
+  socketServer.getChannel("Channel 1").messages.push({ ...message });
+  socketServer.to("Channel 1", incomingEvent);
+});
 
 export {
   socketServer,

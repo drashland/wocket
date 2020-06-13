@@ -40,7 +40,7 @@ const createChannel = async () => {
   if (createChannelName.value.trim() == "") {
     alert("Channel name is required!");
   }
-  console.log("Creating channel");
+  console.log("Creating channel.");
   const response = await fetch(`http://${WEB_SERVER.hostname}:${WEB_SERVER.port}/chat`, {
     method: "POST",
     headers: {

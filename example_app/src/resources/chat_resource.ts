@@ -9,7 +9,7 @@ export default class ChatResource extends Drash.Http.Resource {
 
   public GET() {
     const channel = decodeURIComponent(this.request.getPathParam("channel"));
-    this.response.body = socketServer.getChannels()[channel].messages;
+    this.response.body = socketServer.getChannel(channel).messages;
     return this.response;
   }
 
@@ -19,15 +19,17 @@ export default class ChatResource extends Drash.Http.Resource {
         this.response.body = socketServer.getChannels();
         break;
       case "create_channel":
-        const channelName = this.request.getBodyParam("room_name");
+        console.log("Creating a channel.");
+        const channelName = this.request.getBodyParam("channel_name");
         try {
           socketServer
-            .addChannel(channelName)
-            .on((incomingEvent: any) => {
+            .createChannel(channelName)
+            .on(channelName, (incomingEvent: any) => {
               const { message } = incomingEvent;
               socketServer.getChannel(channelName).messages.push({ ...message });
               socketServer.to(channelName, incomingEvent);
             });
+            console.log(socketServer.getChannels());
           this.response.body = `Channel "${channelName}" created!`;
         } catch (error) {
           throw new Drash.Exceptions.HttpException(400, error);
@@ -39,6 +41,7 @@ export default class ChatResource extends Drash.Http.Resource {
             action: "Field `action` is required."
           }
         };
+        break;
     }
 
     return this.response;
