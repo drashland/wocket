@@ -40,6 +40,11 @@ Deno.test("Channel 2 should be closed", () => {
   assertEquals(undefined, server.getChannel("Channel 2"));
 });
 
+Deno.test("Channel 2 should exist again", () => {
+  server.createChannel("Channel 2");
+  assertEquals("Channel 2", server.getChannel("Channel 2").name);
+});
+
 Deno.test({
   name: "Stop the server",
   async fn() {
