@@ -12,14 +12,6 @@ const userInput = document.getElementById("username");
 const channelsDropdown = document.getElementById("channelsDropdown");
 const createChannelName = document.getElementById("createChannelName");
 
-submitMessageButton.addEventListener("click", sendMessage);
-messageInput.addEventListener("keyup", (event) => {
-  if (event.keyCode === 13) {
-    event.preventDefault();
-    sendMessage();
-  }
-});
-
 /**
  * Append a message to the specified channel's message container.
  *
@@ -201,3 +193,11 @@ const sendMessage = () => {
     await fetchChannels();
   });
 })();
+
+submitMessageButton.addEventListener("click", sendMessage);
+messageInput.addEventListener("keyup", (event) => {
+  if (event.keyCode === 13) {
+    event.preventDefault();
+    sendMessage();
+  }
+});
