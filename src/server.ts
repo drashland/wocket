@@ -23,6 +23,14 @@ export default class SocketServer extends EventEmitter {
 
   /**
    * @description
+   *     Close the server.
+   */
+  public close(): void {
+    this.deno_server.close();
+  }
+
+  /**
+   * @description
    *    Handles websocket connection.
    *    After a successful connection, the client will be added to EventEmitter.clients
    *    and the server will start listening to events.
