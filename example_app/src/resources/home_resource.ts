@@ -6,8 +6,7 @@ export default class HomeResource extends Drash.Http.Resource {
   static paths = ["/"];
 
   public GET() {
-    const channel = socketServer.getChannel("Channel 1");
-    if (!channel) {
+    if (!socketServer.getChannel("Channel 1")) {
       messages["Channel 1"] = {
         messages: []
       };
