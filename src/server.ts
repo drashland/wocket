@@ -24,6 +24,8 @@ export default class SocketServer extends EventEmitter {
   /**
    * @description
    *     Close the server.
+   *
+   * @return void
    */
   public close(): void {
     this.deno_server.close();
@@ -31,9 +33,13 @@ export default class SocketServer extends EventEmitter {
 
   /**
    * @description
-   *    Handles websocket connection.
-   *    After a successful connection, the client will be added to EventEmitter.clients
-   *    and the server will start listening to events.
+   *    Handles websocket connection.  After a successful connection, the client
+   *    will be added to EventEmitter.clients and the server will start
+   *    listening to events.
+   *
+   * @param HTTPOptions options
+   *
+   * @return Promise<DenoServer>
    */
   public async run(options: HTTPOptions): Promise<DenoServer> {
     if (options.hostname) {
