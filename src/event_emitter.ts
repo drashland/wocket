@@ -39,23 +39,23 @@ export default class EventEmitter {
    * @description
    *     Adds a new listener to an event.
    *
-   * @param string eventName
+   * @param string channelName
    * @param number clientId
    *      Client's socket connection id.
    *
    * @return void
    */
-  public addListener(eventName: string, clientId: number): void {
-    if (!this.channels[eventName]) {
-      this.channels[eventName] = { listeners: new Map(), callbacks: [] };
+  public addListener(channelName: string, clientId: number): void {
+    if (!this.channels[channelName]) {
+      this.channels[channelName] = { listeners: new Map(), callbacks: [] };
     }
 
-    if (!this.channels[eventName].listeners.has(clientId)) {
-      this.channels[eventName].listeners.set(
+    if (!this.channels[channelName].listeners.has(clientId)) {
+      this.channels[channelName].listeners.set(
         clientId,
         this.clients[clientId].socket,
       );
-      this.clients[clientId].listeningTo.push(eventName);
+      this.clients[clientId].listeningTo.push(channelName);
     }
   }
 
@@ -82,14 +82,14 @@ export default class EventEmitter {
       throw new Error(err);
     }
 
-    for await (let eventName of Object.keys(parsedMessage)) {
-      if (RESERVED_EVENT_NAMES.includes(eventName)) {
-        this._handleReservedEventNames(parsedMessage[eventName], clientId);
-      } else if (this.channels[eventName]) {
+    for await (let channelName of Object.keys(parsedMessage)) {
+      if (RESERVED_EVENT_NAMES.includes(channelName)) {
+        this._handleReservedEventNames(parsedMessage[channelName], clientId);
+      } else if (this.channels[channelName]) {
         await this.sender.invokeCallback({
-          ...this.channels[eventName],
-          eventName,
-          message: parsedMessage[eventName],
+          ...this.channels[channelName],
+          channelName,
+          message: parsedMessage[channelName],
           from: clientId,
         });
       }
@@ -157,7 +157,7 @@ export default class EventEmitter {
    * @description
    *     Adds a new event.
    * 
-   * @param string eventName
+   * @param string channelName
    * @param Function cb
    *     Callback to be invoked when event is detected.
    * 
@@ -178,9 +178,9 @@ export default class EventEmitter {
    * @param number clientId
    *      Client's socket connection id.
    * 
-   * @return Promise<void>
+   * @return void
    */
-  public async removeClient(clientId: number): Promise<void> {
+  public removeClient(clientId: number): void {
     if (!this.clients[clientId]) return;
     if (this.clients[clientId].listeningTo) {
       this.clients[clientId].listeningTo.forEach((to: string) => {
@@ -198,27 +198,27 @@ export default class EventEmitter {
    * @description
    *    Pushes a new message to the message queue.
    * 
-   * @param string eventName
+   * @param string channelName
    * @param any message
    *     Message to be sent.
    * 
    * @return void
    */
-  public send(eventName: string, message: string): void {
-    this._addToMessageQueue(eventName, message);
+  public send(channelName: string, message: string): void {
+    this._addToMessageQueue(channelName, message);
   }
 
   /**
    * @description
    *     Adds a new event.
    * 
-   * @param string eventName
+   * @param string channelName
    * @param any message
    *     Message to be sent.
    * 
-   * @return Promise<void>
+   * @return void
    */
-  public async to(eventName: string, message: any): Promise<void> {
+  public to(eventName: string, message: any): void {
     this.sender.add({
       ...this.channels[eventName],
       eventName,
@@ -233,12 +233,12 @@ export default class EventEmitter {
    * @param string eventName
    * @param string message
    *
-   * @return Promise<void>
+   * @return void
    */
-  private async _addToMessageQueue(
+  private _addToMessageQueue(
     eventName: string,
     message: string,
-  ): Promise<void> {
+  ): void {
     const msg = {
       ...this.channels[eventName],
       eventName,
