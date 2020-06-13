@@ -4,21 +4,16 @@ import Client from "./client.ts";
 import { MESSAGE_TYPE } from "./io_types.ts";
 import { RESERVED_EVENT_NAMES } from "./reserved_event_names.ts";
 
-class Package {
-}
-
 export default class EventEmitter {
   public clients: any = {};
   private channels: any = {};
   private sender: Sender;
   private channel_being_created: string = "";
-  private package: any;
 
   // FILE MARKER - CONSTRUCTOR /////////////////////////////////////////////////
 
   constructor() {
     this.sender = new Sender();
-    this.package = new Package();
   }
 
   // FILE MARKER - METHODS - PUBLIC ////////////////////////////////////////////
