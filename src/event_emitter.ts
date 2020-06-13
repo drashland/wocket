@@ -120,8 +120,8 @@ export default class EventEmitter {
     let channels = [];
     for (let name in this.channels) {
       if (
-        name === "connection"
-        || name === "disconnect"
+        name === "connection" ||
+        name === "disconnect"
       ) {
         continue;
       }
