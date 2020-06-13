@@ -4,29 +4,31 @@ import { socketServer } from "../../app.ts";
 export default class ChatResource extends Drash.Http.Resource {
   static paths = [
     "/chat",
-    "/chat/:room"
+    "/chat/:channel"
   ];
 
   public GET() {
-    const plugName = decodeURIComponent(this.request.getPathParam("room"));
-    this.response.body = socketServer.plugs[plugName].messages;
+    const channel = decodeURIComponent(this.request.getPathParam("channel"));
+    this.response.body = socketServer.getChannels()[channel].messages;
     return this.response;
   }
 
   public POST() {
     switch (this.request.getBodyParam("action")) {
-      case "get_rooms":
-        let rooms = [];
-        for (let name in socketServer.plugs) {
-          rooms.push(name);
-        }
-        this.response.body = rooms;
+      case "get_channels":
+        this.response.body = socketServer.getChannels();
         break;
-      case "create_room":
-        const roomName = this.request.getBodyParam("room_name");
+      case "create_channel":
+        const channelName = this.request.getBodyParam("room_name");
         try {
-          socketServer.addPlug(roomName);
-          this.response.body = `Room "${roomName}" created!`;
+          socketServer
+            .addChannel(channelName)
+            .on((incomingEvent: any) => {
+              const { message } = incomingEvent;
+              socketServer.getChannel(channelName).messages.push({ ...message });
+              socketServer.to(channelName, incomingEvent);
+            });
+          this.response.body = `Channel "${channelName}" created!`;
         } catch (error) {
           throw new Drash.Exceptions.HttpException(400, error);
         }

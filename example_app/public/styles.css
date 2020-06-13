@@ -43,25 +43,25 @@ li {
   justify-content: space-around;
 }
 
-#input-container-create-room {
+#input-container-create-channel {
   display: flex;
   align-items: center;
   justify-content: space-around;
   padding: 5px;
 }
 
-#rooms {
+#channels {
   padding: 5px;
 }
 
-#rooms .header {
+#channels .header {
   text-align: center;
   background-color: black;
   color: white;
   margin-bottom: 5px;
 }
 
-#rooms #rooms-dropdown {
+#channels #channels-dropdown {
   border: 1px solid #000;
   padding: 5px;
   width: 100%;
@@ -72,14 +72,14 @@ li {
 }
 
 #submitMessage,
-#submitMessageCreateRoom {
+#submitMessageCreateChannel {
   padding: 5px;
   border: 1px solid #000;
   cursor: pointer;
   background-color: #ddd;
 }
 
-#username, #messageToSend, #create-room-name {
+#username, #messageToSend, #create-channel-name {
   border: 1px solid black;
   outline: none;
   padding: 5px;

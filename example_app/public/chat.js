@@ -5,59 +5,59 @@ const socket = new SocketClient({
 });
 
 const messagesContainer = document.getElementById("messages-container");
-const messagesInRoom = document.getElementById("messages");
+const messagesInChannel = document.getElementById("messages");
 const submitMessageButton = document.getElementById("submitMessage");
 const messageInput = document.getElementById("messageToSend");
 const userInput = document.getElementById("username");
-const roomsDropdown = document.getElementById("rooms-dropdown");
-const createRoomName = document.getElementById("create-room-name");
+const channelsDropdown = document.getElementById("channels-dropdown");
+const createChannelName = document.getElementById("create-channel-name");
 
 const scrollToBottom = () => {
   messagesContainer.scrollTop = messagesContainer.scrollHeight;
 };
 
 // appends message to messages container
-const addMessageToChat = (room, messageString) => {
-  if (room != roomsDropdown.value) {
+const addMessageToChat = (channel, messageString) => {
+  if (channel != channelsDropdown.value) {
     return;
   }
   const li = document.createElement("li");
   li.className = "message";
   li.appendChild(document.createTextNode(messageString));
-  messagesInRoom.appendChild(li);
+  messagesInChannel.appendChild(li);
   scrollToBottom();
 };
 
-// Change the current room to the room specified and load the messages of the specified room
-const changeRoom = async (value) => {
-  console.log(`Changing room to "${value}".`);
+// Change the current channel to the channel specified and load the channel's messages
+const changeChannel = async (value) => {
+  console.log(`Changing channel to "${value}".`);
   await fetchChat(value);
 };
 
-// Create a new room by sending a request to the web server, which will tell the socket server to
-// create a new room (aka Plug)
-const createRoom = async () => {
-  if (createRoomName.value.trim() == "") {
-    alert("Room name is required!");
+// Create a new channel by sending a request to the web server, which will tell the socket server to
+// create a new channel.
+const createChannel = async () => {
+  if (createChannelName.value.trim() == "") {
+    alert("Channel name is required!");
   }
-  console.log("Creating room");
+  console.log("Creating channel");
   const response = await fetch(`http://${WEB_SERVER.hostname}:${WEB_SERVER.port}/chat`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json"
     },
     body: JSON.stringify({
-      action: "create_room",
-      room_name: createRoomName.value
+      action: "create_channel",
+      channel_name: createChannelName.value
     })
   });
   if (response.status === 200) {
-    console.log("Room created.");
+    console.log("Channel created.");
     let option = document.createElement("option");
-    option.text = createRoomName.value;
-    option.value = createRoomName.value;
-    roomsDropdown.add(option);
-    listenToRoom(createRoomName.value);
+    option.text = createChannelName.value;
+    option.value = createChannelName.value;
+    channelsDropdown.add(option);
+    listenToChannel(createChannelName.value);
   }
 };
 
@@ -68,71 +68,71 @@ const sendMessage = () => {
   const message = messageInput.value;
   const messageString = `${username}: ${message}`;
 
-  socket.send(roomsDropdown.value, { room: roomsDropdown.value, username: username, text: message });
+  socket.send(channelsDropdown.value, { channel: channelsDropdown.value, username: username, text: message });
   messageInput.value = "";
-  addMessageToChat(roomsDropdown.value, messageString);
+  addMessageToChat(channelsDropdown.value, messageString);
   scrollToBottom();
 };
 
 // loads messages that are sent by server
 const loadMessages = (messages) => {
-  messagesInRoom.innerHTML = "";
+  messagesInChannel.innerHTML = "";
   if (Array.isArray(messages)) {
     messages.forEach((message) => {
       const messageString = `${message.username}: ${message.text}`;
-      addMessageToChat(roomsDropdown.value, messageString);
+      addMessageToChat(channelsDropdown.value, messageString);
     });
     scrollToBottom();
   }
 };
 
-const fetchChat = async (room) => {
-  const url = `http://${WEB_SERVER.hostname}:${WEB_SERVER.port}/chat/${room}`;
+const fetchChat = async (channel) => {
+  const url = `http://${WEB_SERVER.hostname}:${WEB_SERVER.port}/chat/${channel}`;
   const response = await fetch(url)
   const messages = await response.json();
   loadMessages(messages.length ? messages : []);
 };
 
-const fetchRooms = async () => {
+const fetchChannels = async () => {
   const url = `http://${WEB_SERVER.hostname}:${WEB_SERVER.port}/chat`;
-  console.log("Fetching rooms");
+  console.log("Fetching channels.");
   const response = await fetch(`http://${WEB_SERVER.hostname}:${WEB_SERVER.port}/chat`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json"
     },
     body: JSON.stringify({
-      action: "get_rooms",
+      action: "get_channels",
     })
   });
   if (response.status === 200) {
-    const rooms = await response.json();
-    console.log(`Rooms: ${rooms.join(", ")}`);
-    const value = roomsDropdown.value;
-    roomsDropdown.innerHTML = "";
-    rooms.forEach((room) => {
+    const channels = await response.json();
+    console.log(`Channels: ${channels.join(", ")}`);
+    const value = channelsDropdown.value;
+    channelsDropdown.innerHTML = "";
+    channels.forEach((channel) => {
       let option = document.createElement("option");
-      option.text = room;
-      option.value = room;
+      option.text = channel;
+      option.value = channel;
       if (option.value == value) {
         option.selected = true;
       }
-      roomsDropdown.add(option);
-      listenToRoom(room);
+      channelsDropdown.add(option);
+      listenToChannel(channel);
     });
   }
 };
 
-const listenToRoom = (room) => {
-  socket.on(room, (message) => {
+const listenToChannel = (channel) => {
+  socket.on(channel, (message) => {
     const messageString = `${message.username}: ${message.text}`;
-    addMessageToChat(room, messageString);
+    addMessageToChat(channel, messageString);
   });
 };
 
 const init = async () => {
-  await fetchChat("General");
-  await fetchRooms();
+  await fetchChat("Channel 1");
+  await fetchChannels();
 };
 
 submitMessageButton.addEventListener("click", sendMessage);

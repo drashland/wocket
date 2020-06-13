@@ -19,13 +19,13 @@
         <input id="messageToSend" type="text" placeholder="message" style="width: 50%"/>
         <button id="submitMessage" style="width: 25%">send message</button>
       </div>
-      <div id="input-container-create-room">
-        <input id="create-room-name" type="text" placeholder="room name" style="width: 75%"/>
-        <button id="submitMessageCreateRoom" onclick="createRoom()" style="width: 25%">create room</button>
+      <div id="input-container-create-channel">
+        <input id="create-channel-name" type="text" placeholder="channel name" style="width: 75%"/>
+        <button id="submitMessageCreateChannel" onclick="createChannel()" style="width: 25%">create channel</button>
       </div>
-      <div id="rooms">
-        <p class="header">Rooms</p>
-        <select id="rooms-dropdown" onchange="changeRoom(this.value)">
+      <div id="channels">
+        <p class="header">Channels</p>
+        <select id="channels-dropdown" onchange="changeChannel(this.value)">
         </select>
       </div>
     </body>
