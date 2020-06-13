@@ -19,7 +19,6 @@ export default class ChatResource extends Drash.Http.Resource {
         this.response.body = socketServer.getChannels();
         break;
       case "create_channel":
-        console.log("Creating a channel.");
         const channelName = this.request.getBodyParam("channel_name");
         try {
           socketServer
@@ -31,7 +30,6 @@ export default class ChatResource extends Drash.Http.Resource {
               );
               socketServer.to(channelName, incomingEvent);
             });
-          console.log(socketServer.getChannels());
           this.response.body = `Channel "${channelName}" created!`;
         } catch (error) {
           throw new Drash.Exceptions.HttpException(400, error);

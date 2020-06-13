@@ -20,7 +20,7 @@
   justify-content: space-between;
 }
 
-#messages-container {
+#messagesContainer {
   height: 55vh;
   overflow: hidden;
   overflow-y: scroll;
@@ -36,14 +36,14 @@ li {
   word-wrap: break-word;
 }
 
-#input-container {
+#inputContainer {
   padding: 5px;
   display: flex;
   align-items: center;
   justify-content: space-around;
 }
 
-#input-container-create-channel {
+#inputContainerCreateChannel {
   display: flex;
   align-items: center;
   justify-content: space-around;
@@ -61,7 +61,7 @@ li {
   margin-bottom: 5px;
 }
 
-#channels #channels-dropdown {
+#channels #channelsDropdown {
   border: 1px solid #000;
   padding: 5px;
   width: 100%;
@@ -79,7 +79,7 @@ li {
   background-color: #ddd;
 }
 
-#username, #messageToSend, #create-channel-name {
+#username, #messageToSend, #createChannelName {
   border: 1px solid black;
   outline: none;
   padding: 5px;

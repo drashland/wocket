@@ -4,13 +4,13 @@ const socket = new SocketClient({
   port: SOCKET_SERVER.port,
 });
 
-const messagesContainer = document.getElementById("messages-container");
+const messagesContainer = document.getElementById("messagesContainer");
 const messagesInChannel = document.getElementById("messages");
 const submitMessageButton = document.getElementById("submitMessage");
 const messageInput = document.getElementById("messageToSend");
 const userInput = document.getElementById("username");
-const channelsDropdown = document.getElementById("channels-dropdown");
-const createChannelName = document.getElementById("create-channel-name");
+const channelsDropdown = document.getElementById("channelsDropdown");
+const createChannelName = document.getElementById("createChannelName");
 
 const scrollToBottom = () => {
   messagesContainer.scrollTop = messagesContainer.scrollHeight;
@@ -39,6 +39,7 @@ const changeChannel = async (value) => {
 const createChannel = async () => {
   if (createChannelName.value.trim() == "") {
     alert("Channel name is required!");
+    return;
   }
   console.log("Creating channel.");
   const response = await fetch(

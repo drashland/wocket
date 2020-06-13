@@ -11,21 +11,21 @@
   <body>
     <div id="container">
       <div id="banner">Sockets Chat</div>
-      <div id="messages-container">
+      <div id="messagesContainer">
         <ul id="messages"></ul>
       </div>
-      <div id="input-container">
+      <div id="inputContainer">
         <input id="username" type="text" placeholder="username" style="width: 25%"/>
         <input id="messageToSend" type="text" placeholder="message" style="width: 50%"/>
         <button id="submitMessage" style="width: 25%">send message</button>
       </div>
-      <div id="input-container-create-channel">
-        <input id="create-channel-name" type="text" placeholder="channel name" style="width: 75%"/>
-        <button onclick="createChannel()" style="width: 25%">create channel</button>
+      <div id="inputContainerCreateChannel">
+        <input id="createChannelName" type="text" placeholder="channel name" style="width: 75%"/>
+        <button id="submitMessageCreateChannel" onclick="createChannel()" style="width: 25%">create channel</button>
       </div>
       <div id="channels">
         <p class="header">Channels</p>
-        <select id="channels-dropdown" onchange="changeChannel(this.value)">
+        <select id="channelsDropdown" onchange="changeChannel(this.value)">
         </select>
       </div>
     </body>
