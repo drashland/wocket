@@ -32,10 +32,10 @@ console.log(
 
 socketServer
   .createChannel("Channel 1")
-  .onMessage((incomingEvent: any) => {
-    const { message } = incomingEvent;
+  .onMessage((incomingMessage: any) => {
+    const { message } = incomingMessage;
     socketServer.getChannel("Channel 1").messages.push({ ...message });
-    socketServer.to("Channel 1", incomingEvent);
+    socketServer.to("Channel 1", incomingMessage);
   });
 
 export {
