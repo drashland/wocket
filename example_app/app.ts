@@ -38,14 +38,6 @@ socketServer.on("disconnect", () => {
   console.log("A user disconnected.");
 });
 
-socketServer
-  .createChannel("Channel 1")
-  .onMessage((incomingMessage: any) => {
-    const { message } = incomingMessage;
-    socketServer.getChannel("Channel 1").messages.push({ ...message });
-    socketServer.to("Channel 1", incomingMessage);
-  });
-
 export {
   socketServer,
 };
