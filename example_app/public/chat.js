@@ -12,11 +12,19 @@ const userInput = document.getElementById("username");
 const channelsDropdown = document.getElementById("channelsDropdown");
 const createChannelName = document.getElementById("createChannelName");
 
-const scrollToBottom = () => {
+/**
+ * Scroll the messages container to its last message.
+ */
+const scrollToLastMessage = () => {
   messagesContainer.scrollTop = messagesContainer.scrollHeight;
 };
 
-// appends message to messages container
+/**
+ * Append a message to the specified channel's message container.
+ *
+ * @param {String} channel
+ * @param {String} messageString
+ */
 const addMessageToChat = (channel, messageString) => {
   if (channel != channelsDropdown.value) {
     return;
@@ -25,17 +33,23 @@ const addMessageToChat = (channel, messageString) => {
   li.className = "message";
   li.appendChild(document.createTextNode(messageString));
   messagesInChannel.appendChild(li);
-  scrollToBottom();
+  scrollToLastMessage();
 };
 
-// Change the current channel to the channel specified and load the channel's messages
-const changeChannel = async (value) => {
-  console.log(`Changing channel to "${value}".`);
-  await fetchChat(value);
+/**
+ * Change the current channel to the channel specified and load the channel's messages
+ *
+ * @param {String} channelName
+ */
+const changeChannel = async (channelName) => {
+  console.log(`Changing channel to "${channelName}".`);
+  await fetchMessages(channelName);
 };
 
-// Create a new channel by sending a request to the web server, which will tell the socket server to
-// create a new channel.
+/**
+ * Create a new channel by sending a request to the web server, which will tell the socket server to
+ * create a new channel.
+ */
 const createChannel = async () => {
   if (createChannelName.value.trim() == "") {
     alert("Channel name is required!");
@@ -65,7 +79,9 @@ const createChannel = async () => {
   }
 };
 
-// sends message to server
+/**
+ * Send a message to the socket server.
+ */
 const sendMessage = () => {
   const username = userInput.value;
   if (!username) return alert("Enter username!");
@@ -78,7 +94,7 @@ const sendMessage = () => {
   );
   messageInput.value = "";
   addMessageToChat(channelsDropdown.value, messageString);
-  scrollToBottom();
+  scrollToLastMessage();
 };
 
 // loads messages that are sent by server
@@ -89,11 +105,11 @@ const loadMessages = (messages) => {
       const messageString = `${message.username}: ${message.text}`;
       addMessageToChat(channelsDropdown.value, messageString);
     });
-    scrollToBottom();
+    scrollToLastMessage();
   }
 };
 
-const fetchChat = async (channel) => {
+const fetchMessages = async (channel) => {
   const url =
     `http://${WEB_SERVER.hostname}:${WEB_SERVER.port}/chat/${channel}`;
   const response = await fetch(url);
@@ -122,9 +138,11 @@ const fetchChannels = async () => {
     const value = channelsDropdown.value;
     channelsDropdown.innerHTML = "";
     channels.forEach((channel) => {
-      if (channel == "create_room") {
+      // Don't add the following channels to the channels dropdown
+      if (channel == "create_channel") {
         return;
       }
+      // Create the option for the channel and add it to the channels dropdown
       let option = document.createElement("option");
       option.text = channel;
       option.value = channel;
@@ -134,20 +152,30 @@ const fetchChannels = async () => {
       channelsDropdown.add(option);
       listenToChannel(channel);
     });
+  } else {
+    alert("There was an error creating the channel!");
   }
 };
 
-const listenToChannel = (channel) => {
-  socket.on(channel, (message) => {
+/**
+ * Listen to the specified channel for any incoming messages.
+ *
+ * @param {String} channelName
+ */
+const listenToChannel = (channelName) => {
+  socket.on(channelName, (message) => {
     const messageString = `${message.username}: ${message.text}`;
-    addMessageToChat(channel, messageString);
+    addMessageToChat(channelName, messageString);
   });
 };
 
+/**
+ * Initialize this file.
+ */
 const init = async () => {
-  await fetchChat("Channel 1");
+  await fetchMessages("Channel 1");
   await fetchChannels();
-  socket.on("create_room", async (message) => {
+  socket.on("create_channel", async (message) => {
     alert(message);
     await fetchChannels();
   });
