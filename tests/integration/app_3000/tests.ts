@@ -19,9 +19,25 @@ server
     server.to("Channel 1", incomingMessage);
   });
 
+Deno.test("connection and disconnect channels should exist", () => {
+  assertEquals("connection", server.getChannel("connection").name);
+  assertEquals("disconnect", server.getChannel("disconnect").name);
+});
+
 Deno.test("Channel 1 should exist", () => {
-  const channel = server.getChannel("Channel 1");
-  assertEquals("Channel 1", channel.name);
+  assertEquals("Channel 1", server.getChannel("Channel 1").name);
+});
+
+Deno.test("Channel 2 should exist", () => {
+  server.on("Channel 2", () => {
+    console.log("woot woot");
+  });
+  assertEquals("Channel 2", server.getChannel("Channel 2").name);
+});
+
+Deno.test("Channel 2 should be closed", () => {
+  server.closeChannel("Channel 2");
+  assertEquals(undefined, server.getChannel("Channel 2"));
 });
 
 

@@ -97,6 +97,16 @@ export default class EventEmitter {
   }
 
   /**
+   * @description
+   *     Close a channel.
+   *
+   * @param string channelName
+   */
+  public closeChannel(channelName: string): void {
+    delete this.channels[channelName];
+  }
+
+  /**
    * @return any
    *     Return all clients.
    */
