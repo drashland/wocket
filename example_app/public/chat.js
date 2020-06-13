@@ -122,6 +122,9 @@ const fetchChannels = async () => {
     const value = channelsDropdown.value;
     channelsDropdown.innerHTML = "";
     channels.forEach((channel) => {
+      if (channel == "create_room") {
+        return;
+      }
       let option = document.createElement("option");
       option.text = channel;
       option.value = channel;
@@ -144,6 +147,10 @@ const listenToChannel = (channel) => {
 const init = async () => {
   await fetchChat("Channel 1");
   await fetchChannels();
+  socket.on("create_room", async (message) => {
+    alert(message);
+    await fetchChannels();
+  });
 };
 
 submitMessageButton.addEventListener("click", sendMessage);
