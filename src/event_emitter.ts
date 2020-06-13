@@ -1,10 +1,11 @@
 import Sender from "./sender.ts";
 import Channel from "./channel.ts";
+import Client from "./client.ts";
 import { MESSAGE_TYPE } from "./io_types.ts";
 import { RESERVED_EVENT_NAMES } from "./reserved_event_names.ts";
 
 export default class EventEmitter {
-  private clients: any = {};
+  public clients: any = {};
   private channels: any = {};
   private sender: Sender;
   private channel_being_created: string = "";
@@ -21,18 +22,17 @@ export default class EventEmitter {
    * @description
    *     Adds a new client.
    * 
-   * @param socket WebSocket
    * @param clientId int
    *      Client's socket connection id.
+   * @param WebSocket socket
    * 
    * @return void
    */
-  public addClient(socket: any, clientId: number) {
-    this.clients[clientId] = {
-      socket,
-      listeningTo: [],
-    };
+  public addClient(clientId: number, clientSocket: any) {
+    const client = new Client(clientId, clientSocket);
+    this.clients[clientId] = client;
     this._handleReservedEventNames("connection", clientId);
+    return client;
   }
 
   /**
@@ -47,7 +47,7 @@ export default class EventEmitter {
    */
   public addListener(channelName: string, clientId: number): void {
     if (!this.channels[channelName]) {
-      this.channels[channelName] = { listeners: new Map(), callbacks: [] };
+      this.channels[channelName] = new Channel(channelName);
     }
 
     if (!this.channels[channelName].listeners.has(clientId)) {
@@ -55,7 +55,7 @@ export default class EventEmitter {
         clientId,
         this.clients[clientId].socket,
       );
-      this.clients[clientId].listeningTo.push(channelName);
+      this.clients[clientId].listening_to.push(channelName);
     }
   }
 
@@ -119,6 +119,7 @@ export default class EventEmitter {
   public getChannels(): any {
     let channels = [];
     for (let name in this.channels) {
+      // Ignore the following channels
       if (
         name === "connection" ||
         name === "disconnect"
@@ -182,8 +183,8 @@ export default class EventEmitter {
    */
   public removeClient(clientId: number): void {
     if (!this.clients[clientId]) return;
-    if (this.clients[clientId].listeningTo) {
-      this.clients[clientId].listeningTo.forEach((to: string) => {
+    if (this.clients[clientId].listening_to) {
+      this.clients[clientId].listening_to.forEach((to: string) => {
         if (this.channels[to]) {
           this.channels[to].listeners.delete(clientId);
         }

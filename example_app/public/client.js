@@ -51,7 +51,7 @@ class SocketClient {
     if (this.checkReadyState()) {
       if (!this.listening[eventName]) this.listening[eventName] = null;
       this.listening[eventName] = cb;
-      const toSend = JSON.stringify({ listeningTo: eventName });
+      const toSend = JSON.stringify({ listening_to: eventName });
       const encoded = new TextEncoder().encode(toSend);
       this.messageQueue.push(encoded);
       this.emit();

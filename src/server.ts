@@ -58,7 +58,7 @@ export default class SocketServer extends EventEmitter {
         })
           .then(async (socket: WebSocket): Promise<void> => {
             const clientId = conn.rid;
-            super.addClient(socket, clientId);
+            super.addClient(clientId, socket);
 
             try {
               for await (const ev of socket) {
