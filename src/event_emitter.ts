@@ -268,10 +268,14 @@ export default class EventEmitter {
    * @return void
    */
   private _addToPackageQueue(channelName: string, pkg: any): void {
+    if (!this.channels[channelName]) {
+      throw new Error(`No receivers for "${channelName}" channel.`);
+    }
     this.sender.add({
       ...this.channels[channelName],
+      message: pkg.message,
+      from: pkg.from || null,
       channelName,
-      ...pkg,
     });
   }
 
