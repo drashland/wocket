@@ -73,24 +73,19 @@ Deno.test("Channel 2 should exist again", () => {
   assertEquals("Channel 2", socketServer.getChannel("Channel 2").name);
 });
 
-Deno.test({
-  name: "Channel 1 should have a message",
-  async fn() {
-    expectedMessage = "This is a Channel 1 message.";
-    const response = await fetch("http://localhost:3001", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        channel: "Channel 1",
-        message: "This is a Channel 1 message."
-      })
-    });
-    assertEquals(storage["Channel 1"].messages[0], "This is a Channel 1 message.");
-  },
-  sanitizeResources: false,
-  sanitizeOps: false,
+Deno.test("Channel 1 should have a message", async () => {
+  expectedMessage = "This is a Channel 1 message.";
+  const response = await fetch("http://localhost:3001", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      channel: "Channel 1",
+      message: "This is a Channel 1 message."
+    })
+  });
+  assertEquals(storage["Channel 1"].messages[0], "This is a Channel 1 message.");
 });
 
 Deno.test({
