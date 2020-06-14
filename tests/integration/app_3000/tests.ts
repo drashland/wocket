@@ -2,7 +2,6 @@ import { SocketServer } from "../../../mod.ts";
 import { Drash } from "../test_deps.ts";
 import { assert, assertEquals, connectWebSocket } from "../../../deps.ts";
 
-let expectedMessage = "";
 let storage: any = {};
 
 class Resource extends Drash.Http.Resource {
@@ -73,19 +72,20 @@ Deno.test("Channel 2 should exist again", () => {
   assertEquals("Channel 2", socketServer.getChannel("Channel 2").name);
 });
 
-Deno.test("Channel 1 should have a message", async () => {
-  expectedMessage = "This is a Channel 1 message.";
-  const response = await fetch("http://localhost:3001", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      channel: "Channel 1",
-      message: "This is a Channel 1 message."
-    })
-  });
-  assertEquals(storage["Channel 1"].messages[0], "This is a Channel 1 message.");
+Deno.test("Channel 1 should have 1 message", async () => {
+  await sendMessage("Channel 1", "This is a Channel 1 message.");
+  assertEquals(storage["Channel 1"].messages, ["This is a Channel 1 message."]);
+});
+
+Deno.test("Channel 1 should have 2 messages", async () => {
+  await sendMessage("Channel 1", "This is a Channel 1 message #2.");
+  assertEquals(
+    storage["Channel 1"].messages,
+    [
+      "This is a Channel 1 message.",
+      "This is a Channel 1 message #2.",
+    ]
+  );
 });
 
 Deno.test({
@@ -97,3 +97,17 @@ Deno.test({
   sanitizeResources: false,
   sanitizeOps: false,
 });
+
+async function sendMessage(channel: string, message: string) {
+  const response = await fetch("http://localhost:3001", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      channel,
+      message
+    })
+  });
+  await response.text();
+}
