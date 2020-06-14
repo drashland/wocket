@@ -192,7 +192,7 @@ const sendMessage = () => {
   socket.on("create_channel", async (message) => {
     createChannelName.value = "";
     notificationBanner.style.visibility = "visible";
-    notificationBanner.innerHTML =  message.text;
+    notificationBanner.innerHTML = message.text;
     setTimeout(() => notificationBanner.style.visibility = "hidden", 1000);
 
     await fetchChannels();

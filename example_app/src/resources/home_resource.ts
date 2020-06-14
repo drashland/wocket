@@ -8,7 +8,7 @@ export default class HomeResource extends Drash.Http.Resource {
   public GET() {
     if (!socketServer.getChannel("Channel 1")) {
       messages["Channel 1"] = {
-        messages: []
+        messages: [],
       };
       socketServer
         .createChannel("Channel 1")

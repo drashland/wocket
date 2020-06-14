@@ -2,7 +2,14 @@ import { SocketServer } from "../../../mod.ts";
 import { Drash } from "../test_deps.ts";
 import { assert, assertEquals, connectWebSocket } from "../../../deps.ts";
 
-let storage: any = {};
+let storage: any = {
+  "Channel 1": {
+    messages: []
+  },
+  "Channel 2": {
+    messages: []
+  }
+};
 
 class Resource extends Drash.Http.Resource {
   static paths = ["/"];
@@ -14,7 +21,6 @@ class Resource extends Drash.Http.Resource {
     let encoded = new TextEncoder().encode(JSON.stringify({[channel]: message}));
     await socketClient.send(encoded);
     socketClient.close();
-    this.response.body = storage["Channel 1"];
     return this.response;
   }
 }
@@ -41,24 +47,25 @@ console.log(
   "\nIntegration tests: testing different resources can be made and targeted.\n",
 );
 
-socketServer.createChannel("Channel 1");
-socketServer.on("Channel 1", ((packet: any) => {
-  if (!storage["Channel 1"]) {
-    storage["Channel 1"] = {
-      messages: []
-    };
-  }
-  storage["Channel 1"].messages.push(packet.message);
-}));
+// Set up the events
+
+socketServer
+  .createChannel("Channel 1")
+  .on("Channel 1", ((packet: any) => {
+    storage["Channel 1"].messages.push(packet.message);
+  }));
+
+socketServer
+  .createChannel("Channel 2")
+  .on("Channel 2", ((packet: any) => {
+    storage["Channel 2"].messages.push(packet.message);
+  }));
 
 Deno.test("Channel 1 should exist", () => {
   assertEquals("Channel 1", socketServer.getChannel("Channel 1").name);
 });
 
 Deno.test("Channel 2 should exist", () => {
-  socketServer.on("Channel 2", () => {
-    console.log("woot woot");
-  });
   assertEquals("Channel 2", socketServer.getChannel("Channel 2").name);
 });
 
@@ -74,7 +81,12 @@ Deno.test("Channel 2 should exist again", () => {
 
 Deno.test("Channel 1 should have 1 message", async () => {
   await sendMessage("Channel 1", "This is a Channel 1 message.");
-  assertEquals(storage["Channel 1"].messages, ["This is a Channel 1 message."]);
+  assertEquals(
+    storage["Channel 1"].messages,
+    [
+      "This is a Channel 1 message."
+    ]
+  );
 });
 
 Deno.test("Channel 1 should have 2 messages", async () => {
@@ -84,6 +96,16 @@ Deno.test("Channel 1 should have 2 messages", async () => {
     [
       "This is a Channel 1 message.",
       "This is a Channel 1 message #2.",
+    ]
+  );
+});
+
+Deno.test("Channel 2 should have 1 message", async () => {
+  await sendMessage("Channel 2", "This is a Channel 2 message.");
+  assertEquals(
+    storage["Channel 2"].messages,
+    [
+      "This is a Channel 2 message.",
     ]
   );
 });

@@ -36,7 +36,7 @@ export default class ChatResource extends Drash.Http.Resource {
       // Create the channel if it doesn't exist
       if (!socketServer.getChannel(channelName)) {
         messages[channelName] = {
-          messages: []
+          messages: [],
         };
         socketServer
           .createChannel(channelName)
