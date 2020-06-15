@@ -4,7 +4,6 @@
  *    socket server.
  */
 class SocketClient {
-
   constructor(options) {
     this.configs = {
       hostname: options.hostname || "localhost",
@@ -14,7 +13,7 @@ class SocketClient {
     this.message_queue = [];
     this.ready = true;
     this.connection = new WebSocket(
-      `ws://${this.configs.hostname}:${this.configs.port}`
+      `ws://${this.configs.hostname}:${this.configs.port}`,
     );
     this.connection.addEventListener("message", (event) => {
       this.handleEncodedMessage(event.data);
@@ -36,7 +35,9 @@ class SocketClient {
 
   on(channelOrEvent, cb) {
     if (this.connection.readyState === 1) {
-      if (!this.listening[channelOrEvent]) this.listening[channelOrEvent] = null;
+      if (!this.listening[channelOrEvent]) {
+        this.listening[channelOrEvent] = null;
+      }
       this.listening[channelOrEvent] = cb;
       const message = JSON.stringify({ listening_to: channelOrEvent });
       const encoded = new TextEncoder().encode(message);
