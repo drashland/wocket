@@ -6,7 +6,7 @@ socketServer.run({
   port: 3000,
 });
 console.log(
-  `Socket server started on ${socketServer.hostname}:${socketServer.port}`,
+  `Socket server started on ws://${socketServer.hostname}:${socketServer.port}`,
 );
 
 socketServer.on("connection", () => {
