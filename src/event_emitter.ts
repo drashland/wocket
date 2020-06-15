@@ -249,8 +249,8 @@ export default class EventEmitter {
    * @return void
    */
   public to(channelName: string, pkgOrMessage: any): void {
-    let pkg: any = {}
-    if (typeof pkgOrMessage === 'string') {
+    let pkg: any = {};
+    if (typeof pkgOrMessage === "string") {
       pkg.message = {};
       pkg.message = { text: pkgOrMessage };
     } else {
