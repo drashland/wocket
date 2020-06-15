@@ -104,6 +104,17 @@ Deno.test("chan2 should be closed", () => {
   assertEquals(undefined, socketServer.getChannel("chan2"));
 });
 
+Deno.test("chan2 should not receive this message", async () => {
+  socketServer.createChannel("chan2");
+  await sendMessage("chan2", "Test");
+  assertEquals(
+    storage["chan2"].messages,
+    [
+      "This is a chan2 message."
+    ]
+  );
+});
+
 Deno.test({
   name: "Stop the server",
   async fn() {
