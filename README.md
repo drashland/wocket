@@ -23,7 +23,7 @@
 
 To get you started as quickly as possible with a simple client and server, check out the following example app
 
-* [Browser Console](https://github.com/drashland/sockets/tree/master/example_apps/browser_console)
+* [Browser Console](./example_apps/browser_console)
 
 We also have a more advanced example:
 
