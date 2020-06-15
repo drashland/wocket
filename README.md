@@ -20,26 +20,22 @@
 ---
 
 ## Getting Started
- 
-Instructions to start a simple chatroom web application is located in `/example_app`.
 
-<img src="https://raw.githubusercontent.com/drashland/sockets/master/assets/img/screenshot_example_app.png">
+To get you started as quickly as possible with a simple client and server, check out the following example app
 
-```
-A user connected.
-A user connected.
-A user connected.
-```
+* [Browser Console](https://github.com/drashland/sockets/tree/master/example_apps/browser_console)
+
+We also have a more advanced example:
+
+* [Chat](./example_apps/chat)
+
+All example apps in the `example_apps` directory have their own `README.md` file. The `README.md` files have all the instructions you need to get started.
+    
 
 ## Features
-
+    
 - Binary-support
 
-## Testing
-```
-$ deno test tests/test.ts --allow-net --allow-env
-```
+## Roadmap
 
-## What to expect
-
-- Auto-reconnection support
+- [ ] Auto-reconnection support
