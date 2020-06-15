@@ -4,11 +4,11 @@ import { assert, assertEquals, connectWebSocket } from "../../../deps.ts";
 
 let storage: any = {
   "chan1": {
-    messages: []
+    messages: [],
   },
   "chan2": {
-    messages: []
-  }
+    messages: [],
+  },
 };
 
 class Resource extends Drash.Http.Resource {
@@ -17,8 +17,12 @@ class Resource extends Drash.Http.Resource {
   public async POST() {
     const channel = this.request.getBodyParam("channel");
     const message = this.request.getBodyParam("message");
-    const socketClient = await connectWebSocket(`ws://${socketServer.hostname}:${socketServer.port}`);
-    let encoded = new TextEncoder().encode(JSON.stringify({[channel]: message}));
+    const socketClient = await connectWebSocket(
+      `ws://${socketServer.hostname}:${socketServer.port}`,
+    );
+    let encoded = new TextEncoder().encode(
+      JSON.stringify({ [channel]: message }),
+    );
     await socketClient.send(encoded);
     socketClient.close();
     return this.response;
@@ -42,7 +46,9 @@ socketServer.run({
   hostname: "localhost",
   port: 3000,
 });
-console.log(`socketServer listening: http://${socketServer.hostname}:${socketServer.port}`);
+console.log(
+  `socketServer listening: http://${socketServer.hostname}:${socketServer.port}`,
+);
 console.log(
   "\nIntegration tests: testing different resources can be made and targeted.\n",
 );
@@ -51,9 +57,12 @@ console.log(
 
 socketServer
   .createChannel("chan1")
-  .on("chan1", ((packet: any) => {
-    storage["chan1"].messages.push(packet.message);
-  }));
+  .on(
+    "chan1",
+    ((packet: any) => {
+      storage["chan1"].messages.push(packet.message);
+    }),
+  );
 
 Deno.test("chan1 should exist", () => {
   assertEquals("chan1", socketServer.getChannel("chan1").name);
@@ -62,9 +71,12 @@ Deno.test("chan1 should exist", () => {
 Deno.test("chan2 should exist again", () => {
   socketServer
     .createChannel("chan2")
-    .on("chan2", ((packet: any) => {
-      storage["chan2"].messages.push(packet.message);
-    }));
+    .on(
+      "chan2",
+      ((packet: any) => {
+        storage["chan2"].messages.push(packet.message);
+      }),
+    );
   assertEquals("chan2", socketServer.getChannel("chan2").name);
 });
 
@@ -73,8 +85,8 @@ Deno.test("chan1 should have 1 message", async () => {
   assertEquals(
     storage["chan1"].messages,
     [
-      "This is a chan1 message."
-    ]
+      "This is a chan1 message.",
+    ],
   );
 });
 
@@ -85,7 +97,7 @@ Deno.test("chan1 should have 2 messages", async () => {
     [
       "This is a chan1 message.",
       "This is a chan1 message #2.",
-    ]
+    ],
   );
 });
 
@@ -95,7 +107,7 @@ Deno.test("chan2 should have 1 message", async () => {
     storage["chan2"].messages,
     [
       "This is a chan2 message.",
-    ]
+    ],
   );
 });
 
@@ -110,8 +122,8 @@ Deno.test("chan2 should not receive this message", async () => {
   assertEquals(
     storage["chan2"].messages,
     [
-      "This is a chan2 message."
-    ]
+      "This is a chan2 message.",
+    ],
   );
 });
 
@@ -129,12 +141,12 @@ async function sendMessage(channel: string, message: string) {
   const response = await fetch("http://localhost:3001", {
     method: "POST",
     headers: {
-      "Content-Type": "application/json"
+      "Content-Type": "application/json",
     },
     body: JSON.stringify({
       channel,
-      message
-    })
+      message,
+    }),
   });
   await response.text();
 }
