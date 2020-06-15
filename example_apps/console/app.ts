@@ -22,5 +22,8 @@ socketServer
   .onMessage((packet: any) => {
     console.log(packet);
     console.log("Sending a message back to the client.");
-    socketServer.to("Channel 1", `Message received! You sent "${packet.message}" as the message.`);
+    socketServer.to(
+      "Channel 1",
+      `Message received! You sent "${packet.message}" as the message.`,
+    );
   });
