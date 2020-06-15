@@ -14,3 +14,4 @@ This is an interactive client-server application where you send messages to the 
 
 3. Your experience should be something similar to the following:
 
+![Screenshot](./screenshot.png)
