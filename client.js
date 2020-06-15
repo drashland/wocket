@@ -3,7 +3,7 @@
  *    This SocketClient uses native WebSocket. It starts a connection and handles messages with the
  *    socket server.
  */
-class SocketClient {
+export class SocketClient {
 
   constructor(options) {
     this.configs = {
