@@ -3,10 +3,10 @@ import { Drash } from "../test_deps.ts";
 import { assert, assertEquals, connectWebSocket } from "../../../deps.ts";
 
 let storage: any = {
-  "Channel 1": {
+  "chan1": {
     messages: []
   },
-  "Channel 2": {
+  "chan2": {
     messages: []
   }
 };
@@ -50,64 +50,58 @@ console.log(
 // Set up the events
 
 socketServer
-  .createChannel("Channel 1")
-  .on("Channel 1", ((packet: any) => {
-    storage["Channel 1"].messages.push(packet.message);
+  .createChannel("chan1")
+  .on("chan1", ((packet: any) => {
+    storage["chan1"].messages.push(packet.message);
   }));
 
-socketServer
-  .createChannel("Channel 2")
-  .on("Channel 2", ((packet: any) => {
-    storage["Channel 2"].messages.push(packet.message);
-  }));
-
-Deno.test("Channel 1 should exist", () => {
-  assertEquals("Channel 1", socketServer.getChannel("Channel 1").name);
+Deno.test("chan1 should exist", () => {
+  assertEquals("chan1", socketServer.getChannel("chan1").name);
 });
 
-Deno.test("Channel 2 should exist", () => {
-  assertEquals("Channel 2", socketServer.getChannel("Channel 2").name);
+Deno.test("chan2 should exist again", () => {
+  socketServer
+    .createChannel("chan2")
+    .on("chan2", ((packet: any) => {
+      storage["chan2"].messages.push(packet.message);
+    }));
+  assertEquals("chan2", socketServer.getChannel("chan2").name);
 });
 
-Deno.test("Channel 2 should be closed", () => {
-  socketServer.closeChannel("Channel 2");
-  assertEquals(undefined, socketServer.getChannel("Channel 2"));
-});
-
-Deno.test("Channel 2 should exist again", () => {
-  socketServer.createChannel("Channel 2");
-  assertEquals("Channel 2", socketServer.getChannel("Channel 2").name);
-});
-
-Deno.test("Channel 1 should have 1 message", async () => {
-  await sendMessage("Channel 1", "This is a Channel 1 message.");
+Deno.test("chan1 should have 1 message", async () => {
+  await sendMessage("chan1", "This is a chan1 message.");
   assertEquals(
-    storage["Channel 1"].messages,
+    storage["chan1"].messages,
     [
-      "This is a Channel 1 message."
+      "This is a chan1 message."
     ]
   );
 });
 
-Deno.test("Channel 1 should have 2 messages", async () => {
-  await sendMessage("Channel 1", "This is a Channel 1 message #2.");
+Deno.test("chan1 should have 2 messages", async () => {
+  await sendMessage("chan1", "This is a chan1 message #2.");
   assertEquals(
-    storage["Channel 1"].messages,
+    storage["chan1"].messages,
     [
-      "This is a Channel 1 message.",
-      "This is a Channel 1 message #2.",
+      "This is a chan1 message.",
+      "This is a chan1 message #2.",
     ]
   );
 });
 
-Deno.test("Channel 2 should have 1 message", async () => {
-  await sendMessage("Channel 2", "This is a Channel 2 message.");
+Deno.test("chan2 should have 1 message", async () => {
+  await sendMessage("chan2", "This is a chan2 message.");
   assertEquals(
-    storage["Channel 2"].messages,
+    storage["chan2"].messages,
     [
-      "This is a Channel 2 message.",
+      "This is a chan2 message.",
     ]
   );
+});
+
+Deno.test("chan2 should be closed", () => {
+  socketServer.closeChannel("chan2");
+  assertEquals(undefined, socketServer.getChannel("chan2"));
 });
 
 Deno.test({
