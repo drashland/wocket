@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Drashland / Sockets</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss/dist/tailwind.min.css">
+  </head>
+  <body class="p-5">
+    <div class="mb-5">Open your console and enter the following.</div>
+    <pre class="mb-5"><code>socketClient.send("Channel 1", "Hello, world!");</code></pre>
+    <p><strong>Messages received from the socket server:</strong></p>
+    <ul id="messages"></ul>
+  </body>
+  <script>
+    /**
+     * @description
+     *    This SocketClient uses native WebSocket. It starts a connection and handles messages with the
+     *    socket server.
+     */
+    class SocketClient {
+
+      constructor(options) {
+        this.configs = {
+          hostname: options.hostname || "localhost",
+          port: options.port || "3000",
+        };
+        this.listening = {};
+        this.message_queue = [];
+        this.ready = true;
+        this.connection = new WebSocket(
+          `ws://${this.configs.hostname}:${this.configs.port}`
+        );
+        this.connection.addEventListener("message", (event) => {
+          this.handleEncodedMessage(event.data);
+        });
+        return this;
+      }
+
+      handleEncodedMessage(encodedMessage) {
+        encodedMessage.arrayBuffer().then((buffer) => {
+          const decodedMessage = new TextDecoder().decode(buffer);
+          const parsedMessage = JSON.parse(decodedMessage);
+          Object.keys(parsedMessage).forEach((channelOrEvent) => {
+            if (this.listening[channelOrEvent]) {
+              this.listening[channelOrEvent](parsedMessage[channelOrEvent]);
+            }
+          });
+        });
+      }
+
+      on(channelOrEvent, cb) {
+        if (this.connection.readyState === 1) {
+          if (!this.listening[channelOrEvent]) this.listening[channelOrEvent] = null;
+          this.listening[channelOrEvent] = cb;
+          const message = JSON.stringify({ listening_to: channelOrEvent });
+          const encoded = new TextEncoder().encode(message);
+          this.message_queue.push(encoded);
+          this.sendMessagesToServer();
+        } else {
+          setTimeout(() => this.on(channelOrEvent, cb), 5);
+        }
+      }
+
+      sendMessagesToServer() {
+        if (this.ready && this.message_queue.length) {
+          this.ready = false;
+          let message = null;
+          while (this.message_queue.length) {
+            message = new Uint8Array(this.message_queue[0].length);
+            message.set(this.message_queue.pop());
+          }
+          this.connection.send(message);
+          this.ready = true;
+          this.sendMessagesToServer();
+        }
+      }
+
+      send(channelOrEvent, message) {
+        if (channelOrEvent) {
+          message = JSON.stringify({ [channelOrEvent]: message });
+          message = new TextEncoder().encode(message);
+        }
+        this.message_queue.push(message);
+        this.sendMessagesToServer();
+      }
+    }
+
+    // Create the connection between this socket client and the socket server.
+    const socketClient = new SocketClient({
+      hostname: "localhost",
+      port: 3000
+    });
+
+    // When the socket server starts, it creates a channel named "Channel 1", so
+    // we set this socket client up to listen to that channel here. Any messages
+    // sent by the socket server to "Channel 1" will be handled by the callback
+    // below.
+    socketClient.on("Channel 1", (incomingMessage) => {
+      console.log("Message received from the server: " + JSON.stringify(incomingMessage));
+      const messages = document.getElementById("messages");
+      const li = document.createElement("li");
+      li.appendChild(document.createTextNode(incomingMessage.text));
+      messages.appendChild(li);
+    });
+  </script>
+</html>
