@@ -26,7 +26,7 @@ _Although Sockets has working code, it is still very much under development. API
 - [Integrating](#integrating)
 - Documentation (in progress)
 - [Features](#features)
-- [Road Map](#roadmap)
+- [Roadmap](#roadmap)
 - [Contributing](#contributing)
 - [License](#license)
 
