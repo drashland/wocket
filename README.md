@@ -21,6 +21,8 @@
 
 ## Getting Started
 
+Make sure you have [Deno](https://deno.land/) installed before getting started.
+
 To get you started as quickly as possible with a simple client and server, check out the following example app:
 
 * [Browser Console](./example_apps/browser_console)
