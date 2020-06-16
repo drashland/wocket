@@ -19,7 +19,9 @@ webServer.run({
   hostname: "localhost",
   port: 3001,
 });
-console.log(`Web server started on http://${webServer.hostname}:${webServer.port}`);
+console.log(
+  `Web server started on http://${webServer.hostname}:${webServer.port}`,
+);
 
 const socketServer = new SocketServer();
 socketServer.run({
