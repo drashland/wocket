@@ -19,6 +19,6 @@ This is an interactive application where you send messages through a web applica
 
 4. Start sending messages between clients.
 
-5. Your experience should be something similar to the following:
+Your experience should be something similar to the following:
 
 ![Screenshot](./screenshot.png)
