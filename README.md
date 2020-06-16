@@ -40,7 +40,7 @@ Sockets is composed of two parts:
 * A `SocketServer` class that is used to instantiate a socket server on the back-end
 
     ```typescript
-    import { SocketServer } from "https://deno.land/x/sockets/mod.ts";
+    import { SocketServer } from "https://deno.land/x/sockets@master/mod.ts";
     
     // Create the server
     const socketServer = new SocketServer();
