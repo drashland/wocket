@@ -32,7 +32,51 @@ We also have a more advanced example:
 * [Chat](./example_apps/chat)
 
 All example apps in the `example_apps` directory have their own `README.md` file. The `README.md` files have all the instructions you need to get started.
+
+# Integrating
+
+Sockets is composed of two parts:
+
+* A `SocketServer` class that is used to instantiate a socket server on the back-end
+
+    ```typescript
+    import { SocketServer } from "https://deno.land/x/sockets/mod.ts";
     
+    // Create the server
+    const socketServer = new SocketServer();
+    socketServer.run({
+      hostname: "localhost",
+      port: 3000
+    });
+    console.log(`Socket server started on ws://${socketServer.hostname}:${socketServer.port}`);
+
+    // Create Channel 1 and listen to messages sent to Channel 1 by clients
+    socketServer.createChannel("Channel 1")
+      .onMessage((packet: any) => {
+        console.log(packet);
+      });
+    ```
+
+* A client library that loads on the front-end
+
+    ```html
+    <script src="https://cdn.jsdelivr.net/gh/drashland/sockets@master/client.js"></script>
+    <script>
+      // Create the client
+      const socketClient = new SocketClient({
+        hostname: "localhost",
+        port: 3000
+      });
+
+      // Listen to messages sent to Channel 1 by the server
+      socketClient.on("Channel 1", (packet) => {
+        console.log(packet);
+      });
+
+      // Send a message to Channel 1
+      socketClient.send("Channel 1", "Deno + Sockets is cool!");
+    </script>
+    ```
 
 ## Features
     
