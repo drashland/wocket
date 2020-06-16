@@ -173,7 +173,7 @@ const sendMessage = () => {
   const message = messageInput.value;
   const messageString = `${username}: ${message}`;
 
-  socket.send(
+  socket.to(
     channelsDropdown.value,
     { channel: channelsDropdown.value, username: username, text: message },
   );
