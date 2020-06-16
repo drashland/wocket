@@ -19,6 +19,16 @@
 
 ---
 
+_Although Sockets has working code, it is still very much under development. APIs will change without notice. Sorry for any inconvenience!_
+
+## Table of Contents
+- [Getting Started](#getting-started)
+- [Integrating](#integrating)
+- Documentation (in progress)
+- [Features](#features)
+- [Road Map](#roadmap)
+- [License](#license)
+
 ## Getting Started
 
 To get you started as quickly as possible with a simple client and server, check out the following example app:
@@ -83,3 +93,7 @@ Sockets is composed of two parts:
 ## Roadmap
 
 - [ ] Auto-reconnection support
+
+## License
+
+By contributing your code, you agree to license your contribution under the [MIT License](./LICENSE).
