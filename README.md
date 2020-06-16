@@ -33,7 +33,7 @@ We also have a more advanced example:
 
 All example apps in the `example_apps` directory have their own `README.md` file. The `README.md` files have all the instructions you need to get started.
 
-# Integrating
+## Integrating
 
 Sockets is composed of two parts:
 
