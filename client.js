@@ -8,7 +8,7 @@
  *    to. Those methods are:
  *
  *        - on(); and
- *        - send()
+ *        - to()
  *
  *    Use these methods to interact with the connected socket server.
  *
@@ -17,8 +17,10 @@
  *    private, these methods are mainly for the SocketClient class' use.
  *
  *    Helpful links:
- *    - https://developer.mozilla.org/en-US/docs/Web/API/WebSocket
- *    - https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API/Writing_WebSocket_client_applications
+ *    - Learn more about the WebSocket API at the following address:
+ *          https://developer.mozilla.org/en-US/docs/Web/API/WebSocket
+ *    - Learn more about writing web socket client applications at the following address:
+ *          https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API/Writing_WebSocket_client_applications
  */
 class SocketClient {
 
@@ -80,7 +82,7 @@ class SocketClient {
    * @param {String} message
    *     The message to send to the channel or event.
    */
-  send(channelOrEvent, message) {
+  to(channelOrEvent, message) {
     if (channelOrEvent) {
       message = JSON.stringify({ [channelOrEvent]: message });
       message = new TextEncoder().encode(message);
