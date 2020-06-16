@@ -1,6 +1,6 @@
 # Chat
 
-This is an interactive client-server application where you send messages through a web application. The server receives the messages and broadcasts the messages to all clients. You can open multiple browser windows to act as multiple clients.
+This is an interactive application where you send messages through a web application. The socket server receives the messages and broadcasts the messages to all socket clients. You can open multiple browser windows to act as multiple socket clients.  The web application is served using [Drash](https://github.com/drashland/deno-drash). 
 
 1. Clone the repo and go into the `chat` directory.
 
