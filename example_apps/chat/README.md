@@ -5,8 +5,8 @@ This is an interactive client-server application where you send messages through
 1. Clone the repo and go into the `chat` directory.
 
     ```
-    git clone https://github.com/drashland/sockets.git
-    cd sockets/example_apps/chat
+    $ git clone https://github.com/drashland/sockets.git
+    $ cd sockets/example_apps/chat
     ```
 
 2. Start the server.
