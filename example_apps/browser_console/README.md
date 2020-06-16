@@ -1,12 +1,12 @@
 # Browser Console
 
-This is an interactive client-server application where you send messages to the server using your browser's console and receive messages from the server (displayed in the DOM).
+This is an interactive application where you send messages to the socket server using your browser's console and receive messages from the socket server. Messages received from the socket server will be displayed in the DOM.
 
 1. Create your `app.ts` file.
 
     ```typescript
     import { SocketServer } from "https://deno.land/x/sockets/mod.ts";
-    
+
     // Create the socket server
     const socketServer = new SocketServer();
     socketServer.run({
@@ -16,17 +16,17 @@ This is an interactive client-server application where you send messages to the 
     console.log(
       `Socket server started on ws://${socketServer.hostname}:${socketServer.port}`,
     );
-    
+
     // Listen for connections to the socket server
     socketServer.on("connection", () => {
       console.log("A user connected.");
     });
-    
+
     // Listen for disconnections from the socket server
     socketServer.on("disconnect", () => {
       console.log("A user disconnected.");
     });
-    
+
     // Create "Channel 1" so that clients can send messages to it
     socketServer
       .createChannel("Channel 1")
@@ -89,7 +89,7 @@ This is an interactive client-server application where you send messages to the 
     </html>
     ```
 
-4. Open up the `index.html` file and follow the instructions on the screen.
+4. Open up your `index.html` file and follow the instructions on the screen.
 
 Your experience should be something similar to the following:
 
