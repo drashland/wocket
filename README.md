@@ -27,6 +27,7 @@ _Although Sockets has working code, it is still very much under development. API
 - Documentation (in progress)
 - [Features](#features)
 - [Road Map](#roadmap)
+- [Contributing](#contributing)
 - [License](#license)
 
 ## Getting Started
@@ -93,6 +94,10 @@ Sockets is composed of two parts:
 ## Roadmap
 
 - [ ] Auto-reconnection support
+
+## Contributing
+
+Contributors are welcomed!
 
 ## License
 
