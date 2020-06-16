@@ -23,7 +23,6 @@
  *          https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API/Writing_WebSocket_client_applications
  */
 class SocketClient {
-
   /**
    * @description
    *     Construct an object of this class.
