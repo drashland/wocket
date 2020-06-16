@@ -19,7 +19,7 @@ webServer.run({
   hostname: "localhost",
   port: 3001,
 });
-console.log(`Web server started on ${webServer.hostname}:${webServer.port}`);
+console.log(`Web server started on http://${webServer.hostname}:${webServer.port}`);
 
 const socketServer = new SocketServer();
 socketServer.run({
@@ -27,7 +27,7 @@ socketServer.run({
   port: 3000,
 });
 console.log(
-  `Socket server started on ${socketServer.hostname}:${socketServer.port}`,
+  `Socket server started on ws://${socketServer.hostname}:${socketServer.port}`,
 );
 
 socketServer.on("connection", () => {
