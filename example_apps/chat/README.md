@@ -18,3 +18,7 @@ This is an interactive application where you send messages through a web applica
 3. Navigate to localhost:3001 in your browser. Remember, open additoinal browser windows to act as multiple clients.
 
 4. Start sending messages between clients.
+
+5. Your experience should be something similar to the following:
+
+![Screenshot](./screenshot.png)
