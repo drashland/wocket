@@ -17,6 +17,6 @@ This is an interactive client-server application where you send messages to the 
 
 3. Open `index.html` and follow the instructions on the screen.
 
-4. Your experience should be something similar to the following:
+Your experience should be something similar to the following:
 
 ![Screenshot](./screenshot.png)
