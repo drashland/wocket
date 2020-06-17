@@ -77,7 +77,7 @@ This is an interactive application where you send messages to the socket server 
     });
     </code></pre>
           <p class="mb-2">3. Send a message to the socket server.</p>
-    <pre class="mb-5 border-t border-r border-b border-l border-gray-400 rounded-b p-4 overflow-auto bg-gray-200"><code>socketClient.send("Channel 1", "Hello, world!");</code></pre>
+    <pre class="mb-5 border-t border-r border-b border-l border-gray-400 rounded-b p-4 overflow-auto bg-gray-200"><code>socketClient.to("Channel 1", "Hello, world!");</code></pre>
           </div>
           <div class="w-1/2 p-5">
             <p class="mb-5"><strong>Messages received from the socket server:</strong></p>
