@@ -61,6 +61,22 @@ export default class EventEmitter {
 
   /**
    * @description
+   *    Broadcasts a message to all receivers of a channel. pkgOrMessage does
+   *    not contain "from" key.
+   *
+   * @param string channelName
+   * @param any message
+   *     Message to be sent.
+   * 
+   * @return void
+   */
+  public broadcast(channelName: string, pkgOrMessage: any): void {
+    if (pkgOrMessage.from) delete pkgOrMessage.from;
+    this.to(channelName, pkgOrMessage);
+  }
+
+  /**
+   * @description
    *    Decodes and validates incoming messages.
    * 
    * @param MESSAGE_TYPE message
@@ -107,6 +123,26 @@ export default class EventEmitter {
   }
 
   /**
+   * @description
+   *     Create a new channel. Basically, this creates a new event that clients
+   *     can listen to. Ther server can also send messages to this new
+   *     event/channel.
+   *
+   * @param string name
+   *
+   * @return this
+   */
+  public createChannel(name: string): this {
+    this.channel_being_created = name;
+    if (!this.channels[name]) {
+      this.channels[name] = new Channel(name);
+      return this;
+    }
+
+    throw new Error(`Channel "${name}" already exists!`);
+  }
+
+  /**
    * @return any
    *     Return all clients.
    */
@@ -143,22 +179,21 @@ export default class EventEmitter {
 
   /**
    * @description
-   *     Create a new channel. Basically, this creates a new event that clients
-   *     can listen to. Ther server can also send messages to this new
-   *     event/channel.
-   *
-   * @param string name
-   *
-   * @return this
+   *     This is the same as creating a new channel (createChannel()), but for
+   *     internal use.
+   * 
+   * @param string channelName
+   *     The name of the channel.
+   * @param Function cb
+   *     Callback to be invoked when a message is sent to the channel.
+   * 
+   * @return void
    */
-  public createChannel(name: string): this {
-    this.channel_being_created = name;
+  public on(name: string, cb: Function): void {
     if (!this.channels[name]) {
       this.channels[name] = new Channel(name);
-      return this;
     }
-
-    throw new Error(`Channel "${name}" already exists!`);
+    this.channels[name].callbacks.push(cb);
   }
 
   /**
@@ -177,25 +212,6 @@ export default class EventEmitter {
   public onMessage(cb: Function): this {
     this.channels[this.channel_being_created].callbacks.push(cb);
     return this;
-  }
-
-  /**
-   * @description
-   *     This is the same as creating a new channel (createChannel()), but for
-   *     internal use.
-   * 
-   * @param string channelName
-   *     The name of the channel.
-   * @param Function cb
-   *     Callback to be invoked when a message is sent to the channel.
-   * 
-   * @return void
-   */
-  public on(name: string, cb: Function): void {
-    if (!this.channels[name]) {
-      this.channels[name] = new Channel(name);
-    }
-    this.channels[name].callbacks.push(cb);
   }
 
   /**
@@ -220,21 +236,6 @@ export default class EventEmitter {
 
     delete this.clients[clientId];
     this._handleReservedEventNames("disconnect", clientId);
-  }
-
-  /**
-   * @description
-   *    Broadcasts a message to all receivers of a channel.
-   *    pkgOrMessage does not contain "from" key.
-   * @param string channelName
-   * @param any message
-   *     Message to be sent.
-   * 
-   * @return void
-   */
-  public broadcast(channelName: string, pkgOrMessage: any): void {
-    if (pkgOrMessage.from) delete pkgOrMessage.from;
-    this.to(channelName, pkgOrMessage);
   }
 
   /**
