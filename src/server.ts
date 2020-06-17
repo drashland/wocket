@@ -9,12 +9,37 @@ import {
 import EventEmitter from "./event_emitter.ts";
 
 export default class SocketServer extends EventEmitter {
+  /**
+   * @description
+   *     A property to hold the Deno server. This property is set in this.run()
+   *     like so:
+   *
+   *         this.deno_server = serve();
+   *
+   * @property DenoServer any
+   */
   public deno_server: any;
+
+  /**
+   * @description
+   *     A property to hold the hostname this server listens on.
+   *
+   * @property string hostname
+   */
   public hostname: string = "localhost";
+
+  /**
+   * @description
+   *     A property to hold the port this server listens on.
+   * @property number port
+   */
   public port: number = 1557;
 
   // FILE MARKER - CONSTRUCTOR /////////////////////////////////////////////////
 
+  /**
+   * Construct an object of this class.
+   */
   constructor() {
     super();
   }
@@ -50,7 +75,7 @@ export default class SocketServer extends EventEmitter {
       this.port = options.port;
     }
 
-    this.deno_server = serve(`${this.hostname}:${this.port}`);
+    this.deno_server = serve(options);
 
     (async () => {
       for await (const req of this.deno_server) {
