@@ -76,7 +76,7 @@ export default class SocketServer extends EventEmitter {
       this.port = options.port;
     }
 
-    this.deno_server = serve(`${this.hostname}:${this.port}`);
+    this.deno_server = serve(options);
 
     (async () => {
       for await (const req of this.deno_server) {
