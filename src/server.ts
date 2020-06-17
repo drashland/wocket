@@ -9,7 +9,6 @@ import {
 import EventEmitter from "./event_emitter.ts";
 
 export default class SocketServer extends EventEmitter {
-
   /**
    * @description
    *     A property to hold the Deno server. This property is set in this.run()
