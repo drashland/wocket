@@ -7,6 +7,7 @@ import {
   serve,
 } from "../deps.ts";
 import EventEmitter from "./event_emitter.ts";
+import Transmitter from "./transmitter.ts";
 
 export default class SocketServer extends EventEmitter {
   /**
@@ -20,6 +21,7 @@ export default class SocketServer extends EventEmitter {
    */
   public deno_server: any;
 
+  public transmitter: any;
   /**
    * @description
    *     A property to hold the hostname this server listens on.
@@ -29,6 +31,20 @@ export default class SocketServer extends EventEmitter {
   public hostname: string = "localhost";
 
   /**
+   * @description
+   *     A property to determine number of ms to wait for a pong event before closing a client connection.
+   * @property ping interval
+   */
+  public pingInterval: any;
+
+    /**
+   * @description
+   *     A property to determine number of ms before sending a ping event to a connected client.
+   * @property ping timeout
+   */
+  public pingTimeout: any;
+
+    /**
    * @description
    *     A property to hold the port this server listens on.
    * @property number port
@@ -66,7 +82,7 @@ export default class SocketServer extends EventEmitter {
    *
    * @return Promise<DenoServer>
    */
-  public async run(options: HTTPOptions): Promise<DenoServer> {
+  public async run(options: HTTPOptions, transmitterOptions: any): Promise<DenoServer> {
     if (options.hostname) {
       this.hostname = options.hostname;
     }
@@ -75,7 +91,19 @@ export default class SocketServer extends EventEmitter {
       this.port = options.port;
     }
 
+    if (transmitterOptions.pingInterval) {
+      this.pingInterval = transmitterOptions.pingInterval;
+    }
+
+    if (transmitterOptions.pingTimeout) {
+      this.pingTimeout = transmitterOptions.pingTimeout;
+    }
+
     this.deno_server = serve(options);
+
+    if (this.pingInterval && this.pingInterval) {
+      this.transmitter = new Transmitter(this)
+    }
 
     (async () => {
       for await (const req of this.deno_server) {
@@ -89,11 +117,16 @@ export default class SocketServer extends EventEmitter {
         })
           .then(async (socket: WebSocket): Promise<void> => {
             const clientId = conn.rid;
-            super.addClient(clientId, socket);
+            const clientSocket = super.addClient(clientId, socket);
+            if (this.transmitter) {
+              this.transmitter.start(clientSocket);
+            }
 
             try {
               for await (const ev of socket) {
-                if (ev instanceof Uint8Array) {
+                if (ev === 'pong') {
+                  this.transmitter.pong_received = true;
+                } else if (ev instanceof Uint8Array) {
                   await super.checkEvent(ev, clientId);
                 } else if (isWebSocketCloseEvent(ev)) {
                   await super.removeClient(clientId);
@@ -111,7 +144,6 @@ export default class SocketServer extends EventEmitter {
           });
       }
     })();
-
     return this.deno_server;
   }
 }

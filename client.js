@@ -119,16 +119,20 @@ class SocketClient {
    *     The encoded message. See https://developer.mozilla.org/en-US/docs/Web/API/Body for more
    *     information about the Body mixin.
    */
-  _handleEncodedMessage(encodedMessage) {
-    encodedMessage.arrayBuffer().then((buffer) => {
-      const decodedMessage = this.decoder.decode(buffer);
-      const parsedMessage = JSON.parse(decodedMessage);
-      Object.keys(parsedMessage).forEach((channelOrEvent) => {
-        if (this.listening_to[channelOrEvent]) {
-          this.listening_to[channelOrEvent](parsedMessage[channelOrEvent]);
-        }
+  _handleEncodedMessage(message) {
+    if (message === 'ping') {
+      this._pongServer();
+    } else {
+      message.arrayBuffer().then((buffer) => {
+        const decodedMessage = this.decoder.decode(buffer);
+        const parsedMessage = JSON.parse(decodedMessage);
+        Object.keys(parsedMessage).forEach((channelOrEvent) => {
+          if (this.listening_to[channelOrEvent]) {
+            this.listening_to[channelOrEvent](parsedMessage[channelOrEvent]);
+          }
+        });
       });
-    });
+    }
   }
 
   /**
@@ -147,5 +151,9 @@ class SocketClient {
       this.ready = true;
       this._sendMessagesToSocketServer();
     }
+  }
+
+  _pongServer() {
+    this.connection.send('pong');
   }
 }
