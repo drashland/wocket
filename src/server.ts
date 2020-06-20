@@ -127,7 +127,7 @@ export default class SocketServer extends EventEmitter {
    *
    * @return Promise<DenoServer>
    */
-  public async run(options: HTTPSOptions): Promise<DenoServer> {
+  public async runTLS(options: HTTPSOptions): Promise<DenoServer> {
     if (options.hostname) {
       this.hostname = options.hostname;
     }
