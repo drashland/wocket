@@ -68,9 +68,11 @@ Sockets is composed of two parts:
 
 * A client library that loads on the front-end
 
-    ```html
-    <script src="https://cdn.jsdelivr.net/gh/drashland/sockets@master/client.js"></script>
-    <script>
+In a javascript module, here is an example:
+    
+```js
+      // Import the socket client
+      import { SocketClient } from 'https://cdn.jsdelivr.net/gh/drashland/sockets@master/client.js';
       // Create the client
       const socketClient = new SocketClient({
         hostname: "localhost",
@@ -84,8 +86,7 @@ Sockets is composed of two parts:
 
       // Send a message to Channel 1
       socketClient.send("Channel 1", "Deno + Sockets is cool!");
-    </script>
-    ```
+```
 
 ## Features
     
