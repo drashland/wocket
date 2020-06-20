@@ -9,7 +9,7 @@ socketServer.runTLS({
   keyFile: "./server.key",
 });
 console.log(
-  `Socket server started on ws://${socketServer.hostname}:${socketServer.port}`,
+  `Socket server started on wss://${socketServer.hostname}:${socketServer.port}`,
 );
 
 // Listen for connections to the socket server
