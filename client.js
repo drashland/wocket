@@ -33,7 +33,7 @@ class SocketClient {
     this.configs = {
       hostname: options.hostname || "localhost",
       port: options.port || "3000",
-      protocol: options.protocol || "ws"
+      protocol: options.protocol || "ws",
     };
     this.decoder = new TextDecoder();
     this.listening_to = {};

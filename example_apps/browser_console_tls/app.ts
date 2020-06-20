@@ -6,7 +6,7 @@ socketServer.runTLS({
   hostname: "localhost",
   port: 3000,
   certFile: "./server.crt",
-  keyFile: "./server.key"
+  keyFile: "./server.key",
 });
 console.log(
   `Socket server started on ws://${socketServer.hostname}:${socketServer.port}`,
