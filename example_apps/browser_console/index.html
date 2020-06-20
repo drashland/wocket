@@ -24,7 +24,7 @@
                     callback below (the second argument).
                 </p>
 				<pre class="mb-5 border-t border-r border-b border-l border-gray-400 rounded-b p-4 overflow-auto bg-gray-200">
-                    <code> 
+                    <code>
                         socketClient.on("Channel 1", (incomingMessage) => {
                             console.log(
                                 "Message received from the server: " + JSON.stringify(incomingMessage),
@@ -37,7 +37,7 @@
                     </code>
 				</pre>
 				<pre class="mb-5 border-t border-r border-b border-l border-gray-400 rounded-b p-4 overflow-auto bg-gray-200">
-					<code> 
+					<code>
                         import('https://cdn.jsdelivr.net/gh/drashland/sockets@master/client.js').then(({default: SocketClient}) => {
                             const socketClient = new SocketClient({
                                 hostname: "localhost",
@@ -68,6 +68,5 @@
 				<ul id="messages"></ul>
 			</div>
 		</div>
-		<script src="https://cdn.jsdelivr.net/gh/drashland/sockets@master/client.js"></script>
 	</body>
 </html>
