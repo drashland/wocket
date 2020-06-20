@@ -14,7 +14,7 @@ This is an interactive application where you send messages to the socket server 
       port: 3000,
     });
     console.log(
-      `Socket server started on ws://${socketServer.hostname}:${socketServer.port}`,
+      `Socket server started on wss://${socketServer.hostname}:${socketServer.port}`,
     );
 
     // Listen for connections to the socket server
