@@ -64,6 +64,7 @@ This is an interactive application where you send messages to the socket server 
             <p class="mb-5"><strong>Open your console and follow the instructions below.</strong></p>
             <p class="mb-2">1. Create a new connection to the socket server. This will be your socket client.</p>
     <pre class="mb-5 border-t border-r border-b border-l border-gray-400 rounded-b p-4 overflow-auto bg-gray-200"><code>const socketClient = new SocketClient({
+      protocol: "wss",
       hostname: "localhost",
       port: 3000,
     });</code></pre>
