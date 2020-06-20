@@ -33,6 +33,7 @@ class SocketClient {
     this.configs = {
       hostname: options.hostname || "localhost",
       port: options.port || "3000",
+      protocol: options.protocol || "ws",
     };
     this.decoder = new TextDecoder();
     this.listening_to = {};
@@ -97,7 +98,7 @@ class SocketClient {
    */
   _connectToSocketServer() {
     this.connection = new WebSocket(
-      `ws://${this.configs.hostname}:${this.configs.port}`,
+      `${this.configs.protocol}://${this.configs.hostname}:${this.configs.port}`,
     );
   }
 
