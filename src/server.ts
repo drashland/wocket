@@ -117,25 +117,28 @@ export default class SocketServer extends EventEmitter {
         })
           .then(async (socket: WebSocket): Promise<void> => {
             const clientId = conn.rid;
-            const clientSocket = super.addClient(clientId, socket);
+            super.addClient(clientId, socket);
+            this.transmitter._handleReservedEventNames("connection", clientId);
             if (this.transmitter) {
-              this.transmitter.start(clientSocket);
+              this.transmitter.start(clientId);
             }
 
             try {
               for await (const ev of socket) {
                 if (ev === 'pong') {
-                  this.transmitter.pong_received = true;
+                  this.transmitter._handleReservedEventNames('pong', clientId);
                 } else if (ev instanceof Uint8Array) {
-                  await super.checkEvent(ev, clientId);
+                  await this.transmitter.checkEvent(ev, clientId);
                 } else if (isWebSocketCloseEvent(ev)) {
                   await super.removeClient(clientId);
+                  this.transmitter._handleReservedEventNames("disconnect", clientId);
                 }
               }
             } catch (e) {
               if (!socket.isClosed) {
                 await socket.close(1000).catch(console.error);
                 await super.removeClient(clientId);
+                this.transmitter._handleReservedEventNames("disconnect", clientId);
               }
             }
           })

@@ -109,6 +109,10 @@ class SocketClient {
     this.connection.addEventListener("message", (event) => {
       this._handleEncodedMessage(event.data);
     });
+    this.connection.addEventListener("error", (event) => {
+      // send error message to server
+      this.to('error', event);
+    });
   }
 
   /**
@@ -120,9 +124,9 @@ class SocketClient {
    *     information about the Body mixin.
    */
   _handleEncodedMessage(message) {
-    if (message === 'ping') {
+    if (typeof message === 'string' && 'ping') {
       this._pongServer();
-    } else {
+    } else if (typeof message === 'object') {
       message.arrayBuffer().then((buffer) => {
         const decodedMessage = this.decoder.decode(buffer);
         const parsedMessage = JSON.parse(decodedMessage);
@@ -154,6 +158,6 @@ class SocketClient {
   }
 
   _pongServer() {
-    this.connection.send('pong');
+    this.connection.send('pong')
   }
 }
