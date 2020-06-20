@@ -98,7 +98,7 @@ class SocketClient {
    */
   _connectToSocketServer() {
     this.connection = new WebSocket(
-      `ws://${this.configs.hostname}:${this.configs.port}`,
+      `${this.configs.protocol}://${this.configs.hostname}:${this.configs.port}`,
     );
   }
 
