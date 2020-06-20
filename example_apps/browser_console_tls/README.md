@@ -9,7 +9,7 @@ This is an interactive application where you send messages to the socket server 
 
     // Create the socket server
     const socketServer = new SocketServer();
-    socketServer.run({
+    socketServer.runTLS({
       hostname: "localhost",
       port: 3000,
     });
@@ -47,7 +47,7 @@ This is an interactive application where you send messages to the socket server 
     $ deno run --allow-net app.ts
     ```
 
-3. Create your `index.html` file. This file contains `<script src="https://cdn.jsdelivr.net/gh/drashland/sockets@master/client.js"></script>`, which is Sockets' `SocketClient` class. It has an API that is nearly identical to the `SocketServer` class.
+3. Create your `index.html` file. This file contains `<script src="https://cdn.jsdelivr.net/gh/drashland/sockets@master/client.js"></script>`, which is Sockets' `SocketClient` class.
 
     ```html
     <!DOCTYPE html>
