@@ -12,6 +12,8 @@ This is an interactive application where you send messages to the socket server 
     socketServer.runTLS({
       hostname: "localhost",
       port: 3000,
+      certFile: "/path/to/file.crt",
+      keyFile: "/path/to/file.key",
     });
     console.log(
       `Socket server started on wss://${socketServer.hostname}:${socketServer.port}`,
