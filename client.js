@@ -22,7 +22,7 @@
  *    - Learn more about writing web socket client applications at the following address:
  *          https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API/Writing_WebSocket_client_applications
  */
-class SocketClient {
+export class SocketClient {
   /**
    * @description
    *     Construct an object of this class.
@@ -30,11 +30,12 @@ class SocketClient {
    * @return {SocketClient}
    */
   constructor(options) {
-    this.configs = {
+    this.config = {
       hostname: options.hostname || "localhost",
       port: options.port || "3000",
       reconnect: options.reconnect || true,
       protocol: options.protocol || "ws",
+      autoreconnect: options.autoreconnect || true
     };
     this.decoder = new TextDecoder();
     this.reconnectCount = 0;
@@ -50,13 +51,13 @@ class SocketClient {
 
   /**
    * @description
-   *     On receipt of a message in the following channel or on the following event, perform the
-   *     specified callback.
+   * On receipt of a message in the following channel or on the following event, perform the
+   * specified callback.
    *
    * @param {String} channelOrEvent
-   *     The name of the channel or event.
+   * The name of the channel or event.
    * @param {Function} callback
-   *     The callback to execute on receipt of a message from the channel or event.
+   * The callback to execute on receipt of a message from the channel or event.
    */
   on(channelOrEvent, callback) {
     if (this._isClientReady()) {
@@ -75,12 +76,12 @@ class SocketClient {
 
   /**
    * @description
-   *     Send a message to a channel or an event.
+   * Send a message to a channel or an event.
    *
    * @param {String} channelOrEvent
-   *     The name of the channel or event.
+   * The name of the channel or event.
    * @param {String} message
-   *     The message to send to the channel or event.
+   * The message to send to the channel or event.
    */
   to(channelOrEvent, message) {
     if (channelOrEvent) {
@@ -94,6 +95,7 @@ class SocketClient {
   // FILE MARKER - METHODS FOR INTERNAL USE ////////////////////////////////////////////////////////
 
   /**
+<<<<<<< HEAD
    * Check if connection is ready for events.
    */
   _isClientReady() {
@@ -112,23 +114,44 @@ class SocketClient {
 
   /**
    * Connect to the socket server at the hostname and port specified in the configs.
+=======
+   * @description
+   * Connect to the socket server at the hostname and port specified in the config.
+>>>>>>> 9699bc3... Initial simple autoreconnect.
    */
   _connectToSocketServer(reconnect) {
     const previousId = reconnect ? this.connection.id : null;
 
     this.connection = new WebSocket(
-      `${this.configs.protocol}://${this.configs.hostname}:${this.configs.port}`,
+      `${this.config.protocol}://${this.config.hostname}:${this.config.port}`
     );
+<<<<<<< HEAD
 
     if (previousId) {
       this._reconnectSuccessful(previousId);
     }
     this._listenToSocketClientEvents();
+=======
+    this.connection.addEventListener("open", (event) => {
+      console.log(event);
+      this.connected = true;
+      this._sendMessagesToSocketServer()
+    });
+    this.connection.addEventListener("close", (event) => {
+      console.log(event);
+      this.connected = false;
+      this._connectToSocketServer();
+    });
+>>>>>>> 9699bc3... Initial simple autoreconnect.
   }
 
   /**
    * @description
+<<<<<<< HEAD
    *     Listen to events attached to the client.
+=======
+   * Listen to messages from sent by the socket server.
+>>>>>>> 9699bc3... Initial simple autoreconnect.
    */
   _listenToSocketClientEvents() {
     this.connection.addEventListener("message", (event) => {
@@ -145,11 +168,11 @@ class SocketClient {
 
   /**
    * @description
-   *     All messages received by the socket server will be handled by this method.
+   * All messages received by the socket server will be handled by this method.
    *
    * @param {Body}
-   *     The encoded message. See https://developer.mozilla.org/en-US/docs/Web/API/Body for more
-   *     information about the Body mixin.
+   * The encoded message. See https://developer.mozilla.org/en-US/docs/Web/API/Body for more
+   * Information about the Body mixin.
    */
   _handleEncodedMessage(message) {
     if (typeof message === "string" && "ping") {
@@ -169,19 +192,30 @@ class SocketClient {
 
   /**
    * @description
-   *     Send all messages in the message queue to the socket server.
+   * Send all messages in the message queue to the socket server.
    */
   _sendMessagesToSocketServer() {
+<<<<<<< HEAD
     if (this._isClientReady() && this.ready && this.message_queue.length) {
       this.ready = false;
       let message = null;
       while (this.message_queue.length) {
         message = new Uint8Array(this.message_queue[0].length);
         message.set(this.message_queue.pop());
+=======
+    if (this.connected) {
+      if (this.ready && this.message_queue.length) {
+        this.ready = false;
+        let message = null;
+        while (this.message_queue.length) {
+          message = new Uint8Array(this.message_queue[0].length);
+          message.set(this.message_queue.pop());
+        }
+        this.connection.send(message);
+        this.ready = true;
+        this._sendMessagesToSocketServer();
+>>>>>>> 9699bc3... Initial simple autoreconnect.
       }
-      this.connection.send(message);
-      this.ready = true;
-      this._sendMessagesToSocketServer();
     }
   }
 
