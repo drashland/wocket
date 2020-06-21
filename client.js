@@ -60,7 +60,11 @@ export class SocketClient {
    * The callback to execute on receipt of a message from the channel or event.
    */
   on(channelOrEvent, callback) {
+<<<<<<< HEAD
     if (this._isClientReady()) {
+=======
+    if (this.connected) {
+>>>>>>> 615cef1... Change usages of this.connection.readyState === 1 to use this.connected
       if (!this.listening_to[channelOrEvent]) {
         this.listening_to[channelOrEvent] = null;
       }
