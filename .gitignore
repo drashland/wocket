@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # files
 .DS_Store
 
@@ -7,3 +8,16 @@ tmp/*
 # exceptions
 !.gitkeep
 
+=======
+# files
+.DS_Store
+
+# directories
+tmp/*
+
+# exceptions
+!.gitkeep
+
+# example app
+example_app/config.ts
+>>>>>>> da751c0... Merge latest master changes and resolve merge conflicts.
