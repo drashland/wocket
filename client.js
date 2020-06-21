@@ -196,12 +196,17 @@ export class SocketClient {
    */
   _sendMessagesToSocketServer() {
 <<<<<<< HEAD
+<<<<<<< HEAD
     if (this._isClientReady() && this.ready && this.message_queue.length) {
+=======
+    if (this.connected && this.ready && this.message_queue.length) {
+>>>>>>> 40fc4da... Change extra if to &&.
       this.ready = false;
       let message = null;
       while (this.message_queue.length) {
         message = new Uint8Array(this.message_queue[0].length);
         message.set(this.message_queue.pop());
+<<<<<<< HEAD
 =======
     if (this.connected) {
       if (this.ready && this.message_queue.length) {
@@ -215,7 +220,12 @@ export class SocketClient {
         this.ready = true;
         this._sendMessagesToSocketServer();
 >>>>>>> 9699bc3... Initial simple autoreconnect.
+=======
+>>>>>>> 40fc4da... Change extra if to &&.
       }
+      this.connection.send(message);
+      this.ready = true;
+      this._sendMessagesToSocketServer();
     }
   }
 
