@@ -138,7 +138,9 @@ export class SocketClient {
 =======
     this.connection.addEventListener("open", (event) => {
       console.log(event);
-      this.connected = true;
+      if (this.connection.readyState === 1) {
+              this.connected = true;
+      }
       this._sendMessagesToSocketServer()
     });
     this.connection.addEventListener("close", (event) => {
