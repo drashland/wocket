@@ -22,7 +22,7 @@
  *    - Learn more about writing web socket client applications at the following address:
  *          https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API/Writing_WebSocket_client_applications
  */
-export class SocketClient {
+class SocketClient {
   /**
    * @description
    *     Construct an object of this class.

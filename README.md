@@ -68,25 +68,13 @@ Sockets is composed of two parts:
 
 * A client library that loads on the front-end
 
-In a javascript module, here is an example:
-    
-```js
-      // Import the socket client
-      import { SocketClient } from 'https://cdn.jsdelivr.net/gh/drashland/sockets@master/client.js';
-      // Create the client
-      const socketClient = new SocketClient({
-        hostname: "localhost",
-        port: 3000
-      });
+    ```html
+    <script src="https://cdn.jsdelivr.net/gh/drashland/sockets@master/client.js">
+    ```
 
-      // Listen to messages sent to Channel 1 by the server
-      socketClient.on("Channel 1", (packet) => {
-        console.log(packet);
-      });
-
-      // Send a message to Channel 1
-      socketClient.send("Channel 1", "Deno + Sockets is cool!");
-```
+    ```html
+    <script type="module" src="https://cdn.jsdelivr.net/gh/drashland/sockets@master/client-module.js">
+    ```
 
 ## Features
     
