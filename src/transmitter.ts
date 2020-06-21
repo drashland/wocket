@@ -68,6 +68,10 @@ export default class Transmitter {
           });
         }
         break;
+      case "reconnect":
+          // do something on an reconnect event
+          // could be useful to add a flag to this client
+        break;
       case "pong":
         if (!this.server.clients[clientId]) {
           this.server.addClient(clientId, socket);
