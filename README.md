@@ -53,20 +53,6 @@ Sockets is composed of two parts:
 
     ```typescript
     import { SocketServer } from "https://deno.land/x/sockets@master/mod.ts";
-    
-    // Create the server
-    const socketServer = new SocketServer();
-    socketServer.run({
-      hostname: "localhost",
-      port: 3000
-    });
-    console.log(`Socket server started on ws://${socketServer.hostname}:${socketServer.port}`);
-
-    // Create Channel 1 and listen to messages sent to Channel 1 by clients
-    socketServer.createChannel("Channel 1")
-      .onMessage((packet: any) => {
-        console.log(packet);
-      });
     ```
 
 * A client library that loads on the front-end
