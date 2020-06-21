@@ -137,16 +137,18 @@ export class SocketClient {
     this._listenToSocketClientEvents();
 =======
     this.connection.addEventListener("open", (event) => {
-      console.log(event);
+      console.log('Socket connection opened:', event);
       if (this.connection.readyState === 1) {
         this.connected = true;
       }
       this._sendMessagesToSocketServer()
     });
     this.connection.addEventListener("close", (event) => {
-      console.log(event);
+      console.log('Socket connection closed:', event);
       this.connected = false;
-      this._connectToSocketServer();
+      if (this.config.autoreconnect) {
+        this._connectToSocketServer();
+      }
     });
 >>>>>>> 9699bc3... Initial simple autoreconnect.
   }
