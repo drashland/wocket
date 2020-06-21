@@ -415,8 +415,8 @@ class SocketClient {
       this.ready = false;
       let message = null;
       if (this.message_queue.length) {
-        message = new Uint8Array(this.message_queue[0].length);
-        message.set(this.message_queue.pop());
+        message = new Uint8Array(this.message_queue[0]);
+        message.set(this.message_queue.shift());
       }
       this.connection.send(message);
       this.ready = true;
