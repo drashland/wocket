@@ -203,7 +203,7 @@ export class SocketClient {
 >>>>>>> 40fc4da... Change extra if to &&.
       this.ready = false;
       let message = null;
-      while (this.message_queue.length) {
+      if (this.message_queue.length) {
         message = new Uint8Array(this.message_queue[0].length);
         message.set(this.message_queue.pop());
 <<<<<<< HEAD
