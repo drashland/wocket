@@ -63,63 +63,48 @@ This is an interactive application where you send messages to the socket server 
               <strong>Open your console and follow the instructions below.</strong>
             </p>
             <p class="mb-2">1. Create a new connection to the socket server. This will be your socket client.</p>
-            <pre class="mb-5 border-t border-r border-b border-l border-gray-400 rounded-b p-4 overflow-auto bg-gray-200">
-                <code>
-                  import('https://cdn.jsdelivr.net/gh/drashland/sockets@master/client.js').then(({default: SocketClient}) => {
-                      const socketClient = new SocketClient({
-                          hostname: "localhost",
-                          port: 3000,
-                      });
-                  });
-                </code>
-            </pre>
-            <p class="mb-2">
-              2. When the socket server starts, it creates a channel named "Channel 1", so we set this socket client up to listen to that channel here. Any messages sent by the socket server to "Channel 1" will be handled by the
-              callback below (the second argument).
-            </p>
-            <pre class="mb-5 border-t border-r border-b border-l border-gray-400 rounded-b p-4 overflow-auto bg-gray-200">
-              <code>
-                import('https://cdn.jsdelivr.net/gh/drashland/sockets@master/client.js').then(({default: SocketClient}) => {
-                    const socketClient = new SocketClient({
-                        hostname: "localhost",
-                        port: 3000,
-                    });
-
-                    socketClient.on("Channel 1", (incomingMessage) => {
-                        console.log(
-                            "Message received from the server: " + JSON.stringify(incomingMessage),
-                        );
-                        const messages = document.getElementById("messages");
-                        const li = document.createElement("li");
-                        li.appendChild(document.createTextNode(incomingMessage.text));
-                        messages.appendChild(li);
-                    });
-                });
-              </code>
-            </pre>
+            <pre class="mb-5 border-t border-r border-b border-l border-gray-400 rounded-b p-4 overflow-auto bg-gray-200"><code>import('https://cdn.jsdelivr.net/gh/drashland/sockets@master/client.js').then(({default: SocketClient}) => {
+      const socketClient = new SocketClient({
+        hostname: "localhost",
+        port: 3000,
+      });
+    });</code></pre>
+            <p class="mb-2">2. When the socket server starts, it creates a channel named "Channel 1", so we set this socket client up to listen to that channel here. Any messages sent by the socket server to "Channel 1" will be handled by the callback below (the second argument).</p>
+            <pre class="mb-5 border-t border-r border-b border-l border-gray-400 rounded-b p-4 overflow-auto bg-gray-200"><code>import('https://cdn.jsdelivr.net/gh/drashland/sockets@master/client.js').then(({default: SocketClient}) => {
+      const socketClient = new SocketClient({
+        hostname: "localhost",
+        port: 3000,
+      });
+    
+      socketClient.on("Channel 1", (incomingMessage) => {
+        console.log(
+          "Message received from the server: " + JSON.stringify(incomingMessage),
+        );
+        const messages = document.getElementById("messages");
+        const li = document.createElement("li");
+        li.appendChild(document.createTextNode(incomingMessage.text));
+        messages.appendChild(li);
+      });
+    });</code></pre>
             <p class="mb-2">3. Send a message to the socket server.</p>
-            <pre class="mb-5 border-t border-r border-b border-l border-gray-400 rounded-b p-4 overflow-auto bg-gray-200">
-              <code>
-                import('https://cdn.jsdelivr.net/gh/drashland/sockets@master/client.js').then(({default: SocketClient}) => {
-                    const socketClient = new SocketClient({
-                        hostname: "localhost",
-                        port: 3000,
-                    });
-
-                    socketClient.on("Channel 1", (incomingMessage) => {
-                        console.log(
-                            "Message received from the server: " + JSON.stringify(incomingMessage),
-                        );
-                        const messages = document.getElementById("messages");
-                        const li = document.createElement("li");
-                        li.appendChild(document.createTextNode(incomingMessage.text));
-                        messages.appendChild(li);
-                    });
-
-                    socketClient.to("Channel 1", "Hello, world!");
-                });
-              </code>
-            </pre>
+            <pre class="mb-5 border-t border-r border-b border-l border-gray-400 rounded-b p-4 overflow-auto bg-gray-200"><code>import('https://cdn.jsdelivr.net/gh/drashland/sockets@master/client.js').then(({default: SocketClient}) => {
+      const socketClient = new SocketClient({
+        hostname: "localhost",
+        port: 3000,
+      });
+    
+      socketClient.on("Channel 1", (incomingMessage) => {
+        console.log(
+          "Message received from the server: " + JSON.stringify(incomingMessage),
+        );
+        const messages = document.getElementById("messages");
+        const li = document.createElement("li");
+        li.appendChild(document.createTextNode(incomingMessage.text));
+        messages.appendChild(li);
+      });
+    
+      socketClient.to("Channel 1", "Hello, world!");
+    });</code></pre>
           </div>
           <div class="w-1/2 p-5">
             <p class="mb-5">
