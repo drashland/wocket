@@ -99,4 +99,21 @@ This is an interactive application where you send messages to the socket server 
 
 Your experience should be something similar to the following:
 
+```
+const socketClient = new SocketClient({ hostname: 'localhost', port: 3000 });
+
+socketClient.on("Channel 1", (incomingMessage) => {
+  console.log(
+    "Message received from the server: " + JSON.stringify(incomingMessage),
+  );
+  const messages = document.getElementById("messages");
+  const li = document.createElement("li");
+  li.appendChild(document.createTextNode(incomingMessage.text));
+  messages.appendChild(li);
+});
+
+socketClient.to("Channel 1", "Hello World!")
+
+```
+
 ![Screenshot](./screenshot.png)

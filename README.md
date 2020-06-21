@@ -6,6 +6,9 @@
 </p>
 <p align="center">A WebSocket library for <a href="https://github.com/denoland/deno">Deno</a>.</p>
 <p align="center">
+  <a href="https://github.com/drashland/socketse/releases">
+    <img src="https://img.shields.io/github/release/drashland/sockets.svg?color=bright_green&label=latest">
+  </a>
   <a href="https://github.com/drashland/sockets/actions">
     <img src="https://img.shields.io/github/workflow/status/drashland/sockets/master?label=ci">
   </a>
