@@ -66,7 +66,7 @@ Sockets is composed of two parts:
     ```
 
 ## Features
-    
+
 - Binary-support
 
 ## Roadmap
