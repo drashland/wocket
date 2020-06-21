@@ -122,6 +122,11 @@ class SocketClient {
    */
   _listenToSocketServerMessages() {
     this.connection.addEventListener("message", (event) => {
+      if (event.data.constructor && event.data.constructor.name) {
+        if (event.data.constructor.name == "Blob") {
+          return this.file_reader.readAsText(event.data);
+        }
+      }
       this._handleEncodedMessage(event.data);
     });
   }
@@ -147,9 +152,9 @@ class SocketClient {
    *     Handle a JSON message.
    */
   _handleJsonMessage(json) {
-    Object.keys(parsedMessage).forEach((channelOrEvent) => {
+    Object.keys(json).forEach((channelOrEvent) => {
       if (this.listening_to[channelOrEvent]) {
-        this.listening_to[channelOrEvent](parsedMessage[channelOrEvent]);
+        this.listening_to[channelOrEvent](json[channelOrEvent]);
       }
     });
   }

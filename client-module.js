@@ -36,12 +36,14 @@ export class SocketClient {
       protocol: options.protocol || "ws",
     };
     this.decoder = new TextDecoder();
+    this.file_reader = new FileReader();
     this.listening_to = {};
     this.message_queue = [];
     this.ready = true;
 
     this._connectToSocketServer();
     this._listenToSocketServerMessages();
+    this._listenToBlobReading();
 
     return this;
   }
@@ -104,10 +106,27 @@ export class SocketClient {
 
   /**
    * @description
+   *     Listen to when Blobs are being loaded and read. Code taken from the following link:
+   *     https://medium.com/programmers-developers/convert-blob-to-string-in-javascript-944c15ad7d52
+   */
+  _listenToBlobReading() {
+    this.file_reader.addEventListener('loadend', (e) => {
+      const json = JSON.parse(e.srcElement.result);
+      this._handleJsonMessage(json);
+    });
+  }
+
+  /**
+   * @description
    *     Listen to messages from sent by the socket server.
    */
   _listenToSocketServerMessages() {
     this.connection.addEventListener("message", (event) => {
+      if (event.data.constructor && event.data.constructor.name) {
+        if (event.data.constructor.name == "Blob") {
+          return this.file_reader.readAsText(event.data);
+        }
+      }
       this._handleEncodedMessage(event.data);
     });
   }
@@ -123,12 +142,20 @@ export class SocketClient {
   _handleEncodedMessage(encodedMessage) {
     encodedMessage.arrayBuffer().then((buffer) => {
       const decodedMessage = this.decoder.decode(buffer);
-      const parsedMessage = JSON.parse(decodedMessage);
-      Object.keys(parsedMessage).forEach((channelOrEvent) => {
-        if (this.listening_to[channelOrEvent]) {
-          this.listening_to[channelOrEvent](parsedMessage[channelOrEvent]);
-        }
-      });
+      const json = JSON.parse(decodedMessage);
+      this._handleJsonMessage(json);
+    });
+  }
+
+  /**
+   * @description
+   *     Handle a JSON message.
+   */
+  _handleJsonMessage(json) {
+    Object.keys(json).forEach((channelOrEvent) => {
+      if (this.listening_to[channelOrEvent]) {
+        this.listening_to[channelOrEvent](json[channelOrEvent]);
+      }
     });
   }
 
