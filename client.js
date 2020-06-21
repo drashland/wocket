@@ -110,7 +110,7 @@ class SocketClient {
    *     https://medium.com/programmers-developers/convert-blob-to-string-in-javascript-944c15ad7d52
    */
   _listenToBlobReading() {
-    this.file_reader.addEventListener('loadend', (e) => {
+    this.file_reader.addEventListener("loadend", (e) => {
       const json = JSON.parse(e.srcElement.result);
       this._handleJsonMessage(json);
     });
