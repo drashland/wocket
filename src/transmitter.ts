@@ -40,7 +40,7 @@ export default class Transmitter {
 
     for await (let channelName of Object.keys(parsedMessage)) {
       if (RESERVED_EVENT_NAMES.includes(channelName)) {
-        this._handleReservedEventNames(parsedMessage[channelName], clientId);
+        this.handleReservedEventNames(parsedMessage[channelName], clientId);
       } else if (this.server.channels[channelName]) {
         await this.server.sender.invokeCallback({
           ...this.server.channels[channelName],
@@ -58,7 +58,7 @@ export default class Transmitter {
    *
    * @return void
    */
-  private _handleReservedEventNames(eventName: string, clientId: number): void {
+  public handleReservedEventNames(eventName: string, clientId: number, socket?: any): void {
     switch (eventName) {
       case "connection":
       case "disconnect":
@@ -69,7 +69,12 @@ export default class Transmitter {
         }
         break;
       case "pong":
-        this.server.clients[clientId].pong_received = true;
+        if (!this.server.clients[clientId]) {
+          this.server.addClient(clientId, socket);
+          this.start(clientId);
+        } else {
+          this.server.clients[clientId].pong_received = true;
+        }
         break;
       case "error":
         // do something when client errors
@@ -82,9 +87,14 @@ export default class Transmitter {
 
   public start(clientId: number) {
     this.server.clients[clientId].pong_received = true;
-    setInterval(() => {
-      this._ping(clientId)
-    }, this.pingInterval);
+    this.server.clients[clientId].heartbeat = setInterval(() => this._ping(clientId), this.pingInterval);
+  }
+
+  private _timeoutPing(clientId: number) {
+    if (this.server.clients[clientId]) {
+      this.server.removeClient(clientId);
+      clearInterval(this.server.clients[clientId].heartbeat);
+    }
   }
 
   private _ping(clientId: number) {
@@ -94,7 +104,7 @@ export default class Transmitter {
         client.socket.send('ping');
         client.pong_received = false;
       } else {
-        setTimeout(() => this._ping(clientId), this.pingTimeout);
+        setTimeout(() => this._timeoutPing(clientId), this.pingTimeout);
       }
     }
   }

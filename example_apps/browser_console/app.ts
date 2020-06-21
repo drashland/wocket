@@ -6,7 +6,7 @@ socketServer.run({
   hostname: "localhost",
   port: 3000,
 }, {
-  pingInterval: 10000,
+  pingInterval: 20000,
   pingTimeout: 20000,
 });
 console.log(
