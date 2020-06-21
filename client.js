@@ -150,7 +150,13 @@ export class SocketClient {
         this._connectToSocketServer();
       }
     });
+<<<<<<< HEAD
 >>>>>>> 9699bc3... Initial simple autoreconnect.
+=======
+    this.connection.addEventListener("error", (event) => {
+      console.error('Socket ERROR:', event);
+    });
+>>>>>>> c3fd803... console.error() socket errors.
   }
 
   /**
