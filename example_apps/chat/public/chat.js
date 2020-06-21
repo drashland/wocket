@@ -1,3 +1,5 @@
+import { SocketClient } from "https://cdn.jsdelivr.net/gh/drashland/sockets@master/client.js";
+
 // Create a new socket client. This class comes from /public/client.js.
 const socket = new SocketClient({
   hostname: SOCKET_SERVER.hostname,
