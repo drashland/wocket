@@ -47,7 +47,7 @@ This is an interactive application where you send messages to the socket server 
     $ deno run --allow-net app.ts
     ```
 
-3. Create your `index.html` file. This file contains `<script src="https://cdn.jsdelivr.net/gh/drashland/sockets@master/client.js"></script>`, which is Sockets' `SocketClient` class. It has an API that is nearly identical to the `SocketServer` class.
+3. Create your `index.html` file. This file contains an import for https://cdn.jsdelivr.net/gh/drashland/sockets@master/client.js, which is Sockets' `SocketClient` class. It has an API that is nearly identical to the `SocketServer` class.
 
     ```html
     <!DOCTYPE html>
@@ -84,7 +84,13 @@ This is an interactive application where you send messages to the socket server 
             <ul id="messages"></ul>
           </div>
         </div>
-        <script src="https://cdn.jsdelivr.net/gh/drashland/sockets@master/client.js"></script>
+        <script>
+          let SocketClient;
+          import("https://cdn.jsdelivr.net/gh/drashland/sockets@master/client-module.js")
+            .then((Module) => {
+              SocketClient = Module.SocketClient;
+            });
+        </script>
       </body>
     </html>
     ```
@@ -92,5 +98,22 @@ This is an interactive application where you send messages to the socket server 
 4. Open up your `index.html` file and follow the instructions on the screen.
 
 Your experience should be something similar to the following:
+
+```
+const socketClient = new SocketClient({ hostname: 'localhost', port: 3000 });
+
+socketClient.on("Channel 1", (incomingMessage) => {
+  console.log(
+    "Message received from the server: " + JSON.stringify(incomingMessage),
+  );
+  const messages = document.getElementById("messages");
+  const li = document.createElement("li");
+  li.appendChild(document.createTextNode(incomingMessage.text));
+  messages.appendChild(li);
+});
+
+socketClient.to("Channel 1", "Hello World!")
+
+```
 
 ![Screenshot](./screenshot.png)
