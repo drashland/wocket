@@ -33,15 +33,15 @@ class SocketClient {
     this.configs = {
       hostname: options.hostname || "localhost",
       port: options.port || "3000",
+      reconnect: options.reconnect || true,
     };
     this.decoder = new TextDecoder();
+    this.reconnectionCount = 0;
     this.listening_to = {};
     this.message_queue = [];
     this.ready = true;
 
     this._connectToSocketServer();
-    this._listenToSocketServerMessages();
-
     return this;
   }
 
@@ -58,7 +58,7 @@ class SocketClient {
    *     The callback to execute on receipt of a message from the channel or event.
    */
   on(channelOrEvent, callback) {
-    if (this.connection.readyState === 1) {
+    if (this._isClientReady()) {
       if (!this.listening_to[channelOrEvent]) {
         this.listening_to[channelOrEvent] = null;
       }
@@ -92,6 +92,10 @@ class SocketClient {
 
   // FILE MARKER - METHODS FOR INTERNAL USE ////////////////////////////////////////////////////////
 
+  _isClientReady() {
+    this.connection.readyState === 1;
+  }
+
   /**
    * Connect to the socket server at the hostname and port specified in the configs.
    */
@@ -99,19 +103,30 @@ class SocketClient {
     this.connection = new WebSocket(
       `ws://${this.configs.hostname}:${this.configs.port}`,
     );
+    this._listenToSocketClientEvents();
   }
 
   /**
    * @description
-   *     Listen to messages from sent by the socket server.
+   *     Listen to events attached to the client.
    */
-  _listenToSocketServerMessages() {
+  _listenToSocketClientEvents() {
     this.connection.addEventListener("message", (event) => {
       this._handleEncodedMessage(event.data);
     });
     this.connection.addEventListener("error", (event) => {
       // send error message to server
       this.to('error', event);
+    });
+    this.connection.addEventListener("close", () => {
+      this.reconnectionCount += 1;
+
+      // server can react if needed to this connection id
+      this.to('reconnect', {
+        id: this.connection.id,
+        reconnectionCount: this.reconnectionCount,
+      });
+      this._connectToSocketServer();
     });
   }
 
@@ -144,7 +159,7 @@ class SocketClient {
    *     Send all messages in the message queue to the socket server.
    */
   _sendMessagesToSocketServer() {
-    if (this.ready && this.message_queue.length) {
+    if (this._isClientReady() && this.ready && this.message_queue.length) {
       this.ready = false;
       let message = null;
       while (this.message_queue.length) {

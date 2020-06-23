@@ -15,7 +15,7 @@ export default class Transmitter {
     this.server = server;
   }
 
-    /**
+  /**
    * @description
    *    Decodes and validates incoming messages.
    * 
@@ -52,7 +52,7 @@ export default class Transmitter {
     }
   }
 
-    /**
+  /**
    * @param string eventName
    * @param number clientId
    *
@@ -89,11 +89,30 @@ export default class Transmitter {
     }
   }
 
-  public start(clientId: number) {
-    this.server.clients[clientId].pong_received = true;
-    this.server.clients[clientId].heartbeat = setInterval(() => this._ping(clientId), this.pingInterval);
+  private _startHeartbeat(clientId: number) {
+    setInterval(() => this._ping(clientId), this.pingInterval);
   }
 
+  /**
+   * @description
+   *    Attaches heartbeat status to client object.
+   * @param number clientId
+   *
+   * @return void
+   */
+  public start(clientId: number) {
+    this.server.clients[clientId].pong_received = true;
+    this.server.clients[clientId].heartbeat = this._startHeartbeat(clientId);
+  }
+
+  /**
+   * @description
+   *    Pings client at a timeout. If client does not respond, client connection
+   *    will be removed.
+   * @param number clientId
+   *
+   * @return void
+   */
   private _timeoutPing(clientId: number) {
     if (this.server.clients[clientId]) {
       this.server.removeClient(clientId);
@@ -101,6 +120,13 @@ export default class Transmitter {
     }
   }
 
+  /**
+   * @description
+   *    Pings client at a set interval.
+   * @param number clientId
+   *
+   * @return void
+   */
   private _ping(clientId: number) {
     if (this.server.clients[clientId]) {
       const client = this.server.clients[clientId];
