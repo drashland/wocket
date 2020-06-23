@@ -2,17 +2,46 @@ import { MESSAGE_TYPE } from "./io_types.ts";
 import { RESERVED_EVENT_NAMES } from "./reserved_event_names.ts";
 
 export default class Transmitter {
-  public deno_server: any;
-  private pingInterval: number;
-  private pingTimeout: number;
+
+  /**
+   * @description
+   *     A property to determine number of ms to wait for a pong event before closing a client connection.
+   * @property ping interval
+   */
+  private pingInterval: number = 2000;
+
+  /**
+   * @description
+   *     A property to determine number of ms before sending a ping event to a connected client.
+   * @property ping timeout
+   */
+  private pingTimeout: number = 4000;
+
+  /**
+   * @description
+   *     A property to set reconnect flag. If false, server will not ping client.
+   * @property reconnect
+   */
+  private reconnect: boolean = true;
   private server: any;
 
   // FILE MARKER - CONSTRUCTOR /////////////////////////////////////////////////
 
-  constructor(server: any) {
-    this.pingInterval = server.pingInterval;
-    this.pingTimeout = server.pingTimeout;
+  constructor(server: any, options: any = {}) {
+    if ('reconnect' in options) {
+      this.reconnect = options.reconnect;
+    }
+
+    if (options.pingInterval) {
+      this.pingInterval = options.pingInterval;
+    }
+
+    if (options.pingTimeout) {
+      this.pingTimeout = options.pingTimeout;
+    }
+
     this.server = server;
+    return this;
   }
 
   /**
@@ -101,8 +130,10 @@ export default class Transmitter {
    * @return void
    */
   public start(clientId: number) {
-    this.server.clients[clientId].pong_received = true;
-    this.server.clients[clientId].heartbeat = this._startHeartbeat(clientId);
+    if (this.reconnect) {
+      this.server.clients[clientId].pong_received = true;
+      this.server.clients[clientId].heartbeat = this._startHeartbeat(clientId);
+    }
   }
 
   /**

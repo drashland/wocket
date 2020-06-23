@@ -6,8 +6,9 @@ socketServer.run({
   hostname: "localhost",
   port: 3000,
 }, {
-  pingInterval: 20000,
-  pingTimeout: 20000,
+  reconnect: true,
+  pingInterval: 2000,
+  pingTimeout: 6000,
 });
 console.log(
   `Socket server started on ws://${socketServer.hostname}:${socketServer.port}`,

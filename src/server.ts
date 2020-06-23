@@ -34,20 +34,6 @@ export default class SocketServer extends EventEmitter {
 
   /**
    * @description
-   *     A property to determine number of ms to wait for a pong event before closing a client connection.
-   * @property ping interval
-   */
-  public pingInterval: any;
-
-    /**
-   * @description
-   *     A property to determine number of ms before sending a ping event to a connected client.
-   * @property ping timeout
-   */
-  public pingTimeout: any;
-
-    /**
-   * @description
    *     A property to hold the port this server listens on.
    * @property number port
    */
@@ -81,10 +67,11 @@ export default class SocketServer extends EventEmitter {
    *    listening to events.
    *
    * @param HTTPOptions options
+   * @param any transmitterOptions
    *
    * @return Promise<DenoServer>
    */
-  public async run(options: HTTPOptions, transmitterOptions: any): Promise<DenoServer> {
+  public async run(options: HTTPOptions, transmitterOptions: any = {}): Promise<DenoServer> {
     if (options.hostname) {
       this.hostname = options.hostname;
     }
@@ -93,19 +80,8 @@ export default class SocketServer extends EventEmitter {
       this.port = options.port;
     }
 
-    if (transmitterOptions.pingInterval) {
-      this.pingInterval = transmitterOptions.pingInterval;
-    }
-
-    if (transmitterOptions.pingTimeout) {
-      this.pingTimeout = transmitterOptions.pingTimeout;
-    }
-
     this.deno_server = serve(options);
-
-    if (this.pingInterval && this.pingInterval) {
-      this.transmitter = new Transmitter(this)
-    }
+    this.transmitter = new Transmitter(this, transmitterOptions);
 
     (async () => {
       for await (const req of this.deno_server) {
