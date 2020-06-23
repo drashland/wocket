@@ -36,7 +36,7 @@ class SocketClient {
       reconnect: options.reconnect || true,
     };
     this.decoder = new TextDecoder();
-    this.reconnectionCount = 0;
+    this.reconnectCount = 0;
     this.listening_to = {};
     this.message_queue = [];
     this.ready = true;
@@ -92,17 +92,36 @@ class SocketClient {
 
   // FILE MARKER - METHODS FOR INTERNAL USE ////////////////////////////////////////////////////////
 
+  /**
+   * Check if connection is ready for events.
+   */
   _isClientReady() {
     this.connection.readyState === 1;
+  }
+
+  _reconnectSuccessful(previousId) {
+    this.reconnectCount += 1;
+    // server can react if needed to this connection id
+    this.to('reconnect', {
+      previousId,
+      id: this.connection.id,
+      reconnectCount: this.reconnectCount,
+    });
   }
 
   /**
    * Connect to the socket server at the hostname and port specified in the configs.
    */
-  _connectToSocketServer() {
+  _connectToSocketServer(reconnect) {
+    const previousId = reconnect ? this.connection.id : null;
+
     this.connection = new WebSocket(
       `ws://${this.configs.hostname}:${this.configs.port}`,
     );
+
+    if (previousId) {
+      this._reconnectSuccessful(previousId);
+    }
     this._listenToSocketClientEvents();
   }
 
@@ -119,14 +138,7 @@ class SocketClient {
       this.to('error', event);
     });
     this.connection.addEventListener("close", () => {
-      this.reconnectionCount += 1;
-
-      // server can react if needed to this connection id
-      this.to('reconnect', {
-        id: this.connection.id,
-        reconnectionCount: this.reconnectionCount,
-      });
-      this._connectToSocketServer();
+      this._connectToSocketServer(true);
     });
   }
 
