@@ -185,6 +185,10 @@ class SocketClient {
     }
   }
 
+  /**
+   * @description
+   *     Send pong message to server.
+   */
   _pongServer() {
     this.connection.send('pong')
   }
