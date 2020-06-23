@@ -97,7 +97,7 @@ class SocketClient {
    * Check if connection is ready for events.
    */
   _isClientReady() {
-    this.connection.readyState === 1;
+    return this.connection.readyState === 1;
   }
 
   _reconnectSuccessful(previousId) {

@@ -190,7 +190,7 @@ export default class SocketServer extends EventEmitter {
             try {
               for await (const ev of socket) {
                 if (ev instanceof Uint8Array) {
-                  await super.checkEvent(ev, clientId);
+                  await this.transmitter.checkEvent(ev, clientId);
                 } else if (isWebSocketCloseEvent(ev)) {
                   await super.removeClient(clientId);
                 }
