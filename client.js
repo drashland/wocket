@@ -103,7 +103,7 @@ class SocketClient {
   _reconnectSuccessful(previousId) {
     this.reconnectCount += 1;
     // server can react if needed to this connection id
-    this.to('reconnect', {
+    this.to("reconnect", {
       previousId,
       id: this.connection.id,
       reconnectCount: this.reconnectCount,
@@ -136,7 +136,7 @@ class SocketClient {
     });
     this.connection.addEventListener("error", (event) => {
       // send error message to server
-      this.to('error', event);
+      this.to("error", event);
     });
     this.connection.addEventListener("close", () => {
       this._connectToSocketServer(true);
@@ -152,9 +152,9 @@ class SocketClient {
    *     information about the Body mixin.
    */
   _handleEncodedMessage(message) {
-    if (typeof message === 'string' && 'ping') {
+    if (typeof message === "string" && "ping") {
       this._pongServer();
-    } else if (typeof message === 'object') {
+    } else if (typeof message === "object") {
       message.arrayBuffer().then((buffer) => {
         const decodedMessage = this.decoder.decode(buffer);
         const parsedMessage = JSON.parse(decodedMessage);
@@ -190,6 +190,6 @@ class SocketClient {
    *     Send pong message to server.
    */
   _pongServer() {
-    this.connection.send('pong')
+    this.connection.send("pong");
   }
 }

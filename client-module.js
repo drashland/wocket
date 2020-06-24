@@ -1,3 +1,3 @@
-import SocketClient from "./client.js"
+import SocketClient from "./client.js";
 
 export { SocketClient };

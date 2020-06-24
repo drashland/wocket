@@ -71,7 +71,10 @@ export default class SocketServer extends EventEmitter {
    *
    * @return Promise<DenoServer>
    */
-  public async run(options: HTTPOptions, transmitterOptions: any = {}): Promise<DenoServer> {
+  public async run(
+    options: HTTPOptions,
+    transmitterOptions: any = {},
+  ): Promise<DenoServer> {
     if (options.hostname) {
       this.hostname = options.hostname;
     }
@@ -103,20 +106,30 @@ export default class SocketServer extends EventEmitter {
 
             try {
               for await (const ev of socket) {
-                if (ev === 'pong') {
-                  this.transmitter.handleReservedEventNames('pong', clientId, socket);
+                if (ev === "pong") {
+                  this.transmitter.handleReservedEventNames(
+                    "pong",
+                    clientId,
+                    socket,
+                  );
                 } else if (ev instanceof Uint8Array) {
                   await this.transmitter.checkEvent(ev, clientId);
                 } else if (isWebSocketCloseEvent(ev)) {
                   await super.removeClient(clientId);
-                  this.transmitter.handleReservedEventNames("disconnect", clientId);
+                  this.transmitter.handleReservedEventNames(
+                    "disconnect",
+                    clientId,
+                  );
                 }
               }
             } catch (e) {
               if (!socket.isClosed) {
                 await socket.close(1000).catch(console.error);
                 await super.removeClient(clientId);
-                this.transmitter.handleReservedEventNames("disconnect", clientId);
+                this.transmitter.handleReservedEventNames(
+                  "disconnect",
+                  clientId,
+                );
               }
             }
           })

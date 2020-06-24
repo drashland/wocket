@@ -2,7 +2,6 @@ import { MESSAGE_TYPE } from "./io_types.ts";
 import { RESERVED_EVENT_NAMES } from "./reserved_event_names.ts";
 
 export default class Transmitter {
-
   /**
    * @description
    *     A property to determine number of ms to wait for a pong event before closing a client connection.
@@ -28,7 +27,7 @@ export default class Transmitter {
   // FILE MARKER - CONSTRUCTOR /////////////////////////////////////////////////
 
   constructor(server: any, options: any = {}) {
-    if ('reconnect' in options) {
+    if ("reconnect" in options) {
       this.reconnect = options.reconnect;
     }
 
@@ -87,7 +86,11 @@ export default class Transmitter {
    *
    * @return void
    */
-  public handleReservedEventNames(eventName: string, clientId: number, socket?: any): void {
+  public handleReservedEventNames(
+    eventName: string,
+    clientId: number,
+    socket?: any,
+  ): void {
     switch (eventName) {
       case "connection":
       case "disconnect":
@@ -98,8 +101,8 @@ export default class Transmitter {
         }
         break;
       case "reconnect":
-          // do something on an reconnect event
-          // could be useful to add a flag to this client
+        // do something on an reconnect event
+        // could be useful to add a flag to this client
         break;
       case "pong":
         if (!this.server.clients[clientId]) {
@@ -111,7 +114,7 @@ export default class Transmitter {
         break;
       case "error":
         // do something when client errors
-      break;
+        break;
       default:
         this.server.addListener(eventName, clientId);
         break;
@@ -162,7 +165,7 @@ export default class Transmitter {
     if (this.server.clients[clientId]) {
       const client = this.server.clients[clientId];
       if (client.pong_received) {
-        client.socket.send('ping');
+        client.socket.send("ping");
         client.pong_received = false;
       } else {
         setTimeout(() => this._timeoutPing(clientId), this.pingTimeout);
