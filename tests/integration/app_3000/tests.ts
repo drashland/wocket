@@ -1,6 +1,6 @@
 import { SocketServer } from "../../../mod.ts";
 import { Drash } from "../test_deps.ts";
-import { assert, assertEquals, connectWebSocket } from "../../../deps.ts";
+import { assertEquals, connectWebSocket } from "../../../deps.ts";
 
 let storage: any = {
   "chan1": {
@@ -45,7 +45,7 @@ const socketServer = new SocketServer();
 socketServer.run({
   hostname: "localhost",
   port: 3000,
-});
+}, { reconnect: false });
 console.log(
   `socketServer listening: http://${socketServer.hostname}:${socketServer.port}`,
 );
@@ -60,6 +60,7 @@ socketServer
   .on(
     "chan1",
     ((packet: any) => {
+      console.log(packet.message);
       storage["chan1"].messages.push(packet.message);
     }),
   );
