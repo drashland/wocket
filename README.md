@@ -22,7 +22,7 @@
 
 ---
 
-_Although Sockets has working code, it is still very much under development. APIs will change without notice. Sorry for any inconvenience!_
+**_Although Sockets has working code, it is still very much under development and unstable. APIs will change without notice. Sorry for any inconvenience!_**
 
 ## Table of Contents
 - [Getting Started](#getting-started)
