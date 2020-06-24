@@ -60,7 +60,6 @@ socketServer
   .on(
     "chan1",
     ((packet: any) => {
-      console.log(packet.message);
       storage["chan1"].messages.push(packet.message);
     }),
   );
