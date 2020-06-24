@@ -77,6 +77,8 @@ Sockets is composed of two parts:
 
 Contributors are welcomed!
 
+Please read through our [contributing guidelines](./.github/CONTRIBUTING.md). Included are directions for opening issues, coding standards, and notes on development.
+
 ## License
 
 By contributing your code, you agree to license your contribution under the [MIT License](./LICENSE).
