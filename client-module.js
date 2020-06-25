@@ -1,8 +1,3 @@
-<<<<<<< HEAD
-import SocketClient from "./client.js";
-
-export { SocketClient };
-=======
 /**
  * @description
  *    This SocketClient class uses the native WebSocket object to create a connection to a socket
@@ -174,4 +169,3 @@ export class SocketClient {
     }
   }
 }
->>>>>>> 5a855cc... Update client-module.js to match my changes.
