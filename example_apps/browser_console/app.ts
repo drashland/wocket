@@ -1,10 +1,14 @@
-import { SocketServer } from "https://deno.land/x/sockets/mod.ts";
+import { SocketServer } from "../../mod.ts";
 
 // Create the socket server
 const socketServer = new SocketServer();
 socketServer.run({
   hostname: "localhost",
   port: 3000,
+}, {
+  reconnect: true,
+  pingInterval: 2000,
+  pingTimeout: 6000,
 });
 console.log(
   `Socket server started on ws://${socketServer.hostname}:${socketServer.port}`,

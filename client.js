@@ -33,16 +33,16 @@ class SocketClient {
     this.configs = {
       hostname: options.hostname || "localhost",
       port: options.port || "3000",
+      reconnect: options.reconnect || true,
       protocol: options.protocol || "ws",
     };
     this.decoder = new TextDecoder();
+    this.reconnectCount = 0;
     this.listening_to = {};
     this.message_queue = [];
     this.ready = true;
 
     this._connectToSocketServer();
-    this._listenToSocketServerMessages();
-
     return this;
   }
 
@@ -59,7 +59,7 @@ class SocketClient {
    *     The callback to execute on receipt of a message from the channel or event.
    */
   on(channelOrEvent, callback) {
-    if (this.connection.readyState === 1) {
+    if (this._isClientReady()) {
       if (!this.listening_to[channelOrEvent]) {
         this.listening_to[channelOrEvent] = null;
       }
@@ -94,21 +94,52 @@ class SocketClient {
   // FILE MARKER - METHODS FOR INTERNAL USE ////////////////////////////////////////////////////////
 
   /**
+   * Check if connection is ready for events.
+   */
+  _isClientReady() {
+    return this.connection.readyState === 1;
+  }
+
+  _reconnectSuccessful(previousId) {
+    this.reconnectCount += 1;
+    // server can react if needed to this connection id
+    this.to("reconnect", {
+      previousId,
+      id: this.connection.id,
+      reconnectCount: this.reconnectCount,
+    });
+  }
+
+  /**
    * Connect to the socket server at the hostname and port specified in the configs.
    */
-  _connectToSocketServer() {
+  _connectToSocketServer(reconnect) {
+    const previousId = reconnect ? this.connection.id : null;
+
     this.connection = new WebSocket(
       `${this.configs.protocol}://${this.configs.hostname}:${this.configs.port}`,
     );
+
+    if (previousId) {
+      this._reconnectSuccessful(previousId);
+    }
+    this._listenToSocketClientEvents();
   }
 
   /**
    * @description
-   *     Listen to messages from sent by the socket server.
+   *     Listen to events attached to the client.
    */
-  _listenToSocketServerMessages() {
+  _listenToSocketClientEvents() {
     this.connection.addEventListener("message", (event) => {
       this._handleEncodedMessage(event.data);
+    });
+    this.connection.addEventListener("error", (event) => {
+      // send error message to server
+      this.to("error", event);
+    });
+    this.connection.addEventListener("close", () => {
+      this._connectToSocketServer(true);
     });
   }
 
@@ -120,16 +151,20 @@ class SocketClient {
    *     The encoded message. See https://developer.mozilla.org/en-US/docs/Web/API/Body for more
    *     information about the Body mixin.
    */
-  _handleEncodedMessage(encodedMessage) {
-    encodedMessage.arrayBuffer().then((buffer) => {
-      const decodedMessage = this.decoder.decode(buffer);
-      const parsedMessage = JSON.parse(decodedMessage);
-      Object.keys(parsedMessage).forEach((channelOrEvent) => {
-        if (this.listening_to[channelOrEvent]) {
-          this.listening_to[channelOrEvent](parsedMessage[channelOrEvent]);
-        }
+  _handleEncodedMessage(message) {
+    if (typeof message === "string" && "ping") {
+      this._pongServer();
+    } else if (typeof message === "object") {
+      message.arrayBuffer().then((buffer) => {
+        const decodedMessage = this.decoder.decode(buffer);
+        const parsedMessage = JSON.parse(decodedMessage);
+        Object.keys(parsedMessage).forEach((channelOrEvent) => {
+          if (this.listening_to[channelOrEvent]) {
+            this.listening_to[channelOrEvent](parsedMessage[channelOrEvent]);
+          }
+        });
       });
-    });
+    }
   }
 
   /**
@@ -137,7 +172,7 @@ class SocketClient {
    *     Send all messages in the message queue to the socket server.
    */
   _sendMessagesToSocketServer() {
-    if (this.ready && this.message_queue.length) {
+    if (this._isClientReady() && this.ready && this.message_queue.length) {
       this.ready = false;
       let message = null;
       while (this.message_queue.length) {
@@ -148,5 +183,13 @@ class SocketClient {
       this.ready = true;
       this._sendMessagesToSocketServer();
     }
+  }
+
+  /**
+   * @description
+   *     Send pong message to server.
+   */
+  _pongServer() {
+    this.connection.send("pong");
   }
 }

@@ -1,8 +1,6 @@
 import Sender from "./sender.ts";
 import Channel from "./channel.ts";
 import Client from "./client.ts";
-import { MESSAGE_TYPE } from "./io_types.ts";
-import { RESERVED_EVENT_NAMES } from "./reserved_event_names.ts";
 
 export default class EventEmitter {
   public clients: any = {};
@@ -31,7 +29,6 @@ export default class EventEmitter {
   public addClient(clientId: number, clientSocket: any) {
     const client = new Client(clientId, clientSocket);
     this.clients[clientId] = client;
-    this._handleReservedEventNames("connection", clientId);
     return client;
   }
 
@@ -73,43 +70,6 @@ export default class EventEmitter {
   public broadcast(channelName: string, pkgOrMessage: any): void {
     if (pkgOrMessage.from) delete pkgOrMessage.from;
     this.to(channelName, pkgOrMessage);
-  }
-
-  /**
-   * @description
-   *    Decodes and validates incoming messages.
-   * 
-   * @param MESSAGE_TYPE message
-   *     Uint8Array
-   * @param number clientId
-   *     Client's socket connection id.
-   * 
-   * @return Promise<void>
-   */
-  public async checkEvent(
-    message: MESSAGE_TYPE,
-    clientId: number,
-  ): Promise<void> {
-    let result = new TextDecoder().decode(message);
-    let parsedMessage = <any> {};
-    try {
-      parsedMessage = JSON.parse(result);
-    } catch (err) {
-      throw new Error(err);
-    }
-
-    for await (let channelName of Object.keys(parsedMessage)) {
-      if (RESERVED_EVENT_NAMES.includes(channelName)) {
-        this._handleReservedEventNames(parsedMessage[channelName], clientId);
-      } else if (this.channels[channelName]) {
-        await this.sender.invokeCallback({
-          ...this.channels[channelName],
-          channelName,
-          message: parsedMessage[channelName],
-          from: clientId,
-        });
-      }
-    }
   }
 
   /**
@@ -235,7 +195,6 @@ export default class EventEmitter {
     }
 
     delete this.clients[clientId];
-    this._handleReservedEventNames("disconnect", clientId);
   }
 
   /**
@@ -278,27 +237,5 @@ export default class EventEmitter {
       from: pkg.from || null,
       channelName,
     });
-  }
-
-  /**
-   * @param string eventName
-   * @param number clientId
-   *
-   * @return void
-   */
-  private _handleReservedEventNames(eventName: string, clientId: number): void {
-    switch (eventName) {
-      case "connection":
-      case "disconnect":
-        if (this.channels[eventName]) {
-          this.channels[eventName].callbacks.forEach((cb: Function) => {
-            cb(clientId);
-          });
-        }
-        break;
-      default:
-        this.addListener(eventName, clientId);
-        break;
-    }
   }
 }
