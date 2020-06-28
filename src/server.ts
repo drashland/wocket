@@ -9,6 +9,7 @@ import {
   serveTLS,
 } from "../deps.ts";
 import EventEmitter from "./event_emitter.ts";
+import Transmitter from "./transmitter.ts";
 
 export default class SocketServer extends EventEmitter {
   /**
@@ -22,6 +23,7 @@ export default class SocketServer extends EventEmitter {
    */
   public deno_server: any;
 
+  public transmitter: any;
   /**
    * @description
    *     A property to hold the hostname this server listens on.
@@ -65,10 +67,14 @@ export default class SocketServer extends EventEmitter {
    *    listening to events.
    *
    * @param HTTPOptions options
+   * @param any transmitterOptions
    *
    * @return Promise<DenoServer>
    */
-  public async run(options: HTTPOptions): Promise<DenoServer> {
+  public async run(
+    options: HTTPOptions,
+    transmitterOptions: any = {},
+  ): Promise<DenoServer> {
     if (options.hostname) {
       this.hostname = options.hostname;
     }
@@ -78,6 +84,7 @@ export default class SocketServer extends EventEmitter {
     }
 
     this.deno_server = serve(options);
+    this.transmitter = new Transmitter(this, transmitterOptions);
 
     (async () => {
       for await (const req of this.deno_server) {
@@ -92,19 +99,37 @@ export default class SocketServer extends EventEmitter {
           .then(async (socket: WebSocket): Promise<void> => {
             const clientId = conn.rid;
             super.addClient(clientId, socket);
+            this.transmitter.handleReservedEventNames("connection", clientId);
+            if (this.transmitter) {
+              this.transmitter.start(clientId);
+            }
 
             try {
               for await (const ev of socket) {
-                if (ev instanceof Uint8Array) {
-                  await super.checkEvent(ev, clientId);
+                if (ev === "pong") {
+                  this.transmitter.handleReservedEventNames(
+                    "pong",
+                    clientId,
+                    socket,
+                  );
+                } else if (ev instanceof Uint8Array) {
+                  await this.transmitter.checkEvent(ev, clientId);
                 } else if (isWebSocketCloseEvent(ev)) {
                   await super.removeClient(clientId);
+                  this.transmitter.handleReservedEventNames(
+                    "disconnect",
+                    clientId,
+                  );
                 }
               }
             } catch (e) {
               if (!socket.isClosed) {
                 await socket.close(1000).catch(console.error);
                 await super.removeClient(clientId);
+                this.transmitter.handleReservedEventNames(
+                  "disconnect",
+                  clientId,
+                );
               }
             }
           })
@@ -113,7 +138,6 @@ export default class SocketServer extends EventEmitter {
           });
       }
     })();
-
     return this.deno_server;
   }
 
@@ -155,7 +179,7 @@ export default class SocketServer extends EventEmitter {
             try {
               for await (const ev of socket) {
                 if (ev instanceof Uint8Array) {
-                  await super.checkEvent(ev, clientId);
+                  await this.transmitter.checkEvent(ev, clientId);
                 } else if (isWebSocketCloseEvent(ev)) {
                   await super.removeClient(clientId);
                 }
