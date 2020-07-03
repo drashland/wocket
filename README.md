@@ -68,10 +68,11 @@ Sockets is composed of two parts:
 ## Features
 
 - Binary-support
+- Auto-reconnection support
 
 ## Roadmap
 
-- [ ] Auto-reconnection support
+- [ ] Docs website
 
 ## Contributing
 
