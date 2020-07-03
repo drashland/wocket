@@ -32,6 +32,10 @@
         <ul id="messages"></ul>
       </div>
     </div>
-    <script src="../../client.js"></script>
+    <script>
+      let SocketClient;
+      import("https://cdn.jsdelivr.net/gh/drashland/sockets-client@latest/client.js")
+        .then((Module) => SocketClient = Module.default);
+    </script>
   </body>
 </html>

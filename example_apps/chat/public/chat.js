@@ -1,4 +1,4 @@
-import { SocketClient } from "https://cdn.jsdelivr.net/gh/drashland/sockets@master/client.js";
+import SocketClient from "https://cdn.jsdelivr.net/gh/drashland/sockets-client@latest/client.js";
 
 // Create a new socket client. This class comes from /public/client.js.
 const socket = new SocketClient({
