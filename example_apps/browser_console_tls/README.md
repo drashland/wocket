@@ -49,7 +49,7 @@ This is an interactive application where you send messages to the socket server 
     $ deno run --allow-net app.ts
     ```
 
-3. Create your `index.html` file. This file contains `<script src="https://cdn.jsdelivr.net/gh/drashland/sockets@master/client.js"></script>`, which is Sockets' `SocketClient` class.
+3. Create your `index.html` file. This file contains `<script src="https://cdn.jsdelivr.net/gh/drashland/sockets-client@latest/client.js"></script>`, which is Sockets' `SocketClient` class.
 
     ```html
     <!DOCTYPE html>
@@ -65,7 +65,7 @@ This is an interactive application where you send messages to the socket server 
               <strong>Open your console and follow the instructions below.</strong>
             </p>
             <p class="mb-2">1. Create a new connection to the socket server. This will be your socket client.</p>
-            <pre class="mb-5 border-t border-r border-b border-l border-gray-400 rounded-b p-4 overflow-auto bg-gray-200"><code>import('https://cdn.jsdelivr.net/gh/drashland/sockets@master/client.js').then(({default: SocketClient}) => {
+            <pre class="mb-5 border-t border-r border-b border-l border-gray-400 rounded-b p-4 overflow-auto bg-gray-200"><code>import('https://cdn.jsdelivr.net/gh/drashland/sockets-client@latest/client.js').then(({default: SocketClient}) => {
       const socketClient = new SocketClient({
         hostname: "localhost",
         port: 3000,
@@ -73,7 +73,7 @@ This is an interactive application where you send messages to the socket server 
       });
     });</code></pre>
             <p class="mb-2">2. When the socket server starts, it creates a channel named "Channel 1", so we set this socket client up to listen to that channel here. Any messages sent by the socket server to "Channel 1" will be handled by the callback below (the second argument).</p>
-            <pre class="mb-5 border-t border-r border-b border-l border-gray-400 rounded-b p-4 overflow-auto bg-gray-200"><code>import('https://cdn.jsdelivr.net/gh/drashland/sockets@master/client.js').then(({default: SocketClient}) => {
+            <pre class="mb-5 border-t border-r border-b border-l border-gray-400 rounded-b p-4 overflow-auto bg-gray-200"><code>import('https://cdn.jsdelivr.net/gh/drashland/sockets-client@latest/client.js').then(({default: SocketClient}) => {
       const socketClient = new SocketClient({
         hostname: "localhost",
         port: 3000,
@@ -93,7 +93,7 @@ This is an interactive application where you send messages to the socket server 
               </code>
             </pre>
             <p class="mb-2">3. Send a message to the socket server.</p>
-            <pre class="mb-5 border-t border-r border-b border-l border-gray-400 rounded-b p-4 overflow-auto bg-gray-200"><code>import('https://cdn.jsdelivr.net/gh/drashland/sockets@master/client.js').then(({default: SocketClient}) => {
+            <pre class="mb-5 border-t border-r border-b border-l border-gray-400 rounded-b p-4 overflow-auto bg-gray-200"><code>import('https://cdn.jsdelivr.net/gh/drashland/sockets-client@latest/client.js').then(({default: SocketClient}) => {
       const socketClient = new SocketClient({
         hostname: "localhost",
         port: 3000,

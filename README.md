@@ -58,11 +58,7 @@ Sockets is composed of two parts:
 * A client library that loads on the front-end
 
     ```html
-    <script src="https://cdn.jsdelivr.net/gh/drashland/sockets@master/client.js">
-    ```
-
-    ```html
-    <script type="module" src="https://cdn.jsdelivr.net/gh/drashland/sockets@master/client-module.js">
+    <script type="module" src="https://cdn.jsdelivr.net/gh/drashland/sockets-client@latest/client.js">
     ```
 
 ## Features

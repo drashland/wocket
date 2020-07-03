@@ -47,7 +47,7 @@ This is an interactive application where you send messages to the socket server 
     $ deno run --allow-net app.ts
     ```
 
-3. Create your `index.html` file. This file contains an import for https://cdn.jsdelivr.net/gh/drashland/sockets@master/client.js, which is Sockets' `SocketClient` class. It has an API that is nearly identical to the `SocketServer` class.
+3. Create your `index.html` file. This file contains an import for https://cdn.jsdelivr.net/gh/drashland/sockets-client@latest/client.js, which is Sockets' `SocketClient` class. It has an API that is nearly identical to the `SocketServer` class.
 
     ```html
     <!DOCTYPE html>
@@ -86,10 +86,8 @@ This is an interactive application where you send messages to the socket server 
         </div>
         <script>
           let SocketClient;
-          import("https://cdn.jsdelivr.net/gh/drashland/sockets@master/client-module.js")
-            .then((Module) => {
-              SocketClient = Module.SocketClient;
-            });
+          import("https://cdn.jsdelivr.net/gh/drashland/sockets-client@latest/client.js")
+            .then((Module) => SocketClient = Module.default);
         </script>
       </body>
     </html>
