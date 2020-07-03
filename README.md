@@ -55,7 +55,7 @@ Sockets is composed of two parts:
     import { SocketServer } from "https://deno.land/x/sockets@master/mod.ts";
     ```
 
-* A client library that loads on the front-end
+* A [SocketClient] (https://github.com/drashland/sockets-client) that loads on the front-end
 
     ```html
     <script type="module" src="https://cdn.jsdelivr.net/gh/drashland/sockets-client@latest/client.js">
