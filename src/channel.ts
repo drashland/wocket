@@ -1,4 +1,4 @@
-export default class Channel {
+export class Channel {
   public callbacks: any[] = [];
   public name: string;
   public listeners: any;

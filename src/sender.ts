@@ -1,4 +1,4 @@
-export default class Sender {
+export class Sender {
   private packageQueue: any;
   private ready: boolean;
 

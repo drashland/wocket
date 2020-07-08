@@ -1,6 +1,7 @@
-import Sender from "./sender.ts";
-import Channel from "./channel.ts";
-import Client from "./client.ts";
+import { Sender } from "./sender.ts";
+import { Channel } from "./channel.ts";
+import { Client } from "./client.ts";
+import { WebSocket } from "../deps.ts";
 
 export class EventEmitter {
   public clients: any = {};
@@ -21,7 +22,7 @@ export class EventEmitter {
    * @param int - Client's socket connection id.
    * @param clientSocket
    */
-  public addClient(clientId: number, clientSocket: any) {
+  public addClient(clientId: number, clientSocket: WebSocket) {
     const client = new Client(clientId, clientSocket);
     this.clients[clientId] = client;
     return client;
