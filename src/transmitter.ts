@@ -68,7 +68,7 @@ export class Transmitter {
     clientId: number,
   ): Promise<void> {
     let result = new TextDecoder().decode(message);
-    let parsedMessage = <any> {};
+    let parsedMessage: any = {};
     try {
       parsedMessage = JSON.parse(result);
     } catch (err) {

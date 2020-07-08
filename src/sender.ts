@@ -2,18 +2,26 @@ export default class Sender {
   private packageQueue: any;
   private ready: boolean;
 
+  //////////////////////////////////////////////////////////////////////////////
+  // FILE MARKER - CONSTRCUTOR /////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////////////
+
+  /**
+   * Construct an object of this class.
+   */
   constructor() {
     this.packageQueue = [];
     this.ready = true;
   }
 
+  //////////////////////////////////////////////////////////////////////////////
+  // FILE MARKER - METHODS - PUBLIC ////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////////////
+
   /**
-   * @description
-   *     Adds a new message to the message queue to be sent.
-   * 
-   * @param message any
-   * 
-   * @return void
+   * Adds a new message to the message queue to be sent.
+   *
+   * @param pkg
    */
   public add(pkg: any) {
     this.packageQueue.push(pkg);
@@ -21,12 +29,9 @@ export default class Sender {
   }
 
   /**
-   * @description
-   *     Invokes event callbacks.
-   * 
-   * @param msgObj any
-   * 
-   * @return void
+   * Invokes event callbacks.
+   *
+   * @param msgObj
    */
   public async invokeCallback(msgObj: any): Promise<void> {
     const args = Array.prototype.slice.call(arguments);
@@ -35,10 +40,13 @@ export default class Sender {
     }
   }
 
+  //////////////////////////////////////////////////////////////////////////////
+  // FILE MARKER - METHODS - PRIVATE ///////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////////////
+
   /**
-   * @description
-   *     Encodes messages and sends event to all clients listening
-   *     to the event except for the sender.
+   * Encodes messages and sends event to all clients listening to the event
+   * except for the sender.
    */
   private async send() {
     if (this.ready && this.packageQueue.length) {
