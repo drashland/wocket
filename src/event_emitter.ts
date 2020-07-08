@@ -3,6 +3,7 @@ import { Channel } from "./channel.ts";
 import { Client } from "./client.ts";
 import { WebSocket } from "../deps.ts";
 
+// TODO(sara) Add description
 export class EventEmitter {
   public clients: any = {};
   public channels: any = {};

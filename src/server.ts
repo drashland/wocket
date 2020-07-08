@@ -18,6 +18,7 @@ import {
   Transmitter,
 } from "./transmitter.ts";
 
+// TODO(sara) Add description
 export class SocketServer extends EventEmitter {
   /**
    * A property to hold the Deno server. This property is set in this.run()

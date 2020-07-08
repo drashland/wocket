@@ -3,6 +3,7 @@ import { RESERVED_EVENT_NAMES } from "./reserved_event_names.ts";
 import { SocketServer } from "./server.ts";
 import { ITransmitterOptions } from "./interfaces.ts";
 
+// TODO(sara) Add description
 export class Transmitter {
   /**
    * See ITransmitterOptions

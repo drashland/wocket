@@ -1,3 +1,4 @@
+// TODO(sara) Add description
 export class Sender {
   private packageQueue: any;
   private ready: boolean;

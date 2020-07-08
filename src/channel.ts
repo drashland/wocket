@@ -1,3 +1,4 @@
+// TODO(sara) Add description
 export class Channel {
   public callbacks: any[] = [];
   public name: string;

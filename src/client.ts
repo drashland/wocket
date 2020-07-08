@@ -1,5 +1,6 @@
 import { WebSocket } from "../deps.ts";
 
+// TODO(sara) Add description
 export class Client {
   public id: number;
   public socket: any;
