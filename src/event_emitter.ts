@@ -5,7 +5,7 @@ import { WebSocket } from "../deps.ts";
 
 // TODO(sara) Add description
 export class EventEmitter {
-  public clients: any = {};
+  public clients: {[key: number]: Client} = {};
   public channels: any = {};
   public sender: Sender;
   private channel_being_created: string = "";
