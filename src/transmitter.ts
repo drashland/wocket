@@ -137,7 +137,7 @@ export class Transmitter {
   public hydrateClient(clientId: number) {
     if (this.reconnect) {
       this.socket_server.clients[clientId].pong_received = true;
-      this.socket_server.clients[clientId].heartbeat = this.startHeartbeat(clientId);
+      this.socket_server.clients[clientId].heartbeat_id = this.startHeartbeat(clientId);
     }
   }
 
@@ -145,8 +145,9 @@ export class Transmitter {
   // FILE MARKER - METHODS - PRIVATE ///////////////////////////////////////////
   //////////////////////////////////////////////////////////////////////////////
 
-  private startHeartbeat(clientId: number) {
-    setInterval(() => this.ping(clientId), this.ping_interval);
+  private startHeartbeat(clientId: number): number {
+    let id = setInterval(() => this.ping(clientId), this.ping_interval);
+    return id;
   }
 
   /**
@@ -158,7 +159,10 @@ export class Transmitter {
   private timeoutPing(clientId: number) {
     if (this.socket_server.clients[clientId]) {
       this.socket_server.removeClient(clientId);
-      clearInterval(this.socket_server.clients[clientId].heartbeat);
+      const heartbeatId = this.socket_server.clients[clientId].heartbeat_id;
+      if (heartbeatId) {
+        clearInterval(heartbeatId);
+      }
     }
   }
 

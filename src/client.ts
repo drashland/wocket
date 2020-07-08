@@ -2,9 +2,11 @@ import { WebSocket } from "../deps.ts";
 
 // TODO(sara) Add description
 export class Client {
+  public heartbeat_id: number | null = null;
   public id: number;
-  public socket: any;
   public listening_to: any[] = [];
+  public pong_received: boolean = false;
+  public socket: WebSocket;
 
   //////////////////////////////////////////////////////////////////////////////
   // FILE MARKER - CONSTRCUTOR /////////////////////////////////////////////////
