@@ -1,41 +1,23 @@
 import { MESSAGE_TYPE } from "./io_types.ts";
 import { RESERVED_EVENT_NAMES } from "./reserved_event_names.ts";
 import { SocketServer } from "./server.ts";
-
-export interface ITransmitterOptions {
-  /**
-   * A property to determine number of ms to wait for a pong event before
-   * closing a client connection.
-   */
-  ping_interval: number;
-
-  /**
-   * A property to determine number of ms before sending a ping event to a
-   * connected client.
-   */
-  ping_timeout: number;
-
-  /**
-   * A property to set reconnect flag. If false, server will not ping client.
-   */
-  reconnect: boolean;
-}
+import { ITransmitterOptions } from "./interfaces.ts";
 
 export class Transmitter {
   /**
    * See ITransmitterOptions
    */
-  private ping_interval: number = 2000;
+  private ping_interval: number | undefined = 2000;
 
   /**
    * See ITransmitterOptions
    */
-  private ping_timeout: number = 4000;
+  private ping_timeout: number | undefined = 4000;
 
   /**
    * See ITransmitterOptions
    */
-  private reconnect: boolean = true;
+  private reconnect: boolean | undefined = true;
 
   /**
    * A property to hold the socket server.

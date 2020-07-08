@@ -12,7 +12,9 @@ import {
   EventEmitter
 } from "./event_emitter.ts";
 import {
-  ITransmitterOptions,
+  ITransmitterOptions
+} from "./interfaces.ts";
+import {
   Transmitter,
 } from "./transmitter.ts";
 
@@ -75,9 +77,7 @@ export class SocketServer extends EventEmitter {
    *
    * @returns A Promise of DenoServer.
    */
-  public async run(
-    options: HTTPOptions,
-  ): Promise<DenoServer> {
+  public async run(options: HTTPOptions): Promise<DenoServer> {
     if (options.hostname) {
       this.hostname = options.hostname;
     }
@@ -88,58 +88,8 @@ export class SocketServer extends EventEmitter {
 
     this.deno_server = serve(options);
 
-    (async () => {
-      for await (const req of this.deno_server!) {
-        const { conn, r: bufReader, w: bufWriter, headers } = req;
+    this.acceptWebSockets();
 
-        acceptWebSocket({
-          conn,
-          headers,
-          bufReader,
-          bufWriter,
-        })
-          .then(async (socket: WebSocket): Promise<void> => {
-            const clientId = conn.rid;
-            super.addClient(clientId, socket);
-            this.transmitter.handleReservedEventNames("connection", clientId);
-            if (this.transmitter) {
-              this.transmitter.hydrateClient(clientId);
-            }
-
-            try {
-              for await (const ev of socket) {
-                if (ev === "pong") {
-                  this.transmitter.handleReservedEventNames(
-                    "pong",
-                    clientId,
-                    socket,
-                  );
-                } else if (ev instanceof Uint8Array) {
-                  await this.transmitter.checkEvent(ev, clientId);
-                } else if (isWebSocketCloseEvent(ev)) {
-                  await super.removeClient(clientId);
-                  this.transmitter.handleReservedEventNames(
-                    "disconnect",
-                    clientId,
-                  );
-                }
-              }
-            } catch (e) {
-              if (!socket.isClosed) {
-                await socket.close(1000).catch(console.error);
-                await super.removeClient(clientId);
-                this.transmitter.handleReservedEventNames(
-                  "disconnect",
-                  clientId,
-                );
-              }
-            }
-          })
-          .catch((err: Error): void => {
-            console.error(`failed to accept websocket: ${err}`);
-          });
-      }
-    })();
     return this.deno_server!;
   }
 
@@ -163,41 +113,43 @@ export class SocketServer extends EventEmitter {
 
     this.deno_server = serveTLS(options);
 
-    (async () => {
-      for await (const req of this.deno_server!) {
-        const { conn, r: bufReader, w: bufWriter, headers } = req;
+    this.acceptWebSockets();
 
-        acceptWebSocket({
-          conn,
-          headers,
-          bufReader,
-          bufWriter,
-        })
-          .then(async (socket: WebSocket): Promise<void> => {
-            const clientId = conn.rid;
-            super.addClient(clientId, socket);
+    return this.deno_server!;
+  }
 
-            try {
-              for await (const ev of socket) {
-                if (ev instanceof Uint8Array) {
-                  await this.transmitter.checkEvent(ev, clientId);
-                } else if (isWebSocketCloseEvent(ev)) {
-                  await super.removeClient(clientId);
-                }
-              }
-            } catch (e) {
-              if (!socket.isClosed) {
-                await socket.close(1000).catch(console.error);
+  protected async acceptWebSockets() {
+    for await (const req of this.deno_server!) {
+      const { conn, r: bufReader, w: bufWriter, headers } = req;
+
+      acceptWebSocket({
+        conn,
+        headers,
+        bufReader,
+        bufWriter,
+      })
+        .then(async (socket: WebSocket): Promise<void> => {
+          const clientId = conn.rid;
+          super.addClient(clientId, socket);
+
+          try {
+            for await (const ev of socket) {
+              if (ev instanceof Uint8Array) {
+                await this.transmitter.checkEvent(ev, clientId);
+              } else if (isWebSocketCloseEvent(ev)) {
                 await super.removeClient(clientId);
               }
             }
-          })
-          .catch((err: Error): void => {
-            console.error(`failed to accept websocket: ${err}`);
-          });
-      }
-    })();
-
-    return this.deno_server!;
+          } catch (e) {
+            if (!socket.isClosed) {
+              await socket.close(1000).catch(console.error);
+              await super.removeClient(clientId);
+            }
+          }
+        })
+        .catch((err: Error): void => {
+          console.error(`failed to accept websocket: ${err}`);
+        });
+    }
   }
 }
