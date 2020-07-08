@@ -119,6 +119,9 @@ export class SocketServer extends EventEmitter {
     return this.deno_server!;
   }
 
+  /**
+   * Accept incoming websockets.
+   */
   protected async acceptWebSockets() {
     for await (const req of this.deno_server!) {
       const { conn, r: bufReader, w: bufWriter, headers } = req;
