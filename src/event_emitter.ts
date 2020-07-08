@@ -10,13 +10,17 @@ export class EventEmitter {
   public sender: Sender;
   private channel_being_created: string = "";
 
+  //////////////////////////////////////////////////////////////////////////////
   // FILE MARKER - CONSTRUCTOR /////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////////////
 
   constructor() {
     this.sender = new Sender();
   }
 
+  //////////////////////////////////////////////////////////////////////////////
   // FILE MARKER - METHODS - PUBLIC ////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////////////
 
   /**
    * Adds a new client.
@@ -213,10 +217,12 @@ export class EventEmitter {
     } else {
       pkg = pkgOrMessage;
     }
-    this._addToPackageQueue(channelName, pkg);
+    this.addToPackageQueue(channelName, pkg);
   }
 
+  //////////////////////////////////////////////////////////////////////////////
   // FILE MARKER - METHODS - PRIVATE ///////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////////////
 
   /**
    * @param string channelName
@@ -224,7 +230,7 @@ export class EventEmitter {
    *
    * @return void
    */
-  private _addToPackageQueue(channelName: string, pkg: any): void {
+  private addToPackageQueue(channelName: string, pkg: any): void {
     if (!this.channels[channelName]) {
       throw new Error(`No receivers for "${channelName}" channel.`);
     }
