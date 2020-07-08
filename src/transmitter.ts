@@ -1,7 +1,7 @@
+import { ITransmitterOptions } from "./interfaces.ts";
 import { MESSAGE_TYPE } from "./io_types.ts";
 import { RESERVED_EVENT_NAMES } from "./reserved_event_names.ts";
 import { SocketServer } from "./server.ts";
-import { ITransmitterOptions } from "./interfaces.ts";
 
 // TODO(sara) Add description
 export class Transmitter {
