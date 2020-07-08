@@ -60,7 +60,7 @@ export class Transmitter {
    * Decodes and validates incoming messages.
    *
    * @param message - Uint8Array
-   * @param clientId - Client's socket connection id.
+   * @param clientId - The WebSocket connection ID of the client in question.
    *
    * @returns A Promise
    */
@@ -69,6 +69,7 @@ export class Transmitter {
     clientId: number,
   ): Promise<void> {
     let result = new TextDecoder().decode(message);
+    // deno-lint-ignore no-explicit-any
     let parsedMessage: any = {};
     try {
       parsedMessage = JSON.parse(result);
@@ -92,7 +93,7 @@ export class Transmitter {
 
   /**
    * @param eventName
-   * @param clientId
+   * @param clientId - The WebSocket connection ID of the client in question.
    */
   public handleReservedEventNames(
     eventName: string,
@@ -132,9 +133,9 @@ export class Transmitter {
   /**
    * Hydrate the client with properties.
    *
-   * @param clientId - The client in question. We identify clients by an ID.
+   * @param clientId - The WebSocket connection ID of the client in question.
    */
-  public hydrateClient(clientId: number) {
+  public hydrateClient(clientId: number): void {
     if (this.reconnect) {
       this.socket_server.clients[clientId].pong_received = true;
       this.socket_server.clients[clientId].heartbeat_id = this.startHeartbeat(clientId);
@@ -145,6 +146,31 @@ export class Transmitter {
   // FILE MARKER - METHODS - PRIVATE ///////////////////////////////////////////
   //////////////////////////////////////////////////////////////////////////////
 
+  /**
+   * Pings client at a set interval.
+   *
+   * @param clientId - The WebSocket connection ID of the client in question.
+   */
+  private ping(clientId: number): void {
+    if (this.socket_server.clients[clientId]) {
+      const client = this.socket_server.clients[clientId];
+      if (client.pong_received) {
+        client.socket.send("ping");
+        client.pong_received = false;
+      } else {
+        setTimeout(() => this.timeoutPing(clientId), this.ping_timeout);
+      }
+    }
+  }
+
+  /**
+   * Start a heartbeat for the client in question.
+   *
+   * @param clientId - The WebSocket connection ID of the client in question.
+   *
+   * @returns The heartbeat ID. This is used to clear a heartbeat in
+   * timeoutPing().
+   */
   private startHeartbeat(clientId: number): number {
     let id = setInterval(() => this.ping(clientId), this.ping_interval);
     return id;
@@ -154,31 +180,14 @@ export class Transmitter {
    * Pings client at a timeout. If client does not respond, client connection
    * will be removed.
    *
-   * @param clientId
+   * @param clientId - The WebSocket connection ID of the client in question.
    */
-  private timeoutPing(clientId: number) {
+  private timeoutPing(clientId: number): void {
     if (this.socket_server.clients[clientId]) {
       this.socket_server.removeClient(clientId);
       const heartbeatId = this.socket_server.clients[clientId].heartbeat_id;
       if (heartbeatId) {
         clearInterval(heartbeatId);
-      }
-    }
-  }
-
-  /**
-   * Pings client at a set interval.
-   *
-   * @param clientId
-   */
-  private ping(clientId: number) {
-    if (this.socket_server.clients[clientId]) {
-      const client = this.socket_server.clients[clientId];
-      if (client.pong_received) {
-        client.socket.send("ping");
-        client.pong_received = false;
-      } else {
-        setTimeout(() => this.timeoutPing(clientId), this.ping_timeout);
       }
     }
   }
