@@ -2,10 +2,10 @@ import Sender from "./sender.ts";
 import Channel from "./channel.ts";
 import Client from "./client.ts";
 
-export default class EventEmitter {
+export class EventEmitter {
   public clients: any = {};
-  private channels: any = {};
-  private sender: Sender;
+  public channels: any = {};
+  public sender: Sender;
   private channel_being_created: string = "";
 
   // FILE MARKER - CONSTRUCTOR /////////////////////////////////////////////////
@@ -17,14 +17,9 @@ export default class EventEmitter {
   // FILE MARKER - METHODS - PUBLIC ////////////////////////////////////////////
 
   /**
-   * @description
-   *     Adds a new client.
-   * 
-   * @param clientId int
-   *      Client's socket connection id.
-   * @param WebSocket socket
-   * 
-   * @return void
+   * Adds a new client.
+   * @param int - Client's socket connection id.
+   * @param clientSocket
    */
   public addClient(clientId: number, clientSocket: any) {
     const client = new Client(clientId, clientSocket);

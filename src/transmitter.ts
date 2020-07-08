@@ -1,58 +1,85 @@
 import { MESSAGE_TYPE } from "./io_types.ts";
 import { RESERVED_EVENT_NAMES } from "./reserved_event_names.ts";
+import { SocketServer } from "./server.ts";
 
-export default class Transmitter {
+export interface ITransmitterOptions {
   /**
-   * @description
-   *     A property to determine number of ms to wait for a pong event before closing a client connection.
-   * @property ping interval
+   * A property to determine number of ms to wait for a pong event before
+   * closing a client connection.
    */
-  private pingInterval: number = 2000;
+  ping_interval: number;
 
   /**
-   * @description
-   *     A property to determine number of ms before sending a ping event to a connected client.
-   * @property ping timeout
+   * A property to determine number of ms before sending a ping event to a
+   * connected client.
    */
-  private pingTimeout: number = 4000;
+  ping_timeout: number;
 
   /**
-   * @description
-   *     A property to set reconnect flag. If false, server will not ping client.
-   * @property reconnect
+   * A property to set reconnect flag. If false, server will not ping client.
+   */
+  reconnect: boolean;
+}
+
+export class Transmitter {
+  /**
+   * See ITransmitterOptions
+   */
+  private ping_interval: number = 2000;
+
+  /**
+   * See ITransmitterOptions
+   */
+  private ping_timeout: number = 4000;
+
+  /**
+   * See ITransmitterOptions
    */
   private reconnect: boolean = true;
-  private server: any;
-
-  // FILE MARKER - CONSTRUCTOR /////////////////////////////////////////////////
-
-  constructor(server: any, options: any = {}) {
-    if ("reconnect" in options) {
-      this.reconnect = options.reconnect;
-    }
-
-    if (options.pingInterval) {
-      this.pingInterval = options.pingInterval;
-    }
-
-    if (options.pingTimeout) {
-      this.pingTimeout = options.pingTimeout;
-    }
-
-    this.server = server;
-    return this;
-  }
 
   /**
-   * @description
-   *    Decodes and validates incoming messages.
-   * 
-   * @param MESSAGE_TYPE message
-   *     Uint8Array
-   * @param number clientId
-   *     Client's socket connection id.
-   * 
-   * @return Promise<void>
+   * A property to hold the socket server.
+   */
+  private socket_server: SocketServer;
+
+  //////////////////////////////////////////////////////////////////////////////
+  // FILE MARKER - CONSTRUCTOR /////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////////////
+
+  /**
+   * Construct an object of this class.
+   *
+   * @param socketServer - The socket server requiring this transmitter.
+   * @param options = See ITransmitterOptions
+   */
+  constructor(socketServer: SocketServer, options?: ITransmitterOptions) {
+    if (options) {
+      if ("reconnect" in options) {
+        this.reconnect = options.reconnect;
+      }
+      if (options.ping_interval) {
+        this.ping_interval = options.ping_interval;
+      }
+
+      if (options.ping_timeout) {
+        this.ping_timeout = options.ping_timeout;
+      }
+    }
+
+    this.socket_server = socketServer;
+  }
+
+  //////////////////////////////////////////////////////////////////////////////
+  // FILE MARKER - METHODS - PUBLIC ////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////////////
+
+  /**
+   * Decodes and validates incoming messages.
+   *
+   * @param message - Uint8Array
+   * @param clientId - Client's socket connection id.
+   *
+   * @returns A Promise
    */
   public async checkEvent(
     message: MESSAGE_TYPE,
@@ -69,9 +96,9 @@ export default class Transmitter {
     for await (let channelName of Object.keys(parsedMessage)) {
       if (RESERVED_EVENT_NAMES.includes(channelName)) {
         this.handleReservedEventNames(parsedMessage[channelName], clientId);
-      } else if (this.server.channels[channelName]) {
-        await this.server.sender.invokeCallback({
-          ...this.server.channels[channelName],
+      } else if (this.socket_server.channels[channelName]) {
+        await this.socket_server.sender.invokeCallback({
+          ...this.socket_server.channels[channelName],
           channelName,
           message: parsedMessage[channelName],
           from: clientId,
@@ -81,10 +108,8 @@ export default class Transmitter {
   }
 
   /**
-   * @param string eventName
-   * @param number clientId
-   *
-   * @return void
+   * @param eventName
+   * @param clientId
    */
   public handleReservedEventNames(
     eventName: string,
@@ -94,8 +119,8 @@ export default class Transmitter {
     switch (eventName) {
       case "connection":
       case "disconnect":
-        if (this.server.channels[eventName]) {
-          this.server.channels[eventName].callbacks.forEach((cb: Function) => {
+        if (this.socket_server.channels[eventName]) {
+          this.socket_server.channels[eventName].callbacks.forEach((cb: Function) => {
             cb(clientId);
           });
         }
@@ -105,70 +130,68 @@ export default class Transmitter {
         // could be useful to add a flag to this client
         break;
       case "pong":
-        if (!this.server.clients[clientId]) {
-          this.server.addClient(clientId, socket);
-          this.start(clientId);
+        if (!this.socket_server.clients[clientId]) {
+          this.socket_server.addClient(clientId, socket);
+          this.hydrateClient(clientId);
         } else {
-          this.server.clients[clientId].pong_received = true;
+          this.socket_server.clients[clientId].pong_received = true;
         }
         break;
       case "error":
         // do something when client errors
         break;
       default:
-        this.server.addListener(eventName, clientId);
+        this.socket_server.addListener(eventName, clientId);
         break;
     }
   }
 
-  private _startHeartbeat(clientId: number) {
-    setInterval(() => this._ping(clientId), this.pingInterval);
-  }
-
   /**
-   * @description
-   *    Attaches heartbeat status to client object.
-   * @param number clientId
+   * Hydrate the client with properties.
    *
-   * @return void
+   * @param clientId - The client in question. We identify clients by an ID.
    */
-  public start(clientId: number) {
+  public hydrateClient(clientId: number) {
     if (this.reconnect) {
-      this.server.clients[clientId].pong_received = true;
-      this.server.clients[clientId].heartbeat = this._startHeartbeat(clientId);
+      this.socket_server.clients[clientId].pong_received = true;
+      this.socket_server.clients[clientId].heartbeat = this.startHeartbeat(clientId);
+    }
+  }
+
+  //////////////////////////////////////////////////////////////////////////////
+  // FILE MARKER - METHODS - PRIVATE ///////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////////////
+
+  private startHeartbeat(clientId: number) {
+    setInterval(() => this.ping(clientId), this.ping_interval);
+  }
+
+  /**
+   * Pings client at a timeout. If client does not respond, client connection
+   * will be removed.
+   *
+   * @param clientId
+   */
+  private timeoutPing(clientId: number) {
+    if (this.socket_server.clients[clientId]) {
+      this.socket_server.removeClient(clientId);
+      clearInterval(this.socket_server.clients[clientId].heartbeat);
     }
   }
 
   /**
-   * @description
-   *    Pings client at a timeout. If client does not respond, client connection
-   *    will be removed.
-   * @param number clientId
+   * Pings client at a set interval.
    *
-   * @return void
+   * @param clientId
    */
-  private _timeoutPing(clientId: number) {
-    if (this.server.clients[clientId]) {
-      this.server.removeClient(clientId);
-      clearInterval(this.server.clients[clientId].heartbeat);
-    }
-  }
-
-  /**
-   * @description
-   *    Pings client at a set interval.
-   * @param number clientId
-   *
-   * @return void
-   */
-  private _ping(clientId: number) {
-    if (this.server.clients[clientId]) {
-      const client = this.server.clients[clientId];
+  private ping(clientId: number) {
+    if (this.socket_server.clients[clientId]) {
+      const client = this.socket_server.clients[clientId];
       if (client.pong_received) {
         client.socket.send("ping");
         client.pong_received = false;
       } else {
-        setTimeout(() => this._timeoutPing(clientId), this.pingTimeout);
+        setTimeout(() => this.timeoutPing(clientId), this.ping_timeout);
       }
     }
   }

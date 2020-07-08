@@ -8,72 +8,75 @@ import {
   serve,
   serveTLS,
 } from "../deps.ts";
-import EventEmitter from "./event_emitter.ts";
-import Transmitter from "./transmitter.ts";
+import {
+  EventEmitter
+} from "./event_emitter.ts";
+import {
+  ITransmitterOptions,
+  Transmitter,
+} from "./transmitter.ts";
 
-export default class SocketServer extends EventEmitter {
+export class SocketServer extends EventEmitter {
   /**
-   * @description
-   *     A property to hold the Deno server. This property is set in this.run()
-   *     like so:
+   * A property to hold the Deno server. This property is set in this.run()
+   * like so:
    *
-   *         this.deno_server = serve();
-   *
-   * @property DenoServer any
+   *     this.deno_server = serve();
    */
-  public deno_server: any;
+  public deno_server: DenoServer | null = null;
 
-  public transmitter: any;
   /**
-   * @description
-   *     A property to hold the hostname this server listens on.
-   *
-   * @property string hostname
+   * A property to hold the hostname this server listens on.
    */
   public hostname: string = "localhost";
 
   /**
-   * @description
-   *     A property to hold the port this server listens on.
-   * @property number port
+   * A property to hold the port this server listens on.
    */
   public port: number = 1557;
 
+  /**
+   * A property to hold the transmitter. The transmitter is in charge of
+   * transmitting data throughout the server-client lifecycle.
+   */
+  public transmitter: Transmitter;
+
+  //////////////////////////////////////////////////////////////////////////////
   // FILE MARKER - CONSTRUCTOR /////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////////////
 
   /**
    * Construct an object of this class.
+   *
+   * @param transmitterOptions - See ITransmitterOptions
    */
-  constructor() {
+  constructor(transmitterOptions?: ITransmitterOptions) {
     super();
+    this.transmitter = new Transmitter(this, transmitterOptions);
   }
 
+  //////////////////////////////////////////////////////////////////////////////
   // FILE MARKER - METHODS - PUBLIC ////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////////////
 
   /**
-   * @description
-   *     Close the server.
-   *
-   * @return void
+   * Close the server.
    */
   public close(): void {
-    this.deno_server.close();
+    this.deno_server!.close();
   }
 
   /**
-   * @description
-   *    Handles websocket connection.  After a successful connection, the client
-   *    will be added to EventEmitter.clients and the server will start
-   *    listening to events.
+   * Handles websocket connection.  After a successful connection, the client
+   * will be added to EventEmitter.clients and the server will start listening
+   * to events.
    *
-   * @param HTTPOptions options
-   * @param any transmitterOptions
+   * @param options - See HTTPOptions
    *
-   * @return Promise<DenoServer>
+   * @returns A Promise of DenoServer.
    */
   public async run(
     options: HTTPOptions,
-    transmitterOptions: any = {},
   ): Promise<DenoServer> {
     if (options.hostname) {
       this.hostname = options.hostname;
@@ -84,10 +87,9 @@ export default class SocketServer extends EventEmitter {
     }
 
     this.deno_server = serve(options);
-    this.transmitter = new Transmitter(this, transmitterOptions);
 
     (async () => {
-      for await (const req of this.deno_server) {
+      for await (const req of this.deno_server!) {
         const { conn, r: bufReader, w: bufWriter, headers } = req;
 
         acceptWebSocket({
@@ -101,7 +103,7 @@ export default class SocketServer extends EventEmitter {
             super.addClient(clientId, socket);
             this.transmitter.handleReservedEventNames("connection", clientId);
             if (this.transmitter) {
-              this.transmitter.start(clientId);
+              this.transmitter.hydrateClient(clientId);
             }
 
             try {
@@ -138,18 +140,17 @@ export default class SocketServer extends EventEmitter {
           });
       }
     })();
-    return this.deno_server;
+    return this.deno_server!;
   }
 
   /**
-   * @description
-   *    Handles websocket secure connection. After a successful connection,
-   *    the client will be added to EventEmitter.clients and the server will
-   *    start listening to events.
+   * Handles websocket secure connection. After a successful connection, the
+   * client will be added to EventEmitter.clients and the server will start
+   * listening to events.
    *
-   * @param HTTPOptions options
+   * @param options - See HTTPOptions
    *
-   * @return Promise<DenoServer>
+   * @returns A Promise of the DenoServer.
    */
   public async runTLS(options: HTTPSOptions): Promise<DenoServer> {
     if (options.hostname) {
@@ -163,7 +164,7 @@ export default class SocketServer extends EventEmitter {
     this.deno_server = serveTLS(options);
 
     (async () => {
-      for await (const req of this.deno_server) {
+      for await (const req of this.deno_server!) {
         const { conn, r: bufReader, w: bufWriter, headers } = req;
 
         acceptWebSocket({
@@ -197,6 +198,6 @@ export default class SocketServer extends EventEmitter {
       }
     })();
 
-    return this.deno_server;
+    return this.deno_server!;
   }
 }
