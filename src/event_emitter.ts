@@ -235,10 +235,6 @@ export class EventEmitter {
     if (!this.channels[channelName]) {
       throw new Error(`No receivers for "${channelName}" channel.`);
     }
-    const pkgQueueItem = new PackageQueueItem(
-      pkg,
-      this.channels[channelName],
-    );
-    this.sender.add(pkgQueueItem);
+    this.sender.add(new PackageQueueItem(pkg, this.channels[channelName]));
   }
 }
