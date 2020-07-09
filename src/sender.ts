@@ -1,6 +1,6 @@
 // TODO(sara) Add description
 export class Sender {
-  private packageQueue: any;
+  private package_queue: any;
   private ready: boolean;
 
   //////////////////////////////////////////////////////////////////////////////
@@ -11,7 +11,7 @@ export class Sender {
    * Construct an object of this class.
    */
   constructor() {
-    this.packageQueue = [];
+    this.package_queue = [];
     this.ready = true;
   }
 
@@ -25,7 +25,7 @@ export class Sender {
    * @param pkg
    */
   public add(pkg: any) {
-    this.packageQueue.push(pkg);
+    this.package_queue.push(pkg);
     this.send();
   }
 
@@ -50,22 +50,15 @@ export class Sender {
    * except for the sender.
    */
   private async send() {
-    if (this.ready && this.packageQueue.length) {
+    if (this.ready && this.package_queue.length) {
       this.ready = false;
-      const pkg = this.packageQueue.shift();
-      const {
-        channelName,
-        message,
-        from,
-        listeners,
-      } = pkg;
-
+      const pkgQueueItem = this.package_queue.shift();
       const encodedMessage = new TextEncoder().encode(
-        JSON.stringify({ [channelName]: message }),
+        JSON.stringify({ [pkgQueueItem.channel.name]: pkgQueueItem.package.message }),
       );
-      for await (let listener of listeners) {
+      for await (let listener of pkgQueueItem.channel.listeners) {
         const [clientId, socketConn] = listener;
-        if (clientId !== from) {
+        if (clientId !== pkgQueueItem.package.sender_id) {
           try {
             await socketConn.send(encodedMessage);
           } catch (err) {

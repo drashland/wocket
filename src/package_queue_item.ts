@@ -1,11 +1,15 @@
+import { Channel } from "./channel.ts";
+import { Package } from "./package.ts";
+
 interface IMessage {
   text: Uint8Array | string;
 }
 
 // TODO(sara) Add description
-export class Package {
-  public message: IMessage;
-  public sender_id: number | null;
+export class PackageQueueItem {
+
+  public channel: Channel;
+  public package: Package;
 
   //////////////////////////////////////////////////////////////////////////////
   // FILE MARKER - CONSTRCUTOR /////////////////////////////////////////////////
@@ -16,10 +20,8 @@ export class Package {
    *
    * @param name - The name of the channel.
    */
-  constructor(messageText: Uint8Array | string, senderId: number | null = null) {
-    this.message = {
-      text: messageText
-    };
-    this.sender_id = senderId;
+  constructor(pkg: Package, channel: Channel) {
+    this.package = pkg;
+    this.channel = channel;
   }
 }

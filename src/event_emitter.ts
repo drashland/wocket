@@ -2,11 +2,13 @@ import { Sender } from "./sender.ts";
 import { Channel } from "./channel.ts";
 import { Client } from "./client.ts";
 import { WebSocket } from "../deps.ts";
+import { Package } from "./package.ts";
+import { PackageQueueItem } from "./package_queue_item.ts";
 
 // TODO(sara) Add description
 export class EventEmitter {
   public clients: {[key: number]: Client} = {};
-  public channels: any = {};
+  public channels: {[key: string]: Channel} = {};
   public sender: Sender;
   private channel_being_created: string = "";
 
@@ -68,9 +70,11 @@ export class EventEmitter {
    * 
    * @return void
    */
-  public broadcast(channelName: string, pkgOrMessage: any): void {
-    if (pkgOrMessage.from) delete pkgOrMessage.from;
-    this.to(channelName, pkgOrMessage);
+  public broadcast(channelName: string, message: Package | string): void {
+    if (typeof message !== "string" && message.sender_id) {
+      message.sender_id = null;
+    }
+    this.to(channelName, message);
   }
 
   /**
@@ -209,15 +213,12 @@ export class EventEmitter {
    * 
    * @return void
    */
-  public to(channelName: string, pkgOrMessage: any): void {
-    let pkg: any = {};
-    if (typeof pkgOrMessage === "string") {
-      pkg.message = {};
-      pkg.message = { text: pkgOrMessage };
-    } else {
-      pkg = pkgOrMessage;
+  public to(channelName: string, message: Package | string): void {
+    if (typeof message === "string") {
+      this.addToPackageQueue(channelName, new Package(message));
+      return;
     }
-    this.addToPackageQueue(channelName, pkg);
+    this.addToPackageQueue(channelName, message);
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -230,15 +231,14 @@ export class EventEmitter {
    *
    * @return void
    */
-  private addToPackageQueue(channelName: string, pkg: any): void {
+  private addToPackageQueue(channelName: string, pkg: Package): void {
     if (!this.channels[channelName]) {
       throw new Error(`No receivers for "${channelName}" channel.`);
     }
-    this.sender.add({
-      ...this.channels[channelName],
-      message: pkg.message,
-      from: pkg.from || null,
-      channelName,
-    });
+    const pkgQueueItem = new PackageQueueItem(
+      pkg,
+      this.channels[channelName],
+    );
+    this.sender.add(pkgQueueItem);
   }
 }
