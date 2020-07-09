@@ -1,10 +1,6 @@
 import { Channel } from "./channel.ts";
 import { Package } from "./package.ts";
 
-interface IMessage {
-  text: Uint8Array | string;
-}
-
 // TODO(sara) Add description
 export class PackageQueueItem {
   public channel: Channel;
