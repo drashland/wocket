@@ -111,7 +111,7 @@ export class EventEmitter {
    * @return any
    *     Return all clients.
    */
-  public getClients(): any {
+  public getClients(): {[key: string]: Client} {
     return this.clients;
   }
 
@@ -127,7 +127,7 @@ export class EventEmitter {
    * @return any
    *     Return all channels.
    */
-  public getChannels(): any {
+  public getChannels(): {[key: string]: Channel} {
     let channels = [];
     for (let name in this.channels) {
       // Ignore the following channels
