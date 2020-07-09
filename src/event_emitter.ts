@@ -4,6 +4,7 @@ import { Client } from "./client.ts";
 import { WebSocket } from "../deps.ts";
 import { Package } from "./package.ts";
 import { PackageQueueItem } from "./package_queue_item.ts";
+import { RESERVED_EVENT_NAMES } from "./reserved_event_names.ts";
 
 // TODO(sara) Add description
 export class EventEmitter {
@@ -127,14 +128,11 @@ export class EventEmitter {
    * @return any
    *     Return all channels.
    */
-  public getChannels(): {[key: string]: Channel} {
+  public getChannels(): string[] {
     let channels = [];
     for (let name in this.channels) {
       // Ignore the following channels
-      if (
-        name === "connection" ||
-        name === "disconnect"
-      ) {
+      if (RESERVED_EVENT_NAMES.indexOf(name) !== -1) {
         continue;
       }
       channels.push(name);

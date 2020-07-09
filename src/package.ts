@@ -1,6 +1,4 @@
-interface IMessage {
-  text: Uint8Array | string;
-}
+import { IMessage } from "./interfaces.ts";
 
 // TODO(sara) Add description
 export class Package {

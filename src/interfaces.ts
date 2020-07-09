@@ -1,3 +1,10 @@
+export interface IMessage {
+  /**
+   * The message in binary or string form.
+   */
+  text: Uint8Array | string;
+}
+
 export interface ITransmitterOptions {
   /**
    * A property to determine number of ms to wait for a pong event before
@@ -16,5 +23,3 @@ export interface ITransmitterOptions {
    */
   reconnect?: boolean
 }
-
-
