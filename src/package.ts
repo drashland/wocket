@@ -14,9 +14,12 @@ export class Package {
    *
    * @param name - The name of the channel.
    */
-  constructor(messageText: Uint8Array | string, senderId: number | null = null) {
+  constructor(
+    messageText: Uint8Array | string,
+    senderId: number | null = null,
+  ) {
     this.message = {
-      text: messageText
+      text: messageText,
     };
     this.sender_id = senderId;
   }

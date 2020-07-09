@@ -9,10 +9,10 @@ import {
   serveTLS,
 } from "../deps.ts";
 import {
-  EventEmitter
+  EventEmitter,
 } from "./event_emitter.ts";
 import {
-  ITransmitterOptions
+  ITransmitterOptions,
 } from "./interfaces.ts";
 import {
   Transmitter,

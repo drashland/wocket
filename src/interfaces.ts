@@ -21,5 +21,5 @@ export interface ITransmitterOptions {
   /**
    * A property to set reconnect flag. If false, server will not ping client.
    */
-  reconnect?: boolean
+  reconnect?: boolean;
 }

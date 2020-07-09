@@ -7,7 +7,6 @@ interface IMessage {
 
 // TODO(sara) Add description
 export class PackageQueueItem {
-
   public channel: Channel;
   public package: Package;
 

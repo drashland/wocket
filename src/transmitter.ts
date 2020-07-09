@@ -104,9 +104,11 @@ export class Transmitter {
       case "connection":
       case "disconnect":
         if (this.socket_server.channels[eventName]) {
-          this.socket_server.channels[eventName].callbacks.forEach((cb: Function) => {
-            cb(clientId);
-          });
+          this.socket_server.channels[eventName].callbacks.forEach(
+            (cb: Function) => {
+              cb(clientId);
+            },
+          );
         }
         break;
       case "reconnect":
@@ -138,7 +140,9 @@ export class Transmitter {
   public hydrateClient(clientId: number): void {
     if (this.reconnect) {
       this.socket_server.clients[clientId].pong_received = true;
-      this.socket_server.clients[clientId].heartbeat_id = this.startHeartbeat(clientId);
+      this.socket_server.clients[clientId].heartbeat_id = this.startHeartbeat(
+        clientId,
+      );
     }
   }
 

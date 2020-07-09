@@ -54,7 +54,9 @@ export class Sender {
       this.ready = false;
       const pkgQueueItem = this.package_queue.shift();
       const encodedMessage = new TextEncoder().encode(
-        JSON.stringify({ [pkgQueueItem.channel.name]: pkgQueueItem.package.message }),
+        JSON.stringify(
+          { [pkgQueueItem.channel.name]: pkgQueueItem.package.message },
+        ),
       );
       for await (let listener of pkgQueueItem.channel.listeners) {
         const [clientId, socketConn] = listener;

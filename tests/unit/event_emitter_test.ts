@@ -1,8 +1,8 @@
-import  { EventEmitter } from "../../src/event_emitter.ts";
+import { EventEmitter } from "../../src/event_emitter.ts";
 import {
   assertEquals,
   assert,
-  WebSocket
+  WebSocket,
 } from "../../deps.ts";
 
 const ClientSocket = () => {
