@@ -1,4 +1,4 @@
-import SocketServer from "../../src/server.ts";
+import { SocketServer } from "../../src/server.ts";
 import { assertEquals } from "../../deps.ts";
 
 Deno.test("should connect to 3000 if port is not provided", () => {

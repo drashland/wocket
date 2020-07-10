@@ -1,8 +1,10 @@
+import { Channel } from "./channel.ts";
+import { Package } from "./package.ts";
+
 // TODO(sara) Add description
-export class Channel {
-  public callbacks: any[] = [];
-  public name: string;
-  public listeners: any;
+export class PackageQueueItem {
+  public channel: Channel;
+  public package: Package;
 
   //////////////////////////////////////////////////////////////////////////////
   // FILE MARKER - CONSTRCUTOR /////////////////////////////////////////////////
@@ -13,8 +15,8 @@ export class Channel {
    *
    * @param name - The name of the channel.
    */
-  constructor(name: string) {
-    this.name = name;
-    this.listeners = new Map();
+  constructor(pkg: Package, channel: Channel) {
+    this.package = pkg;
+    this.channel = channel;
   }
 }

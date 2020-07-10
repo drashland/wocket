@@ -41,11 +41,11 @@ webServer.run({
 });
 console.log(`Web server started on ${webServer.hostname}:${webServer.port}`);
 
-const socketServer = new SocketServer();
+const socketServer = new SocketServer({ reconnect: false });
 socketServer.run({
   hostname: "localhost",
   port: 3000,
-}, { reconnect: false });
+});
 console.log(
   `socketServer listening: http://${socketServer.hostname}:${socketServer.port}`,
 );

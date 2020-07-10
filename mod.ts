@@ -1,5 +1,1 @@
-import SocketServer from "./src/server.ts";
-
-export {
-  SocketServer,
-};
+export { SocketServer } from "./src/server.ts";

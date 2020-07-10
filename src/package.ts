@@ -1,8 +1,9 @@
+import { IMessage } from "./interfaces.ts";
+
 // TODO(sara) Add description
-export class Channel {
-  public callbacks: any[] = [];
-  public name: string;
-  public listeners: any;
+export class Package {
+  public message: IMessage;
+  public sender_id: number | null;
 
   //////////////////////////////////////////////////////////////////////////////
   // FILE MARKER - CONSTRCUTOR /////////////////////////////////////////////////
@@ -13,8 +14,13 @@ export class Channel {
    *
    * @param name - The name of the channel.
    */
-  constructor(name: string) {
-    this.name = name;
-    this.listeners = new Map();
+  constructor(
+    messageText: Uint8Array | string,
+    senderId: number | null = null,
+  ) {
+    this.message = {
+      text: messageText,
+    };
+    this.sender_id = senderId;
   }
 }

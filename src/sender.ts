@@ -1,32 +1,38 @@
-export default class Sender {
-  private packageQueue: any;
+// TODO(sara) Add description
+export class Sender {
+  private package_queue: any;
   private ready: boolean;
 
+  //////////////////////////////////////////////////////////////////////////////
+  // FILE MARKER - CONSTRCUTOR /////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////////////
+
+  /**
+   * Construct an object of this class.
+   */
   constructor() {
-    this.packageQueue = [];
+    this.package_queue = [];
     this.ready = true;
   }
 
+  //////////////////////////////////////////////////////////////////////////////
+  // FILE MARKER - METHODS - PUBLIC ////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////////////
+
   /**
-   * @description
-   *     Adds a new message to the message queue to be sent.
-   * 
-   * @param message any
-   * 
-   * @return void
+   * Adds a new message to the message queue to be sent.
+   *
+   * @param pkg
    */
   public add(pkg: any) {
-    this.packageQueue.push(pkg);
+    this.package_queue.push(pkg);
     this.send();
   }
 
   /**
-   * @description
-   *     Invokes event callbacks.
-   * 
-   * @param msgObj any
-   * 
-   * @return void
+   * Invokes event callbacks.
+   *
+   * @param msgObj
    */
   public async invokeCallback(msgObj: any): Promise<void> {
     const args = Array.prototype.slice.call(arguments);
@@ -35,28 +41,26 @@ export default class Sender {
     }
   }
 
+  //////////////////////////////////////////////////////////////////////////////
+  // FILE MARKER - METHODS - PRIVATE ///////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////////////
+
   /**
-   * @description
-   *     Encodes messages and sends event to all clients listening
-   *     to the event except for the sender.
+   * Encodes messages and sends event to all clients listening to the event
+   * except for the sender.
    */
   private async send() {
-    if (this.ready && this.packageQueue.length) {
+    if (this.ready && this.package_queue.length) {
       this.ready = false;
-      const pkg = this.packageQueue.shift();
-      const {
-        channelName,
-        message,
-        from,
-        listeners,
-      } = pkg;
-
+      const pkgQueueItem = this.package_queue.shift();
       const encodedMessage = new TextEncoder().encode(
-        JSON.stringify({ [channelName]: message }),
+        JSON.stringify(
+          { [pkgQueueItem.channel.name]: pkgQueueItem.package.message },
+        ),
       );
-      for await (let listener of listeners) {
+      for await (let listener of pkgQueueItem.channel.listeners) {
         const [clientId, socketConn] = listener;
-        if (clientId !== from) {
+        if (clientId !== pkgQueueItem.package.sender_id) {
           try {
             await socketConn.send(encodedMessage);
           } catch (err) {

@@ -1,32 +1,36 @@
-import Sender from "./sender.ts";
-import Channel from "./channel.ts";
-import Client from "./client.ts";
+import { Sender } from "./sender.ts";
+import { Channel } from "./channel.ts";
+import { Client } from "./client.ts";
+import { WebSocket } from "../deps.ts";
+import { Package } from "./package.ts";
+import { PackageQueueItem } from "./package_queue_item.ts";
+import { RESERVED_EVENT_NAMES } from "./reserved_event_names.ts";
 
-export default class EventEmitter {
-  public clients: any = {};
-  private channels: any = {};
-  private sender: Sender;
+// TODO(sara) Add description
+export class EventEmitter {
+  public clients: { [key: number]: Client } = {};
+  public channels: { [key: string]: Channel } = {};
+  public sender: Sender;
   private channel_being_created: string = "";
 
+  //////////////////////////////////////////////////////////////////////////////
   // FILE MARKER - CONSTRUCTOR /////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////////////
 
   constructor() {
     this.sender = new Sender();
   }
 
+  //////////////////////////////////////////////////////////////////////////////
   // FILE MARKER - METHODS - PUBLIC ////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////////////
 
   /**
-   * @description
-   *     Adds a new client.
-   * 
-   * @param clientId int
-   *      Client's socket connection id.
-   * @param WebSocket socket
-   * 
-   * @return void
+   * Adds a new client.
+   * @param int - Client's socket connection id.
+   * @param clientSocket
    */
-  public addClient(clientId: number, clientSocket: any) {
+  public addClient(clientId: number, clientSocket: WebSocket) {
     const client = new Client(clientId, clientSocket);
     this.clients[clientId] = client;
     return client;
@@ -67,9 +71,11 @@ export default class EventEmitter {
    * 
    * @return void
    */
-  public broadcast(channelName: string, pkgOrMessage: any): void {
-    if (pkgOrMessage.from) delete pkgOrMessage.from;
-    this.to(channelName, pkgOrMessage);
+  public broadcast(channelName: string, message: Package | string): void {
+    if (typeof message !== "string" && message.sender_id) {
+      message.sender_id = null;
+    }
+    this.to(channelName, message);
   }
 
   /**
@@ -106,7 +112,7 @@ export default class EventEmitter {
    * @return any
    *     Return all clients.
    */
-  public getClients(): any {
+  public getClients(): { [key: string]: Client } {
     return this.clients;
   }
 
@@ -122,14 +128,11 @@ export default class EventEmitter {
    * @return any
    *     Return all channels.
    */
-  public getChannels(): any {
+  public getChannels(): string[] {
     let channels = [];
     for (let name in this.channels) {
       // Ignore the following channels
-      if (
-        name === "connection" ||
-        name === "disconnect"
-      ) {
+      if (RESERVED_EVENT_NAMES.indexOf(name) !== -1) {
         continue;
       }
       channels.push(name);
@@ -208,18 +211,17 @@ export default class EventEmitter {
    * 
    * @return void
    */
-  public to(channelName: string, pkgOrMessage: any): void {
-    let pkg: any = {};
-    if (typeof pkgOrMessage === "string") {
-      pkg.message = {};
-      pkg.message = { text: pkgOrMessage };
-    } else {
-      pkg = pkgOrMessage;
+  public to(channelName: string, message: Package | string): void {
+    if (typeof message === "string") {
+      this.addToPackageQueue(channelName, new Package(message));
+      return;
     }
-    this._addToPackageQueue(channelName, pkg);
+    this.addToPackageQueue(channelName, message);
   }
 
+  //////////////////////////////////////////////////////////////////////////////
   // FILE MARKER - METHODS - PRIVATE ///////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////////////
 
   /**
    * @param string channelName
@@ -227,15 +229,10 @@ export default class EventEmitter {
    *
    * @return void
    */
-  private _addToPackageQueue(channelName: string, pkg: any): void {
+  private addToPackageQueue(channelName: string, pkg: Package): void {
     if (!this.channels[channelName]) {
       throw new Error(`No receivers for "${channelName}" channel.`);
     }
-    this.sender.add({
-      ...this.channels[channelName],
-      message: pkg.message,
-      from: pkg.from || null,
-      channelName,
-    });
+    this.sender.add(new PackageQueueItem(pkg, this.channels[channelName]));
   }
 }
