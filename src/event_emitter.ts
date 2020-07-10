@@ -18,7 +18,7 @@ export class EventEmitter {
   //////////////////////////////////////////////////////////////////////////////
 
   /**
-   * Constrcut an object of this class.
+   * Construct an object of this class.
    */
   constructor() {
     this.sender = new Sender();
