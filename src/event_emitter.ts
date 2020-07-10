@@ -17,6 +17,9 @@ export class EventEmitter {
   // FILE MARKER - CONSTRUCTOR /////////////////////////////////////////////////
   //////////////////////////////////////////////////////////////////////////////
 
+  /**
+   * Constrcut an object of this class.
+   */
   constructor() {
     this.sender = new Sender();
   }
@@ -28,23 +31,22 @@ export class EventEmitter {
   /**
    * Adds a new client.
    * @param int - Client's socket connection id.
-   * @param clientSocket
+   * @param clientSocket - The client as a WebSocket instance.
+   *
+   * @returns A Client instance for use in the socket-client connection
+   * lifecycle.
    */
-  public addClient(clientId: number, clientSocket: WebSocket) {
+  public addClient(clientId: number, clientSocket: WebSocket): Client {
     const client = new Client(clientId, clientSocket);
     this.clients[clientId] = client;
     return client;
   }
 
   /**
-   * @description
-   *     Adds a new listener to an event.
+   * Adds a new listener to an event.
    *
-   * @param string channelName
-   * @param number clientId
-   *      Client's socket connection id.
-   *
-   * @return void
+   * @param channelName - The name of the channel.
+   * @param clientId - Client's socket connection id.
    */
   public addListener(channelName: string, clientId: number): void {
     if (!this.channels[channelName]) {
@@ -61,15 +63,11 @@ export class EventEmitter {
   }
 
   /**
-   * @description
-   *    Broadcasts a message to all receivers of a channel. pkgOrMessage does
-   *    not contain "from" key.
+   * Broadcasts a message to all receivers of a channel. pkgOrMessage does not
+   * contain "from" key.
    *
-   * @param string channelName
-   * @param any message
-   *     Message to be sent.
-   * 
-   * @return void
+   * @param channelName - The name of the channel.
+   * @param message - The message to broadcast.
    */
   public broadcast(channelName: string, message: Package | string): void {
     if (typeof message !== "string" && message.sender_id) {
@@ -79,78 +77,71 @@ export class EventEmitter {
   }
 
   /**
-   * @description
-   *     Close a channel.
+   * Close a channel.
    *
-   * @param string channelName
+   * @param channelName - The name of the channel.
    */
   public closeChannel(channelName: string): void {
     delete this.channels[channelName];
   }
 
   /**
-   * @description
-   *     Create a new channel. Basically, this creates a new event that clients
-   *     can listen to. Ther server can also send messages to this new
-   *     event/channel.
+   * Create a new channel. Basically, this creates a new event that clients can
+   * listen to. Ther server can also send messages to this new event/channel.
    *
-   * @param string name
+   * @param channelName - The name of the channel.
    *
-   * @return this
+   * @returns this
    */
-  public createChannel(name: string): this {
-    this.channel_being_created = name;
-    if (!this.channels[name]) {
-      this.channels[name] = new Channel(name);
+  public createChannel(channelName: string): this {
+    this.channel_being_created = channelName;
+    if (!this.channels[channelName]) {
+      this.channels[channelName] = new Channel(channelName);
       return this;
     }
 
-    throw new Error(`Channel "${name}" already exists!`);
+    throw new Error(`Channel "${channelName}" already exists!`);
   }
 
   /**
-   * @return any
-   *     Return all clients.
+   * Get all clients.
+   *
+   * @returns All clients.
    */
   public getClients(): { [key: string]: Client } {
     return this.clients;
   }
 
   /**
-   * @return Channel
-   *     Return the specified channel.
+   * @returns The specified channel.
    */
-  public getChannel(name: string): Channel {
-    return this.channels[name];
+  public getChannel(channelName: string): Channel {
+    return this.channels[channelName];
   }
 
   /**
-   * @return any
-   *     Return all channels.
+   * Get all of the channels.
+   *
+   * @return An array with all of the channel names.
    */
   public getChannels(): string[] {
     let channels = [];
-    for (let name in this.channels) {
+    for (let channelName in this.channels) {
       // Ignore the following channels
-      if (RESERVED_EVENT_NAMES.indexOf(name) !== -1) {
+      if (RESERVED_EVENT_NAMES.indexOf(channelName) !== -1) {
         continue;
       }
-      channels.push(name);
+      channels.push(channelName);
     }
     return channels;
   }
 
   /**
-   * @description
-   *     This is the same as creating a new channel (createChannel()), but for
-   *     internal use.
-   * 
-   * @param string channelName
-   *     The name of the channel.
-   * @param Function cb
-   *     Callback to be invoked when a message is sent to the channel.
-   * 
-   * @return void
+   * This is the same as creating a new channel (createChannel()), but for
+   * internal use.
+   *
+   * @param channelName - The name of the channel.
+   * @param cb - Callback to be invoked when a message is sent to the channel.
    */
   public on(name: string, cb: Function): void {
     if (!this.channels[name]) {
@@ -160,17 +151,17 @@ export class EventEmitter {
   }
 
   /**
-   * @description
-   *     This method should only be chained after createChannel(). This allows
-   *     for better semantics when creating channels. For example:
+   * This method should only be chained after createChannel(). This allows for
+   * better semantics when creating channels. For example:
    *
-   *         socketServer.createChannel("channel").onMessage(() => { ... });
+   * ```ts
+   * socketServer.createChannel("channel").onMessage(() => { ... });
+   * ```
    *
-   * @param Function cb
-   *     The callback to invoke when the channel this method is chained to
-   *     receives a message.
+   * @param cb -  The callback to invoke when the channel this method is chained
+   * to receives a message.
    *
-   * @return this
+   * @returns this
    */
   public onMessage(cb: Function): this {
     this.channels[this.channel_being_created].callbacks.push(cb);
@@ -178,14 +169,10 @@ export class EventEmitter {
   }
 
   /**
-   * @description
-   *     Removes an existing client from server and any channels that the client
-   *     subscribed to.
-   * 
-   * @param number clientId
-   *      Client's socket connection id.
-   * 
-   * @return void
+   * Removes an existing client from server and any channels that the client
+   * subscribed to.
+   *
+   * @param clientId - The ID of the client's socket connection.
    */
   public removeClient(clientId: number): void {
     if (!this.clients[clientId]) return;
@@ -204,12 +191,8 @@ export class EventEmitter {
    * @description
    *     Send a message to a channel, excluding the sender.
    *
-   * @param string channelName
-   *     The channel to send the message to.
-   * @param any message
-   *     Message to be sent.
-   * 
-   * @return void
+   * @param channelName - The name of the channel.
+   * @param message - The message to send.
    */
   public to(channelName: string, message: Package | string): void {
     if (typeof message === "string") {
@@ -224,10 +207,11 @@ export class EventEmitter {
   //////////////////////////////////////////////////////////////////////////////
 
   /**
-   * @param string channelName
-   * @param string message
+   * Add a package to the queue so that the message contained in the package can
+   * be sent to the client(s).
    *
-   * @return void
+   * @param channelName - The name of the channel.
+   * @param message - The message to send.
    */
   private addToPackageQueue(channelName: string, pkg: Package): void {
     if (!this.channels[channelName]) {
