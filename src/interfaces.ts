@@ -4,7 +4,7 @@ export interface ICallback {
   channelName: string;
   message: IMessage;
   from: number;
-  callbacks: Function[],
+  callbacks: Function[];
   name: string;
   listeners: Map<number, WebSocket>;
 }
