@@ -188,8 +188,7 @@ export class EventEmitter {
   }
 
   /**
-   * @description
-   *     Send a message to a channel, excluding the sender.
+   * Send a message to a channel, excluding the sender.
    *
    * @param channelName - The name of the channel.
    * @param message - The message to send.
