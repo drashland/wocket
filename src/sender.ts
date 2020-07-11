@@ -1,3 +1,5 @@
+import { PackageQueueItem } from "./package_queue_item.ts";
+
 // TODO(sara) Add description
 export class Sender {
   private package_queue: any;
@@ -22,10 +24,13 @@ export class Sender {
   /**
    * Adds a new message to the message queue to be sent.
    *
-   * @param pkg
+   * @param packageQueueItem - The item to store in the queue. This item will be
+   * sent in the order it was received as long as the queue is in a "ready"
+   * state. Being "ready" means that the queue is not currently sending any
+   * messages. Messages are not sent concurrently.
    */
-  public add(pkg: any) {
-    this.package_queue.push(pkg);
+  public add(packageQueueItem: PackageQueueItem) {
+    this.package_queue.push(packageQueueItem);
     this.send();
   }
 
@@ -46,8 +51,8 @@ export class Sender {
   //////////////////////////////////////////////////////////////////////////////
 
   /**
-   * Encodes messages and sends event to all clients listening to the event
-   * except for the sender.
+   * Encodes messages and sends event to all clients listening to the channel or
+   * event except for the sender.
    */
   private async send() {
     if (this.ready && this.package_queue.length) {

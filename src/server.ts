@@ -51,7 +51,7 @@ export class SocketServer extends EventEmitter {
   /**
    * Construct an object of this class.
    *
-   * @param transmitterOptions - See ITransmitterOptions
+   * @param transmitterOptions - See ITransmitterOptions.
    */
   constructor(transmitterOptions?: ITransmitterOptions) {
     super();
@@ -74,7 +74,7 @@ export class SocketServer extends EventEmitter {
    * will be added to EventEmitter.clients and the server will start listening
    * to events.
    *
-   * @param options - See HTTPOptions
+   * @param options - See HTTPOptions.
    *
    * @returns A Promise of DenoServer.
    */
@@ -99,7 +99,7 @@ export class SocketServer extends EventEmitter {
    * client will be added to EventEmitter.clients and the server will start
    * listening to events.
    *
-   * @param options - See HTTPOptions
+   * @param options - See HTTPOptions.
    *
    * @returns A Promise of the DenoServer.
    */
