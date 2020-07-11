@@ -122,7 +122,7 @@ export class EventEmitter {
   /**
    * Get all of the channels.
    *
-   * @return An array with all of the channel names.
+   * @returns An array with all of the channel names.
    */
   public getChannels(): string[] {
     let channels = [];
