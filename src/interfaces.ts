@@ -1,3 +1,14 @@
+import { WebSocket } from "../deps.ts";
+
+export interface ICallback {
+  channelName: string;
+  message: IMessage;
+  from: number;
+  callbacks: Function[],
+  name: string;
+  listeners: Map<number, WebSocket>;
+}
+
 export interface IMessage {
   /**
    * The message in binary or string form.

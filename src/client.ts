@@ -4,7 +4,7 @@ import { WebSocket } from "../deps.ts";
 export class Client {
   public heartbeat_id: number | null = null;
   public id: number;
-  public listening_to: any[] = [];
+  public listening_to: string[] = [];
   public pong_received: boolean = false;
   public socket: WebSocket;
 
