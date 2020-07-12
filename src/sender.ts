@@ -1,21 +1,10 @@
 import { PackageQueueItem } from "./package_queue_item.ts";
+import { ICallback } from "./interfaces.ts";
 
 // TODO(sara) Add description
 export class Sender {
-  private package_queue: any;
-  private ready: boolean;
-
-  //////////////////////////////////////////////////////////////////////////////
-  // FILE MARKER - CONSTRCUTOR /////////////////////////////////////////////////
-  //////////////////////////////////////////////////////////////////////////////
-
-  /**
-   * Construct an object of this class.
-   */
-  constructor() {
-    this.package_queue = [];
-    this.ready = true;
-  }
+  private package_queue: PackageQueueItem[] = [];
+  private ready: boolean = true;
 
   //////////////////////////////////////////////////////////////////////////////
   // FILE MARKER - METHODS - PUBLIC ////////////////////////////////////////////
@@ -39,7 +28,7 @@ export class Sender {
    *
    * @param msgObj
    */
-  public async invokeCallback(msgObj: any): Promise<void> {
+  public async invokeCallback(msgObj: ICallback): Promise<void> {
     const args = Array.prototype.slice.call(arguments);
     for await (let cb of msgObj.callbacks) {
       cb.apply(this, args);
@@ -60,12 +49,12 @@ export class Sender {
       const pkgQueueItem = this.package_queue.shift();
       const encodedMessage = new TextEncoder().encode(
         JSON.stringify(
-          { [pkgQueueItem.channel.name]: pkgQueueItem.package.message },
+          { [pkgQueueItem!.channel.name]: pkgQueueItem!.package.message },
         ),
       );
-      for await (let listener of pkgQueueItem.channel.listeners) {
+      for await (let listener of pkgQueueItem!.channel.listeners) {
         const [clientId, socketConn] = listener;
-        if (clientId !== pkgQueueItem.package.sender_id) {
+        if (clientId !== pkgQueueItem!.package.sender_id) {
           try {
             await socketConn.send(encodedMessage);
           } catch (err) {

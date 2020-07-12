@@ -2,6 +2,7 @@ import { ITransmitterOptions } from "./interfaces.ts";
 import { MESSAGE_TYPE } from "./io_types.ts";
 import { RESERVED_EVENT_NAMES } from "./reserved_event_names.ts";
 import { SocketServer } from "./server.ts";
+import { WebSocket } from "../deps.ts";
 
 // TODO(sara) Add description
 export class Transmitter {
@@ -98,7 +99,7 @@ export class Transmitter {
   public handleReservedEventNames(
     eventName: string,
     clientId: number,
-    socket?: any,
+    socket?: WebSocket | undefined,
   ): void {
     switch (eventName) {
       case "connection":
@@ -117,8 +118,10 @@ export class Transmitter {
         break;
       case "pong":
         if (!this.socket_server.clients[clientId]) {
-          this.socket_server.addClient(clientId, socket);
-          this.hydrateClient(clientId);
+          if (socket) {
+            this.socket_server.addClient(clientId, socket);
+            this.hydrateClient(clientId);
+          }
         } else {
           this.socket_server.clients[clientId].pong_received = true;
         }

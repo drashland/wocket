@@ -1,8 +1,10 @@
+import { WebSocket } from "../deps.ts";
+
 // TODO(sara) Add description
 export class Channel {
-  public callbacks: any[] = [];
+  public callbacks: Function[] = [];
   public name: string;
-  public listeners: any;
+  public listeners: Map<number, WebSocket>;
 
   //////////////////////////////////////////////////////////////////////////////
   // FILE MARKER - CONSTRCUTOR /////////////////////////////////////////////////
