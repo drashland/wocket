@@ -144,9 +144,22 @@ export class SocketServer extends EventEmitter {
               } else if (isWebSocketCloseEvent(ev)) {
                 super.removeClient(clientId);
               } else if (typeof ev === "string") {
-                switch (ev) {
-                  case "ping":
+                switch (true) {
+                  case ev == "ping":
                     socket.send("pong");
+                    break;
+                  case ev.includes("send_message"):
+                    try {
+                      const json = JSON.parse(ev);
+                      console.log(json);
+                      const message = json.send_message;
+                      await this.transmitter.checkEvent(
+                        encoder.encode(JSON.stringify(message)),
+                        clientId
+                      );
+                    } catch (error) {
+                      console.log(error);
+                    }
                     break;
                   default:
                     await this.transmitter.checkEvent(
