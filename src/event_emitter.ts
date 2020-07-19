@@ -151,24 +151,6 @@ export class EventEmitter {
   }
 
   /**
-   * This method should only be chained after createChannel(). This allows for
-   * better semantics when creating channels. For example:
-   *
-   * ```ts
-   * socketServer.createChannel("channel").onMessage(() => { ... });
-   * ```
-   *
-   * @param cb -  The callback to invoke when the channel this method is chained
-   * to receives a message.
-   *
-   * @returns this
-   */
-  public onMessage(cb: Function): this {
-    this.channels[this.channel_being_created].callbacks.push(cb);
-    return this;
-  }
-
-  /**
    * Removes an existing client from server and any channels that the client
    * subscribed to.
    *
