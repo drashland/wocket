@@ -114,9 +114,6 @@ export class Transmitter {
       case "error":
         // do something when client errors
         break;
-      case "listen_to":
-        this.socket_server.addListener("listening_to", clientId);
-        break;
       case "pong":
         if (!this.socket_server.clients[clientId]) {
           if (socket) {
