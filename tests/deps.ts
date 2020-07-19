@@ -1,5 +1,5 @@
 export {
-  Drash
+  Drash,
 } from "https://deno.land/x/drash@v1.1.0/mod.ts";
 
 export {
