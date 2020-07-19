@@ -8,8 +8,8 @@ import { RESERVED_EVENT_NAMES } from "./reserved_event_names.ts";
 
 // TODO(sara) Add description
 export class EventEmitter {
-  public clients: { [key: number]: Client } = {};
   public channels: { [key: string]: Channel } = {};
+  public clients: { [key: number]: Client } = {};
   public sender: Sender;
 
   //////////////////////////////////////////////////////////////////////////////
