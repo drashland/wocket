@@ -1,5 +1,4 @@
 import { ITransmitterOptions } from "./interfaces.ts";
-import { MESSAGE_TYPE } from "./io_types.ts";
 import { RESERVED_EVENT_NAMES } from "./reserved_event_names.ts";
 import { SocketServer } from "./server.ts";
 import { WebSocket } from "../deps.ts";
@@ -65,9 +64,9 @@ export class Transmitter {
    *
    * @returns A Promise
    */
-  public async checkEvent(
-    message: MESSAGE_TYPE,
-    clientId: number,
+  public async handleMessage(
+    message: Uint8Array,
+    client: Client,
   ): Promise<void> {
     let result = new TextDecoder().decode(message);
     // deno-lint-ignore no-explicit-any
