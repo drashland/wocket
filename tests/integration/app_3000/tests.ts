@@ -1,6 +1,6 @@
 import { SocketServer } from "../../../mod.ts";
-import { Drash } from "../test_deps.ts";
-import { assertEquals, connectWebSocket } from "../../../deps.ts";
+import { Drash } from "../../deps.ts";
+import { assertEquals, connectWebSocket } from "../../deps.ts";
 
 let storage: any = {
   "chan1": {
@@ -21,7 +21,7 @@ class Resource extends Drash.Http.Resource {
       `ws://${socketServer.hostname}:${socketServer.port}`,
     );
     let encoded = new TextEncoder().encode(
-      JSON.stringify({ [channel]: message }),
+      JSON.stringify({ [channel as string]: message }),
     );
     await socketClient.send(encoded);
     socketClient.close();

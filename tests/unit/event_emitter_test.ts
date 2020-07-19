@@ -3,7 +3,7 @@ import {
   assertEquals,
   assert,
   WebSocket,
-} from "../../deps.ts";
+} from "../deps.ts";
 
 const ClientSocket = () => {
   return {
