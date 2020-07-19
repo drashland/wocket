@@ -17,6 +17,7 @@ import {
 import {
   Transmitter,
 } from "./transmitter.ts";
+const encoder = new TextEncoder();
 
 // TODO(sara) Add description
 export class SocketServer extends EventEmitter {
@@ -142,6 +143,18 @@ export class SocketServer extends EventEmitter {
                 await this.transmitter.checkEvent(ev, clientId);
               } else if (isWebSocketCloseEvent(ev)) {
                 await super.removeClient(clientId);
+              } else if (typeof ev === "string") {
+                switch (ev) {
+                  case "ping":
+                    socket.send("pong");
+                    break;
+                  default:
+                    await this.transmitter.checkEvent(
+                      encoder.encode(ev),
+                      clientId
+                    );
+                    break;
+                }
               }
             }
           } catch (e) {
