@@ -1,10 +1,10 @@
 import { PackageQueueItem } from "./package_queue_item.ts";
-import { ICallback } from "./interfaces.ts";
+import { IPacket } from "./interfaces.ts";
 
 // TODO(sara) Add description
 export class Sender {
   private package_queue: PackageQueueItem[] = [];
-  private ready: boolean = true;
+  private ready = true;
 
   //////////////////////////////////////////////////////////////////////////////
   // FILE MARKER - METHODS - PUBLIC ////////////////////////////////////////////
@@ -28,9 +28,9 @@ export class Sender {
    *
    * @param msgObj
    */
-  public async invokeCallback(msgObj: ICallback): Promise<void> {
+  public async invokeCallback(packet: IPacket): Promise<void> {
     const args = Array.prototype.slice.call(arguments);
-    for await (let cb of msgObj.callbacks) {
+    for await (let cb of packet.callbacks) {
       cb.apply(this, args);
     }
   }

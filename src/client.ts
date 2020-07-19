@@ -5,7 +5,7 @@ export class Client {
   public heartbeat_id: number | null = null;
   public id: number;
   public listening_to: string[] = [];
-  public pong_received: boolean = false;
+  public pong_received = false;
   public socket: WebSocket;
 
   //////////////////////////////////////////////////////////////////////////////

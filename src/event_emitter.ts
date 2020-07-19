@@ -11,7 +11,7 @@ export class EventEmitter {
   public clients: { [key: number]: Client } = {};
   public channels: { [key: string]: Channel } = {};
   public sender: Sender;
-  private channel_being_created: string = "";
+  private channel_being_created = "";
 
   //////////////////////////////////////////////////////////////////////////////
   // FILE MARKER - CONSTRUCTOR /////////////////////////////////////////////////

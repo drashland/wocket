@@ -31,12 +31,12 @@ export class SocketServer extends EventEmitter {
   /**
    * A property to hold the hostname this server listens on.
    */
-  public hostname: string = "localhost";
+  public hostname = "localhost";
 
   /**
    * A property to hold the port this server listens on.
    */
-  public port: number = 1557;
+  public port = 1557;
 
   /**
    * A property to hold the transmitter. The transmitter is in charge of

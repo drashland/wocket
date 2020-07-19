@@ -1,6 +1,6 @@
 import { WebSocket } from "../deps.ts";
 
-export interface ICallback {
+export interface IPacket {
   channelName: string;
   message: IMessage;
   from: number;
