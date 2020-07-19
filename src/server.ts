@@ -249,9 +249,32 @@ export class SocketServer extends EventEmitter {
       //
       //     {"listen_to":"channel name / event name"}
       //
-      if (json.listen_to) {
-        super.addListener(json.listen_to, client.id);
-        return client.socket.send(`Now listening to: ${json.listen_to}`);
+      if (json.connect_to) {
+        json.connect_to.forEach((channelName: string) => {
+          try {
+            super.addListener(channelName, client.id);
+            client.socket.send(`Connected to ${channelName}.`);
+          } catch (error) {
+            client.socket.send(error.message);
+          }
+        });
+        return;
+      }
+
+      // A listen_to message should be in the following format:
+      //
+      //     {"listen_to":"channel name / event name"}
+      //
+      if (json.disconnect_from) {
+        json.disconnect_from.forEach((channelName: string) => {
+          try {
+            super.removeListener(channelName, client.id);
+            client.socket.send(`Disconnected from ${channelName}.`);
+          } catch (error) {
+            client.socket.send(error.message);
+          }
+        });
+        return;
       }
     } catch (error) {
       client.socket.send(error.message);

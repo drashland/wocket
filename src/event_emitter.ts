@@ -11,7 +11,6 @@ export class EventEmitter {
   public clients: { [key: number]: Client } = {};
   public channels: { [key: string]: Channel } = {};
   public sender: Sender;
-  private channel_being_created = "";
 
   //////////////////////////////////////////////////////////////////////////////
   // FILE MARKER - CONSTRUCTOR /////////////////////////////////////////////////
@@ -59,7 +58,10 @@ export class EventEmitter {
         this.clients[clientId].socket,
       );
       this.clients[clientId].listening_to.push(channelName);
+      return;
     }
+
+    throw new Error(`Already listening to ${channelName}.`);
   }
 
   /**
@@ -94,7 +96,6 @@ export class EventEmitter {
    * @returns this
    */
   public createChannel(channelName: string): this {
-    this.channel_being_created = channelName;
     if (!this.channels[channelName]) {
       this.channels[channelName] = new Channel(channelName);
       return this;
@@ -167,6 +168,29 @@ export class EventEmitter {
     }
 
     delete this.clients[clientId];
+  }
+
+  /**
+   * Removes a listener from a channel.
+   *
+   * @param channelName - The name of the channel.
+   * @param clientId - Client's socket connection id.
+   */
+  public removeListener(channelName: string, clientId: number): void {
+    if (!this.channels[channelName]) {
+      throw new Error("Channel not found.");
+    }
+
+    if (this.channels[channelName].listeners.has(clientId)) {
+      this.channels[channelName].listeners.delete(clientId);
+      const index = this.clients[clientId].listening_to.indexOf(channelName);
+      if (index > -1) {
+        this.clients[clientId].listening_to.splice(index, 1);
+        return;
+      }
+    }
+
+    throw new Error(`Not connected to ${channelName}.`);
   }
 
   /**
