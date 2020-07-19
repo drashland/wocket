@@ -1,3 +1,4 @@
+import { Client } from "./client.ts";
 import { ITransmitterOptions } from "./interfaces.ts";
 import { RESERVED_EVENT_NAMES } from "./reserved_event_names.ts";
 import { SocketServer } from "./server.ts";
@@ -79,13 +80,13 @@ export class Transmitter {
 
     for await (let channelName of Object.keys(parsedMessage)) {
       if (RESERVED_EVENT_NAMES.includes(channelName)) {
-        this.handleReservedEventNames(parsedMessage[channelName], clientId);
+        this.handleReservedEventNames(parsedMessage[channelName], client.id);
       } else if (this.socket_server.channels[channelName]) {
         await this.socket_server.sender.invokeCallback({
           ...this.socket_server.channels[channelName],
           channelName,
           message: parsedMessage[channelName],
-          from: clientId,
+          from: client.id,
         });
       }
     }
