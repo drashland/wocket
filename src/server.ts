@@ -142,7 +142,7 @@ export class SocketServer extends EventEmitter {
               if (ev instanceof Uint8Array) {
                 await this.transmitter.checkEvent(ev, clientId);
               } else if (isWebSocketCloseEvent(ev)) {
-                await super.removeClient(clientId);
+                super.removeClient(clientId);
               } else if (typeof ev === "string") {
                 switch (ev) {
                   case "ping":
@@ -160,7 +160,7 @@ export class SocketServer extends EventEmitter {
           } catch (e) {
             if (!socket.isClosed) {
               await socket.close(1000).catch(console.error);
-              await super.removeClient(clientId);
+              super.removeClient(clientId);
             }
           }
         })
