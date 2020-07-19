@@ -148,6 +148,9 @@ export class SocketServer extends EventEmitter {
                   case ev == "ping":
                     socket.send("pong");
                     break;
+                  case ev == "pong":
+                    socket.send("ping");
+                    break;
                   case ev.includes("send_message"):
                     try {
                       const json = JSON.parse(ev);
