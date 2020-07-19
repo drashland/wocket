@@ -88,23 +88,6 @@ export class EventEmitter {
   }
 
   /**
-   * Create a new channel. Basically, this creates a new event that clients can
-   * listen to. Ther server can also send messages to this new event/channel.
-   *
-   * @param channelName - The name of the channel.
-   *
-   * @returns this
-   */
-  public createChannel(channelName: string): this {
-    if (!this.channels[channelName]) {
-      this.channels[channelName] = new Channel(channelName);
-      return this;
-    }
-
-    throw new Error(`Channel "${channelName}" already exists!`);
-  }
-
-  /**
    * Get all clients.
    *
    * @returns All clients.
@@ -138,7 +121,7 @@ export class EventEmitter {
   }
 
   /**
-   * This is the same as creating a new channel (createChannel()), but for
+   * This is the same as creating a new channel (openChannel()), but for
    * internal use.
    *
    * @param channelName - The name of the channel.
@@ -149,6 +132,23 @@ export class EventEmitter {
       this.channels[name] = new Channel(name);
     }
     this.channels[name].callbacks.push(cb);
+  }
+
+  /**
+   * Create a new channel. Basically, this creates a new event that clients can
+   * listen to. Ther server can also send messages to this new event/channel.
+   *
+   * @param channelName - The name of the channel.
+   *
+   * @returns this
+   */
+  public openChannel(channelName: string): this {
+    if (!this.channels[channelName]) {
+      this.channels[channelName] = new Channel(channelName);
+      return this;
+    }
+
+    throw new Error(`Channel "${channelName}" already exists!`);
   }
 
   /**

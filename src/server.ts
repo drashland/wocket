@@ -230,7 +230,7 @@ export class SocketServer extends EventEmitter {
       //
       //     {
       //       "send_message": {
-      //         "to": "channel name / event name",
+      //         "to": ["array", "of", "channels"],
       //         "message": "the message"
       //       }
       //     }
@@ -245,9 +245,13 @@ export class SocketServer extends EventEmitter {
         );
       }
 
-      // A listen_to message should be in the following format:
+      // A connect_to message should be in the following format:
       //
-      //     {"listen_to":"channel name / event name"}
+      //     {
+      //       "connect_to": [
+      //         "array", "of", "channels"
+      //       ]
+      //     }
       //
       if (json.connect_to) {
         json.connect_to.forEach((channelName: string) => {
@@ -261,9 +265,13 @@ export class SocketServer extends EventEmitter {
         return;
       }
 
-      // A listen_to message should be in the following format:
+      // A disconnect_from message should be in the following format:
       //
-      //     {"listen_to":"channel name / event name"}
+      //     {
+      //       "disconnect_from": [
+      //         "array", "of", "channels"
+      //       ]
+      //     }
       //
       if (json.disconnect_from) {
         json.disconnect_from.forEach((channelName: string) => {
@@ -274,6 +282,38 @@ export class SocketServer extends EventEmitter {
             client.socket.send(error.message);
           }
         });
+        return;
+      }
+
+      // A open_channel message should be in the following format:
+      //
+      //     {
+      //       "open_channel": "channel name"
+      //     }
+      //
+      if (json.open_channel) {
+        try {
+          super.openChannel(json.open_channel.channel_name);
+          client.socket.send(`Opened channel: ${json.open_channel.channel_name}.`);
+        } catch (error) {
+          client.socket.send(error.message);
+        }
+        return;
+      }
+
+      // A close_channel message should be in the following format:
+      //
+      //     {
+      //       "close_channel": "channel name"
+      //     }
+      //
+      if (json.close_channel) {
+        try {
+          super.closeChannel(json.close_channel.channel_name);
+          client.socket.send(`Closed channel: ${json.close_channel.channel_name}.`);
+        } catch (error) {
+          client.socket.send(error.message);
+        }
         return;
       }
     } catch (error) {
