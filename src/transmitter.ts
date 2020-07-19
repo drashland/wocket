@@ -112,9 +112,11 @@ export class Transmitter {
           );
         }
         break;
-      case "reconnect":
-        // do something on an reconnect event
-        // could be useful to add a flag to this client
+      case "error":
+        // do something when client errors
+        break;
+      case "listen_to":
+        this.socket_server.addListener("listening_to", clientId);
         break;
       case "pong":
         if (!this.socket_server.clients[clientId]) {
@@ -126,8 +128,9 @@ export class Transmitter {
           this.socket_server.clients[clientId].pong_received = true;
         }
         break;
-      case "error":
-        // do something when client errors
+      case "reconnect":
+        // do something on an reconnect event
+        // could be useful to add a flag to this client
         break;
       default:
         this.socket_server.addListener(eventName, clientId);
