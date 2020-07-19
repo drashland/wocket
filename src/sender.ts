@@ -49,7 +49,11 @@ export class Sender {
       const pkgQueueItem = this.package_queue.shift();
       const encodedMessage = new TextEncoder().encode(
         JSON.stringify(
-          { [pkgQueueItem!.channel.name]: pkgQueueItem!.package.message },
+          {
+            from: pkgQueueItem!.package.sender_id ?? "Server",
+            to: pkgQueueItem!.channel.name,
+            message: pkgQueueItem!.package.message
+          },
         ),
       );
       for await (let listener of pkgQueueItem!.channel.listeners) {

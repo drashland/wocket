@@ -1,19 +1,8 @@
-import { WebSocket } from "../deps.ts";
-
 export interface IPacket {
-  channelName: string;
-  message: IMessage;
+  to: string;
+  message: Uint8Array | string;
   from: number;
   callbacks: Function[];
-  name: string;
-  listeners: Map<number, WebSocket>;
-}
-
-export interface IMessage {
-  /**
-   * The message in binary or string form.
-   */
-  text: Uint8Array | string;
 }
 
 export interface ITransmitterOptions {

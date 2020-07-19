@@ -228,11 +228,19 @@ export class SocketServer extends EventEmitter {
 
       // A send_message message should be in the following format:
       //
-      //     {"send_message": {"channel name / event name": "message"} }
+      //     {
+      //       "send_message": {
+      //         "to": "channel name / event name",
+      //         "message": "the message"
+      //       }
+      //     }
       //
       if (json.send_message) {
         return await this.transmitter.handleMessage(
-          encoder.encode(JSON.stringify(json.send_message)),
+          JSON.stringify({
+            to: json.send_message.to,
+            message: json.send_message.message,
+          }),
           client,
         );
       }

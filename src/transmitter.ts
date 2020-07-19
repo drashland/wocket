@@ -66,10 +66,16 @@ export class Transmitter {
    * @returns A Promise
    */
   public async handleMessage(
-    message: Uint8Array,
+    message: Uint8Array | string,
     client: Client,
   ): Promise<void> {
-    let result = new TextDecoder().decode(message);
+    let result: string;
+    if (message instanceof Uint8Array) {
+      result = new TextDecoder().decode(message);
+    } else {
+      // Assume it's already JSON string
+      result = message;
+    }
     // deno-lint-ignore no-explicit-any
     let parsedMessage: any = {};
     try {
@@ -78,18 +84,19 @@ export class Transmitter {
       throw new Error(err);
     }
 
-    for await (let channelName of Object.keys(parsedMessage)) {
+    parsedMessage.to.forEach(async (channelName: string) => {
       if (RESERVED_EVENT_NAMES.includes(channelName)) {
-        this.handleReservedEventNames(parsedMessage[channelName], client.id);
+        this.handleReservedEventNames(parsedMessage.message, client.id);
       } else if (this.socket_server.channels[channelName]) {
         await this.socket_server.sender.invokeCallback({
-          ...this.socket_server.channels[channelName],
-          channelName,
-          message: parsedMessage[channelName],
+          callbacks: this.socket_server.channels[channelName].callbacks,
+          to: channelName,
+          message: parsedMessage.message,
           from: client.id,
         });
       }
-    }
+    });
+
   }
 
   /**

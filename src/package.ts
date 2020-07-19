@@ -1,8 +1,6 @@
-import { IMessage } from "./interfaces.ts";
-
 // TODO(sara) Add description
 export class Package {
-  public message: IMessage;
+  public message: Uint8Array | string;
   public sender_id: number | null;
 
   //////////////////////////////////////////////////////////////////////////////
@@ -18,9 +16,7 @@ export class Package {
     messageText: Uint8Array | string,
     senderId: number | null = null,
   ) {
-    this.message = {
-      text: messageText,
-    };
+    this.message = messageText;
     this.sender_id = senderId;
   }
 }
