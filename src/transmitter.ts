@@ -34,7 +34,7 @@ export class Transmitter {
    * Construct an object of this class.
    *
    * @param socketServer - The socket server requiring this transmitter.
-   * @param options = See ITransmitterOptions
+   * @param options - See ITransmitterOptions.
    */
   constructor(socketServer: SocketServer, options?: ITransmitterOptions) {
     if (options) {
@@ -60,8 +60,8 @@ export class Transmitter {
   /**
    * Decodes and validates incoming messages.
    *
-   * @param message - Uint8Array
-   * @param clientId - The WebSocket connection ID of the client in question.
+   * @param message
+   * @param client
    *
    * @returns A Promise
    */
