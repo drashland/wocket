@@ -1,14 +1,14 @@
 import { SocketServer } from "../../mod.ts";
 
 // Create the socket server
-const socketServer = new SocketServer();
+const socketServer = new SocketServer({
+  reconnect: true,
+  ping_interval: 2000,
+  ping_timeout: 6000,
+});
 socketServer.run({
   hostname: "localhost",
   port: 3000,
-}, {
-  reconnect: true,
-  pingInterval: 2000,
-  pingTimeout: 6000,
 });
 console.log(
   `Socket server started on ws://${socketServer.hostname}:${socketServer.port}`,
@@ -26,8 +26,7 @@ socketServer.on("disconnect", () => {
 
 // Create "Channel 1" so that clients can send messages to it
 socketServer
-  .createChannel("Channel 1")
-  .onMessage((packet: any) => {
+  .on("Channel 1", (packet: any) => {
     console.log(packet);
     console.log("Sending a message back to the client.");
     // Send messages to all clients listening to "Channel 1"
