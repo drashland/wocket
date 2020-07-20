@@ -13,7 +13,7 @@ export interface IPacket {
   /**
    * A property to hold the message this packet contains.
    */
-  message: Uint8Array | string;
+  message: unknown;
 
   /**
    * A property to hold the address this packet is going to.
