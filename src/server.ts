@@ -276,7 +276,7 @@ export class SocketServer extends EventEmitter {
       if (json.disconnect_from) {
         json.disconnect_from.forEach((channelName: string) => {
           try {
-            super.removeListener(channelName, client.id);
+            super.removeClientFromChannel(channelName, client.id);
             client.socket.send(`Disconnected from ${channelName}.`);
           } catch (error) {
             client.socket.send(error.message);
