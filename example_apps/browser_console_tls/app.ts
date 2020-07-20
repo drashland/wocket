@@ -1,12 +1,12 @@
-import { SocketServer } from "../../mod.ts";
+import {IPacket, SocketServer} from "../../mod.ts";
 
 // Create the socket server
 const socketServer = new SocketServer();
 socketServer.runTLS({
   hostname: "localhost",
   port: 3000,
-  certFile: "./server.crt",
-  keyFile: "./server.key",
+  certFile: "./example_apps/browser_console_tls/server.crt",
+  keyFile: "./example_apps/browser_console_tls/server.key",
 });
 console.log(
   `Socket server started on wss://${socketServer.hostname}:${socketServer.port}`,
@@ -24,8 +24,7 @@ socketServer.on("disconnect", () => {
 
 // Create "Channel 1" so that clients can send messages to it
 socketServer
-  .createChannel("Channel 1")
-  .onMessage((packet: any) => {
+  .on("Channel 1", (packet: IPacket) => {
     console.log(packet);
     console.log("Sending a message back to the client.");
     // Send messages to all clients listening to "Channel 1"
