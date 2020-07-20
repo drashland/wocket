@@ -100,19 +100,19 @@ export class Transmitter {
   }
 
   /**
-   * @param eventName
+   * @param channelName
    * @param clientId - The WebSocket connection ID of the client in question.
    */
   public handleReservedEventNames(
-    eventName: string,
+    channelName: string,
     clientId: number,
     socket?: WebSocket | undefined,
   ): void {
-    switch (eventName) {
+    switch (channelName) {
       case "connection":
       case "disconnect":
-        if (this.socket_server.channels[eventName]) {
-          this.socket_server.channels[eventName].callbacks.forEach(
+        if (this.socket_server.channels[channelName]) {
+          this.socket_server.channels[channelName].callbacks.forEach(
             (cb: Function) => {
               cb(clientId);
             },
@@ -125,7 +125,7 @@ export class Transmitter {
       case "pong":
         if (!this.socket_server.clients[clientId]) {
           if (socket) {
-            this.socket_server.addClient(clientId, socket);
+            this.socket_server.createClient(clientId, socket);
             this.hydrateClient(clientId);
           }
         } else {
@@ -137,7 +137,7 @@ export class Transmitter {
         // could be useful to add a flag to this client
         break;
       default:
-        this.socket_server.addListener(eventName, clientId);
+        this.socket_server.addClientToChannel(channelName, clientId);
         break;
     }
   }

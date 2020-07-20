@@ -35,19 +35,20 @@ export class EventEmitter {
    * @returns A Client instance for use in the socket-client connection
    * lifecycle.
    */
-  public addClient(clientId: number, clientSocket: WebSocket): Client {
+  public createClient(clientId: number, clientSocket: WebSocket): Client {
     const client = new Client(clientId, clientSocket);
     this.clients[clientId] = client;
     return client;
   }
 
   /**
-   * Adds a new listener to an event.
+   * Adds a new client to a channel. Once the client is added, the client will
+   * be able to receive messages sent to the channel.
    *
    * @param channelName - The name of the channel.
    * @param clientId - Client's socket connection id.
    */
-  public addListener(channelName: string, clientId: number): void {
+  public addClientToChannel(channelName: string, clientId: number): void {
     if (!this.channels[channelName]) {
       this.channels[channelName] = new Channel(channelName);
     }

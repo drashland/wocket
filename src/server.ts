@@ -138,7 +138,7 @@ export class SocketServer extends EventEmitter {
       })
         .then(async (socket: WebSocket): Promise<void> => {
           const clientId = conn.rid;
-          const client = super.addClient(clientId, socket);
+          const client = super.createClient(clientId, socket);
 
           try {
             for await (const message of socket) {
@@ -256,7 +256,7 @@ export class SocketServer extends EventEmitter {
       if (json.connect_to) {
         json.connect_to.forEach((channelName: string) => {
           try {
-            super.addListener(channelName, client.id);
+            super.addClientToChannel(channelName, client.id);
             client.socket.send(`Connected to ${channelName}.`);
           } catch (error) {
             client.socket.send(error.message);
