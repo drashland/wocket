@@ -14,7 +14,6 @@ import { RESERVED_EVENT_NAMES } from "./reserved_event_names.ts";
  * channels are open
  */
 export class EventEmitter {
-
   /**
    * A list of key value pairs describing all created
    * channels, where the key is the channel name,

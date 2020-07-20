@@ -10,7 +10,6 @@ import { WebSocket } from "../deps.ts";
  * to connect the 'wires' between them.
  */
 export class Transmitter {
-
   /**
    * See ITransmitterOptions
    */
@@ -101,7 +100,6 @@ export class Transmitter {
         });
       }
     });
-
   }
 
   /**

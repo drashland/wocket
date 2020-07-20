@@ -5,7 +5,6 @@ import { WebSocket } from "../deps.ts";
  * This class describes open channels, and is used to place clients into
  */
 export class Channel {
-
   /**
    * The callbacks for listening
    *

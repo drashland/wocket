@@ -3,7 +3,6 @@
  * down through the socket.
  */
 export class Package {
-
   /**
    * The message to send to the client
    */

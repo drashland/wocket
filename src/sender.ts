@@ -7,7 +7,6 @@ import { IPacket } from "./interfaces.ts";
  * through the queue stack which will send the message
  */
 export class Sender {
-
   /**
    * A list of `PackageQueue` items which represents.
    * the message queue
@@ -59,7 +58,7 @@ export class Sender {
    * Encodes messages and sends event to all clients listening to the channel or
    * event except for the sender.
    */
-  private async send (): Promise<void> {
+  private async send(): Promise<void> {
     if (this.ready && this.package_queue.length) {
       this.ready = false;
       const pkgQueueItem = this.package_queue.shift();
@@ -68,7 +67,7 @@ export class Sender {
           {
             from: pkgQueueItem!.package.sender_id ?? "Server",
             to: pkgQueueItem!.channel.name,
-            message: pkgQueueItem!.package.message
+            message: pkgQueueItem!.package.message,
           },
         ),
       );

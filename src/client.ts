@@ -6,7 +6,6 @@ import { WebSocket } from "../deps.ts";
  * and many more
  */
 export class Client {
-
   /**
    * The `heartbeat_id` is the  same as the `id`.
    * It is used to 'poll' the client, to check if the connection is alive.

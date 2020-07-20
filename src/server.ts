@@ -146,16 +146,15 @@ export class SocketServer extends EventEmitter {
 
           try {
             for await (const message of socket) {
-
               // Handle binary
               if (message instanceof Uint8Array) {
                 this.handleMessageAsBinary(client, message);
 
-              // Handle strings
+                // Handle strings
               } else if (typeof message === "string") {
                 await this.handleMessageAsString(client, message);
 
-              // Handle disconnects
+                // Handle disconnects
               } else if (isWebSocketCloseEvent(message)) {
                 super.removeClient(client.id);
               }
@@ -183,7 +182,10 @@ export class SocketServer extends EventEmitter {
    * @param client - The client instance.
    * @param message - The message the client sent.
    */
-  protected async handleMessageAsBinary(client: Client, message: Uint8Array): Promise<void> {
+  protected async handleMessageAsBinary(
+    client: Client,
+    message: Uint8Array,
+  ): Promise<void> {
     return await this.transmitter.handleMessage(message, client);
   }
 
@@ -298,7 +300,9 @@ export class SocketServer extends EventEmitter {
       if (json.open_channel) {
         try {
           super.openChannel(json.open_channel.channel_name);
-          client.socket.send(`Opened channel: ${json.open_channel.channel_name}.`);
+          client.socket.send(
+            `Opened channel: ${json.open_channel.channel_name}.`,
+          );
         } catch (error) {
           client.socket.send(error.message);
         }
@@ -314,7 +318,9 @@ export class SocketServer extends EventEmitter {
       if (json.close_channel) {
         try {
           super.closeChannel(json.close_channel.channel_name);
-          client.socket.send(`Closed channel: ${json.close_channel.channel_name}.`);
+          client.socket.send(
+            `Closed channel: ${json.close_channel.channel_name}.`,
+          );
         } catch (error) {
           client.socket.send(error.message);
         }

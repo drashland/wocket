@@ -6,7 +6,6 @@ import { Package } from "./package.ts";
  * in the queue of messages to send to the client
  */
 export class PackageQueueItem {
-
   /**
    * The channel instance, so this class can
    * send the data down to the clients
