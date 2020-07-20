@@ -22,7 +22,11 @@ import {
 } from "./transmitter.ts";
 const encoder = new TextEncoder();
 
-// TODO(sara) Add description
+/**
+ * The `SocketServer` class is responsible for creating a users
+ * socket server. Similar to how Drash.Http.Server creates a
+ * server instance
+ */
 export class SocketServer extends EventEmitter {
   /**
    * A property to hold the Deno server. This property is set in this.run()
@@ -179,7 +183,7 @@ export class SocketServer extends EventEmitter {
    * @param client - The client instance.
    * @param message - The message the client sent.
    */
-  protected async handleMessageAsBinary(client: Client, message: Uint8Array) {
+  protected async handleMessageAsBinary(client: Client, message: Uint8Array): Promise<void> {
     return await this.transmitter.handleMessage(message, client);
   }
 

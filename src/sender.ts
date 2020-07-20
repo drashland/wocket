@@ -1,9 +1,25 @@
 import { PackageQueueItem } from "./package_queue_item.ts";
 import { IPacket } from "./interfaces.ts";
 
-// TODO(sara) Add description
+/**
+ * The Sender class is responsible for adding
+ * messages to the message queue, and then to work
+ * through the queue stack which will send the message
+ */
 export class Sender {
+
+  /**
+   * A list of `PackageQueue` items which represents.
+   * the message queue
+   */
   private package_queue: PackageQueueItem[] = [];
+
+  /**
+   * Tells `Sender` when it is ready to work through
+   * the package queue. For instance, whilst sending
+   * a package, `ready` is `false` and once the package
+   * is sent, the class is ready to send another package
+   */
   private ready = true;
 
   //////////////////////////////////////////////////////////////////////////////
@@ -18,7 +34,7 @@ export class Sender {
    * state. Being "ready" means that the queue is not currently sending any
    * messages. Messages are not sent concurrently.
    */
-  public add(packageQueueItem: PackageQueueItem) {
+  public add(packageQueueItem: PackageQueueItem): void {
     this.package_queue.push(packageQueueItem);
     this.send();
   }
@@ -26,7 +42,7 @@ export class Sender {
   /**
    * Invokes event callbacks.
    *
-   * @param msgObj
+   * @param packet - The data object to invoke the callbacks on
    */
   public async invokeCallback(packet: IPacket): Promise<void> {
     const args = Array.prototype.slice.call(arguments);
@@ -43,7 +59,7 @@ export class Sender {
    * Encodes messages and sends event to all clients listening to the channel or
    * event except for the sender.
    */
-  private async send() {
+  private async send (): Promise<void> {
     if (this.ready && this.package_queue.length) {
       this.ready = false;
       const pkgQueueItem = this.package_queue.shift();

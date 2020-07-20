@@ -4,8 +4,13 @@ import { RESERVED_EVENT_NAMES } from "./reserved_event_names.ts";
 import { SocketServer } from "./server.ts";
 import { WebSocket } from "../deps.ts";
 
-// TODO(sara) Add description
+/**
+ * The `Transmitter` class is used as the middleman
+ * between the client and server, when sending messages,
+ * to connect the 'wires' between them.
+ */
 export class Transmitter {
+
   /**
    * See ITransmitterOptions
    */
@@ -60,8 +65,8 @@ export class Transmitter {
   /**
    * Decodes and validates incoming messages.
    *
-   * @param message - Uint8Array
-   * @param clientId - The WebSocket connection ID of the client in question.
+   * @param message - Uint8Array, the message being handled of the client
+   * @param client - The WebSocket connection of the client in question.
    *
    * @returns A Promise
    */
@@ -100,8 +105,12 @@ export class Transmitter {
   }
 
   /**
+   * Handles connection states, and actions based on
+   * those states
+   *
    * @param channelName
    * @param clientId - The WebSocket connection ID of the client in question.
+   * @param [socket] - The WebSocket connection of the client in question. Used to create a client on `pong` events
    */
   public handleReservedEventNames(
     channelName: string,
