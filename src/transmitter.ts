@@ -84,18 +84,17 @@ export class Transmitter {
       throw new Error(err);
     }
 
-    parsedMessage.to.forEach(async (channelName: string) => {
-      if (RESERVED_EVENT_NAMES.includes(channelName)) {
-        this.handleReservedEventNames(parsedMessage.message, client.id);
-      } else if (this.socket_server.channels[channelName]) {
-        await this.socket_server.sender.invokeCallback({
-          callbacks: this.socket_server.channels[channelName].callbacks,
-          to: channelName,
-          message: parsedMessage.message,
-          from: client.id,
-        });
-      }
-    });
+    if (RESERVED_EVENT_NAMES.includes(parsedMessage.to)) {
+      this.handleReservedEventNames(parsedMessage.to, client);
+    } else if (this.socket_server.channels[parsedMessage.to]) {
+      // TODO(crookse) Create new Packet(callbacks, from, to, message);
+      await this.socket_server.sender.invokeCallback({
+        callbacks: this.socket_server.channels[parsedMessage.to].callbacks,
+        to: parsedMessage.to,
+        message: parsedMessage.message,
+        from: client.id,
+      });
+    }
 
   }
 
