@@ -193,14 +193,17 @@ export class SocketServer extends EventEmitter {
     client: Client,
     message: string,
   ): Promise<void> {
-    switch (true) {
-      case message == "ping":
+    switch (message) {
+      case "id":
+        return client.socket.send(client.id.toString());
+
+      case "ping":
         return client.socket.send("pong");
 
-      case message == "pong":
+      case "pong":
         return client.socket.send("ping");
 
-      case message == "test":
+      case "test":
         return client.socket.send(
           `Socket server is listening at ${this.hostname}:${this.port}.`,
         );
