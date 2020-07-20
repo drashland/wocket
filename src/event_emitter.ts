@@ -179,7 +179,7 @@ export class EventEmitter {
    */
   public removeClientFromChannel(channelName: string, clientId: number): void {
     if (!this.channels[channelName]) {
-      throw new Error("Channel not found.");
+      throw new Error(`Channel "${channelName}" not found.`);
     }
 
     if (this.channels[channelName].listeners.has(clientId)) {
