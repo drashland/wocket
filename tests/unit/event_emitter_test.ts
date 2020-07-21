@@ -247,7 +247,7 @@ Rhum.testPlan("unit/event_emitter_test.ts", () => {
         thrown: true,
         msg: "Channel \"I dont exist\" not found."
       })
-    })
+    });
     Rhum.testCase("Throws an error when the client id isn't connected to the channel", () => {
       const io = new EventEmitter()
       io.openChannel("My channel");
