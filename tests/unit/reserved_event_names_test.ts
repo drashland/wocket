@@ -3,7 +3,7 @@ import { Rhum } from "../deps.ts";
 
 Rhum.testPlan("unit/reserved_event_names_test.ts", () => {
    Rhum.testSuite("values", () => {
-     Rhum.testPlan("Should have the correct values", () => {
+     Rhum.testCase("Should have the correct values", () => {
        Rhum.asserts.assertEquals(RESERVED_EVENT_NAMES, [
          "connection",
          "disconnect",
