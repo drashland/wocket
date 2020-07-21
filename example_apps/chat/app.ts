@@ -23,12 +23,12 @@ console.log(
   `Web server started on http://${webServer.hostname}:${webServer.port}`,
 );
 
-const socketServer = new SocketServer();
+const socketServer = new SocketServer({
+  reconnect: false
+});
 socketServer.run({
   hostname: "localhost",
   port: 3000,
-}, {
-  reconnect: false,
 });
 console.log(
   `Socket server started on ws://${socketServer.hostname}:${socketServer.port}`,
