@@ -34,7 +34,7 @@ export class Transmitter {
    * Construct an object of this class.
    *
    * @param socketServer - The socket server requiring this transmitter.
-   * @param options = See ITransmitterOptions
+   * @param options - See ITransmitterOptions.
    */
   constructor(socketServer: SocketServer, options?: ITransmitterOptions) {
     if (options) {
@@ -60,8 +60,8 @@ export class Transmitter {
   /**
    * Decodes and validates incoming messages.
    *
-   * @param message - Uint8Array
-   * @param clientId - The WebSocket connection ID of the client in question.
+   * @param message
+   * @param client
    *
    * @returns A Promise
    */
@@ -84,29 +84,27 @@ export class Transmitter {
       throw new Error(err);
     }
 
-    parsedMessage.to.forEach(async (channelName: string) => {
-      if (RESERVED_EVENT_NAMES.includes(channelName)) {
-        this.handleReservedEventNames(parsedMessage.message, client.id);
-      } else if (this.socket_server.channels[channelName]) {
-        await this.socket_server.sender.invokeCallback({
-          callbacks: this.socket_server.channels[channelName].callbacks,
-          to: channelName,
-          message: parsedMessage.message,
-          from: client.id,
-        });
-      }
-    });
+    if (RESERVED_EVENT_NAMES.includes(parsedMessage.to)) {
+      this.handleReservedEventNames(parsedMessage.to, client);
+    } else if (this.socket_server.channels[parsedMessage.to]) {
+      // TODO(crookse) Create new Packet(callbacks, from, to, message);
+      await this.socket_server.sender.invokeCallback({
+        callbacks: this.socket_server.channels[parsedMessage.to].callbacks,
+        to: parsedMessage.to,
+        message: parsedMessage.message,
+        from: client.id,
+      });
+    }
 
   }
 
   /**
    * @param channelName
-   * @param clientId - The WebSocket connection ID of the client in question.
+   * @param client
    */
   public handleReservedEventNames(
     channelName: string,
-    clientId: number,
-    socket?: WebSocket | undefined,
+    client: Client,
   ): void {
     switch (channelName) {
       case "connection":
@@ -114,7 +112,7 @@ export class Transmitter {
         if (this.socket_server.channels[channelName]) {
           this.socket_server.channels[channelName].callbacks.forEach(
             (cb: Function) => {
-              cb(clientId);
+              cb(client.id);
             },
           );
         }
@@ -123,13 +121,13 @@ export class Transmitter {
         // do something when client errors
         break;
       case "pong":
-        if (!this.socket_server.clients[clientId]) {
-          if (socket) {
-            this.socket_server.createClient(clientId, socket);
-            this.hydrateClient(clientId);
+        if (!this.socket_server.clients[client.id]) {
+          if (client.socket) {
+            this.socket_server.createClient(client.id, client.socket);
+            this.hydrateClient(client.id);
           }
         } else {
-          this.socket_server.clients[clientId].pong_received = true;
+          this.socket_server.clients[client.id].pong_received = true;
         }
         break;
       case "reconnect":
@@ -137,7 +135,7 @@ export class Transmitter {
         // could be useful to add a flag to this client
         break;
       default:
-        this.socket_server.addClientToChannel(channelName, clientId);
+        this.socket_server.addClientToChannel(channelName, client.id);
         break;
     }
   }

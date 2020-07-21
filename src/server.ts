@@ -193,14 +193,17 @@ export class SocketServer extends EventEmitter {
     client: Client,
     message: string,
   ): Promise<void> {
-    switch (true) {
-      case message == "ping":
+    switch (message) {
+      case "id":
+        return client.socket.send(`Client ID: ${client.id}`);
+
+      case "ping":
         return client.socket.send("pong");
 
-      case message == "pong":
+      case "pong":
         return client.socket.send("ping");
 
-      case message == "test":
+      case "test":
         return client.socket.send(
           `Socket server is listening at ${this.hostname}:${this.port}.`,
         );
@@ -276,7 +279,7 @@ export class SocketServer extends EventEmitter {
       if (json.disconnect_from) {
         json.disconnect_from.forEach((channelName: string) => {
           try {
-            super.removeListener(channelName, client.id);
+            super.removeClientFromChannel(channelName, client.id);
             client.socket.send(`Disconnected from ${channelName}.`);
           } catch (error) {
             client.socket.send(error.message);

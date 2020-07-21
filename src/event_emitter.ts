@@ -172,14 +172,14 @@ export class EventEmitter {
   }
 
   /**
-   * Removes a listener from a channel.
+   * Removes a client from a channel.
    *
    * @param channelName - The name of the channel.
    * @param clientId - Client's socket connection id.
    */
-  public removeListener(channelName: string, clientId: number): void {
+  public removeClientFromChannel(channelName: string, clientId: number): void {
     if (!this.channels[channelName]) {
-      throw new Error("Channel not found.");
+      throw new Error(`Channel "${channelName}" not found.`);
     }
 
     if (this.channels[channelName].listeners.has(clientId)) {
