@@ -195,7 +195,7 @@ export class SocketServer extends EventEmitter {
   ): Promise<void> {
     switch (message) {
       case "id":
-        return client.socket.send(client.id.toString());
+        return client.socket.send(`Client ID: ${client.id}`);
 
       case "ping":
         return client.socket.send("pong");
