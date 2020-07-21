@@ -3,6 +3,7 @@
 
 # directories
 tmp/*
+.idea
 
 # exceptions
 !.gitkeep
