@@ -8,22 +8,14 @@ import {
   serve,
   serveTLS,
 } from "../deps.ts";
-import {
-  Client,
-} from "./client.ts";
-import {
-  EventEmitter,
-} from "./event_emitter.ts";
-import {
-  ITransmitterOptions,
-} from "./interfaces.ts";
-import {
-  Transmitter,
-} from "./transmitter.ts";
-const encoder = new TextEncoder();
+import { Client } from "./client.ts";
+import { EventEmitter } from "./event_emitter.ts";
+import { ITransmitterOptions } from "./interfaces.ts";
+import { Packet } from "./packet.ts";
+import { Transmitter } from "./transmitter.ts";
 
 // TODO(sara) Add description
-export class SocketServer extends EventEmitter {
+export class Server extends EventEmitter {
   /**
    * A property to hold the Deno server. This property is set in this.run()
    * like so:
@@ -136,36 +128,36 @@ export class SocketServer extends EventEmitter {
         bufReader,
         bufWriter,
       })
-        .then(async (socket: WebSocket): Promise<void> => {
-          const clientId = conn.rid;
-          const client = super.createClient(clientId, socket);
+      .then(async (socket: WebSocket): Promise<void> => {
+        const clientId = conn.rid;
+        const client = super.createClient(clientId, socket);
 
-          try {
-            for await (const message of socket) {
+        try {
+          for await (const message of socket) {
 
-              // Handle binary
-              if (message instanceof Uint8Array) {
-                this.handleMessageAsBinary(client, message);
+            // Handle binary
+            if (message instanceof Uint8Array) {
+              this.handleMessageAsBinary(client, message);
 
-              // Handle strings
-              } else if (typeof message === "string") {
-                await this.handleMessageAsString(client, message);
+            // Handle strings
+            } else if (typeof message === "string") {
+              await this.handleMessageAsString(client, message);
 
-              // Handle disconnects
-              } else if (isWebSocketCloseEvent(message)) {
-                super.removeClient(client.id);
-              }
-            }
-          } catch (e) {
-            if (!socket.isClosed) {
-              await socket.close(1000).catch(console.error);
+            // Handle disconnects
+            } else if (isWebSocketCloseEvent(message)) {
               super.removeClient(client.id);
             }
           }
-        })
-        .catch((err: Error): void => {
-          console.error(`failed to accept websocket: ${err}`);
-        });
+        } catch (e) {
+          if (!socket.isClosed) {
+            await socket.close(1000).catch(console.error);
+            super.removeClient(client.id);
+          }
+        }
+      })
+      .catch((err: Error): void => {
+        console.error(`failed to accept websocket: ${err}`);
+      });
     }
   }
 
@@ -180,7 +172,9 @@ export class SocketServer extends EventEmitter {
    * @param message - The message the client sent.
    */
   protected async handleMessageAsBinary(client: Client, message: Uint8Array) {
-    return await this.transmitter.handleMessage(message, client);
+    const decoded = JSON.parse(new TextDecoder().decode(message));
+    const packet = new Packet(client, decoded.to, decoded.message);
+    return await this.transmitter.handlePacket(packet);
   }
 
   /**
@@ -232,21 +226,19 @@ export class SocketServer extends EventEmitter {
       // A send_message message should be in the following format:
       //
       //     {
-      //       "send_message": {
+      //       "send_packet": {
       //         "to": ["array", "of", "channels"],
       //         "message": "the message"
       //       }
       //     }
       //
       if (json.send_message) {
-        return await this.transmitter.handleMessage(
-          JSON.stringify({
-            from: client,
-            to: json.send_message.to,
-            message: json.send_message.message,
-          }),
+        const packet = new Packet(
           client,
+          json.send_message.to,
+          json.send_message.message
         );
+        return await this.transmitter.handlePacket(packet);
       }
 
       // A connect_to message should be in the following format:

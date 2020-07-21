@@ -1,4 +1,4 @@
-import { SocketServer } from "../../../mod.ts";
+import { Server } from "../../../mod.ts";
 import { Drash } from "../../deps.ts";
 import { assertEquals, connectWebSocket } from "../../deps.ts";
 
@@ -16,13 +16,11 @@ class Resource extends Drash.Http.Resource {
   protected messages: any = {};
   public async POST() {
     const channel = this.request.getBodyParam("channel");
-    const message = this.request.getBodyParam("message");
+    const message = this.request.getBodyParam("message") as string;
     const socketClient = await connectWebSocket(
       `ws://${socketServer.hostname}:${socketServer.port}`,
     );
-    let encoded = new TextEncoder().encode(
-      JSON.stringify({ [channel as string]: message }),
-    );
+    let encoded = new TextEncoder().encode(message);
     await socketClient.send(encoded);
     socketClient.close();
     return this.response;
@@ -41,7 +39,7 @@ webServer.run({
 });
 console.log(`Web server started on ${webServer.hostname}:${webServer.port}`);
 
-const socketServer = new SocketServer({ reconnect: false });
+const socketServer = new Server({ reconnect: false });
 socketServer.run({
   hostname: "localhost",
   port: 3000,
@@ -55,9 +53,8 @@ console.log(
 
 // Set up the events
 
-socketServer
-  .createChannel("chan1")
-  .on(
+socketServer.openChannel("chan1");
+socketServer.on(
     "chan1",
     ((packet: any) => {
       storage["chan1"].messages.push(packet.message);
@@ -69,9 +66,8 @@ Deno.test("chan1 should exist", () => {
 });
 
 Deno.test("chan2 should exist again", () => {
-  socketServer
-    .createChannel("chan2")
-    .on(
+  socketServer.openChannel("chan2");
+  socketServer.on(
       "chan2",
       ((packet: any) => {
         storage["chan2"].messages.push(packet.message);
@@ -117,7 +113,7 @@ Deno.test("chan2 should be closed", () => {
 });
 
 Deno.test("chan2 should not receive this message", async () => {
-  socketServer.createChannel("chan2");
+  socketServer.openChannel("chan2");
   await sendMessage("chan2", "Test");
   assertEquals(
     storage["chan2"].messages,
@@ -144,8 +140,10 @@ async function sendMessage(channel: string, message: string) {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      channel,
-      message,
+      send_message: {
+        to: channel,
+        message,
+      }
     }),
   });
   await response.text();

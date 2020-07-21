@@ -21,7 +21,7 @@ Deno.test("should have Channels, Clients, and Sender on class init", () => {
 Deno.test("should connect a client", () => {
   const io = new EventEmitter();
   const clientSocket = ClientSocket() as unknown as WebSocket;
-  const client = io.addClient(1, clientSocket);
+  const client = io.createClient(1, clientSocket);
   const connectedClients = io.getClients();
   assertEquals(connectedClients[client.id].socket, clientSocket);
 });
@@ -34,7 +34,7 @@ Deno.test("should remove client", async () => {
   const connectedClients = io.getClients();
   assertEquals(connectedClients, []);
 
-  const newClient = io.addClient(2, clientSocket);
+  const newClient = io.createClient(2, clientSocket);
   assertEquals(connectedClients[newClient.id].socket, clientSocket);
 });
 
@@ -61,22 +61,22 @@ Deno.test("should detect same channel name and push cb into callbacks array of c
 
 Deno.test("should register which clients are listening to what channel", () => {
   const io = new EventEmitter();
-  const client1 = io.addClient(1337, ClientSocket() as unknown as WebSocket);
-  io.addListener("chat", client1.id);
+  const client1 = io.createClient(1337, ClientSocket() as unknown as WebSocket);
+  io.addClientToChannel("chat", client1.id);
   assert(io.getChannel("chat").listeners.has(1337));
   assertEquals(io.getChannel("chat").listeners.size, 1);
 
-  const client2 = io.addClient(1447, ClientSocket() as unknown as WebSocket);
-  io.addListener("chat", client2.id);
+  const client2 = io.createClient(1447, ClientSocket() as unknown as WebSocket);
+  io.addClientToChannel("chat", client2.id);
   assertEquals(io.getChannel("chat").listeners.size, 2);
 });
 
 Deno.test("should remove client from channels[channelName].listeners", async () => {
   const io = new EventEmitter();
-  const client1 = io.addClient(1, ClientSocket() as unknown as WebSocket);
-  io.addListener("chat", client1.id);
-  const client2 = io.addClient(2, ClientSocket() as unknown as WebSocket);
-  io.addListener("chat", client2.id);
+  const client1 = io.createClient(1, ClientSocket() as unknown as WebSocket);
+  io.addClientToChannel("chat", client1.id);
+  const client2 = io.createClient(2, ClientSocket() as unknown as WebSocket);
+  io.addClientToChannel("chat", client2.id);
   await io.removeClient(2);
   const clientsConnected = io.getClients();
   assert(!clientsConnected[2]);
