@@ -241,6 +241,7 @@ export class SocketServer extends EventEmitter {
       if (json.send_message) {
         return await this.transmitter.handleMessage(
           JSON.stringify({
+            from: client,
             to: json.send_message.to,
             message: json.send_message.message,
           }),
