@@ -199,7 +199,7 @@ export class Server extends EventEmitter {
 
       case "test":
         return client.socket.send(
-          `Socket server is listening at ${this.hostname}:${this.port}.`,
+          `Server started on ${this.hostname}:${this.port}.`,
         );
 
       // If the message isn't any of the above, then it we expect the message
