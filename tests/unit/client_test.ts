@@ -11,7 +11,7 @@ const ClientSocket = () => {
 
 Rhum.testPlan("unit/client_test.ts",  () => {
   Rhum.testSuite("constructor()", () => {
-    Rhum.testCase("Sets the name and creates empty listeners", () => {
+    Rhum.testCase("Sets the properties", () => {
       const client = new Client(1, ClientSocket() as unknown as WebSocket)
       Rhum.asserts.assertEquals(client.heartbeat_id, null)
       Rhum.asserts.assertEquals(client.id, 1)
