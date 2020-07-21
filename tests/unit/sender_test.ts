@@ -3,7 +3,7 @@ import {Sender} from "../../src/sender.ts";
 import {Packet} from "../../src/packet.ts";
 import {Client} from "../../src/client.ts";
 import {WebSocket} from "../../deps.ts";
-import {Channel} from "../../src/channel";
+import {Channel} from "../../src/channel.ts";
 
 const ClientSocket = () => {
   return {
