@@ -68,8 +68,6 @@ export class Transmitter {
       return this.handleReservedEvent(packet);
     }
 
-    console.log(packet);
-
     // Invoke all callbacks (aka the handlers for this packet)
     if (this.server.channels[packet.to]) {
       for await (let cb of this.server.channels[packet.to].callbacks) {
