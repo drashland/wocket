@@ -41,6 +41,33 @@ Rhum.testPlan("unit/event_emitter_test.ts", () => {
       io.addClientToChannel("chat", client2.id);
       Rhum.asserts.assertEquals(io.getChannel("chat").listeners.size, 2);
     });
+    Rhum.testCase("Creates the channel if it doesn't already exist", () => {
+      const io = new EventEmitter();
+      Rhum.asserts.assertEquals(io.channels["chat"], undefined)
+      const client1 = io.createClient(1337, ClientSocket() as unknown as WebSocket);
+      io.addClientToChannel("chat", client1.id);
+      Rhum.asserts.assertEquals(io.channels["chat"].name, "chat")
+    })
+    Rhum.testCase("Throws an error when the client is already connected to the channel", () => {
+      const io = new EventEmitter();
+      Rhum.asserts.assertEquals(io.channels["chat"], undefined)
+      const client1 = io.createClient(1337, ClientSocket() as unknown as WebSocket);
+      io.addClientToChannel("chat", client1.id);
+      let err = {
+        thrown: false,
+        msg: ""
+      }
+      try {
+        io.addClientToChannel("chat", client1.id)
+      } catch (error) {
+        err.thrown = true
+        err.msg = error.message
+      }
+      Rhum.asserts.assertEquals(err, {
+        thrown: true,
+        msg: "Already listening to chat."
+      })
+    })
   });
 
   // I don't believe we can unit test this properly. Maybe best left to integration tests
@@ -136,6 +163,11 @@ Rhum.testPlan("unit/event_emitter_test.ts", () => {
       Rhum.asserts.assertEquals(Object.keys(channels).length, expect.length);
       Rhum.asserts.assertEquals(io.getChannel("chat").callbacks.length, 1);
     });
+    Rhum.testCase("Should create the channel if it doesn't exist", () => {
+      const io = new EventEmitter()
+      io.on("something", () => true)
+      Rhum.asserts.assertEquals(io.channels["something"].name, "something")
+    })
   });
 
   Rhum.testSuite("openChannel()", () => {
@@ -187,6 +219,15 @@ Rhum.testPlan("unit/event_emitter_test.ts", () => {
       Rhum.asserts.assert(!clientsConnected[2]);
       Rhum.asserts.assertEquals(io.getChannel("chat").listeners.size, 1);
     });
+    Rhum.testCase("Should do nothing if the client does not exist", async () => {
+      const io = new EventEmitter()
+      const client1 = io.createClient(1, ClientSocket() as unknown as WebSocket);
+      Rhum.asserts.assertEquals(io.clients[1].id, 1);
+      Rhum.asserts.assertEquals(io.clients[2], undefined);
+      await io.removeClient(2)
+      Rhum.asserts.assertEquals(io.clients[1].id, 1);
+      Rhum.asserts.assertEquals(io.clients[2], undefined);
+    })
   })
 
   Rhum.testSuite("removeClientFromChannel()", () => {
@@ -250,5 +291,3 @@ Rhum.testPlan("unit/event_emitter_test.ts", () => {
 });
 
 Rhum.run()
-// todo make sure all previous tests test all logic
-// todo make sure all asserts use rhum
