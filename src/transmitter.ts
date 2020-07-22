@@ -1,8 +1,8 @@
 import { Client } from "./client.ts";
 import { ITransmitterOptions } from "./interfaces.ts";
 import { RESERVED_EVENT_NAMES } from "./reserved_event_names.ts";
-import { SocketServer } from "./server.ts";
-import { WebSocket } from "../deps.ts";
+import { Server } from "./server.ts";
+import { Packet } from "./packet.ts";
 
 // TODO(sara) Add description
 export class Transmitter {
@@ -24,7 +24,7 @@ export class Transmitter {
   /**
    * A property to hold the socket server.
    */
-  private socket_server: SocketServer;
+  private server: Server;
 
   //////////////////////////////////////////////////////////////////////////////
   // FILE MARKER - CONSTRUCTOR /////////////////////////////////////////////////
@@ -33,14 +33,15 @@ export class Transmitter {
   /**
    * Construct an object of this class.
    *
-   * @param socketServer - The socket server requiring this transmitter.
+   * @param server - The socket server requiring this transmitter.
    * @param options - See ITransmitterOptions.
    */
-  constructor(socketServer: SocketServer, options?: ITransmitterOptions) {
+  constructor(server: Server, options?: ITransmitterOptions) {
     if (options) {
       if ("reconnect" in options) {
         this.reconnect = options.reconnect;
       }
+
       if (options.ping_interval) {
         this.ping_interval = options.ping_interval;
       }
@@ -50,7 +51,7 @@ export class Transmitter {
       }
     }
 
-    this.socket_server = socketServer;
+    this.server = server;
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -60,82 +61,70 @@ export class Transmitter {
   /**
    * Decodes and validates incoming messages.
    *
-   * @param message
-   * @param client
-   *
-   * @returns A Promise
+   * @param packet
    */
-  public async handleMessage(
-    message: Uint8Array | string,
-    client: Client,
-  ): Promise<void> {
-    let result: string;
-    if (message instanceof Uint8Array) {
-      result = new TextDecoder().decode(message);
-    } else {
-      // Assume it's already JSON string
-      result = message;
-    }
-    // deno-lint-ignore no-explicit-any
-    let parsedMessage: any = {};
-    try {
-      parsedMessage = JSON.parse(result);
-    } catch (err) {
-      throw new Error(err);
+  public async handlePacket(packet: Packet): Promise<void> {
+    if (RESERVED_EVENT_NAMES.includes(packet.to)) {
+      return this.handleReservedEvent(packet);
     }
 
-    if (RESERVED_EVENT_NAMES.includes(parsedMessage.to)) {
-      this.handleReservedEventNames(parsedMessage.to, client);
-    } else if (this.socket_server.channels[parsedMessage.to]) {
-      // TODO(crookse) Create new Packet(callbacks, from, to, message);
-      await this.socket_server.sender.invokeCallback({
-        callbacks: this.socket_server.channels[parsedMessage.to].callbacks,
-        to: parsedMessage.to,
-        message: parsedMessage.message,
-        from: client.id,
-      });
+    // Invoke all callbacks (aka the handlers for this packet)
+    if (this.server.channels[packet.to]) {
+      for await (let cb of this.server.channels[packet.to].callbacks) {
+        cb(packet);
+      }
+      return;
     }
 
+    throw new Error(`Channel "${packet.to}" not found.`);
   }
 
   /**
    * @param channelName
    * @param client
    */
-  public handleReservedEventNames(
-    channelName: string,
-    client: Client,
-  ): void {
-    switch (channelName) {
+  public handleReservedEvent(packet: Packet): void {
+    const eventName = packet.to;
+    switch (eventName) {
+
       case "connection":
       case "disconnect":
-        if (this.socket_server.channels[channelName]) {
-          this.socket_server.channels[channelName].callbacks.forEach(
+        if (this.server.channels[eventName]) {
+          this.server.channels[eventName].callbacks.forEach(
             (cb: Function) => {
-              cb(client.id);
+              cb(packet);
             },
           );
         }
         break;
+
       case "error":
-        // do something when client errors
-        break;
-      case "pong":
-        if (!this.socket_server.clients[client.id]) {
-          if (client.socket) {
-            this.socket_server.createClient(client.id, client.socket);
-            this.hydrateClient(client.id);
-          }
-        } else {
-          this.socket_server.clients[client.id].pong_received = true;
+        if (packet.from instanceof Client) {
+          packet.from.socket.send("An error occurred with the connection.");
         }
         break;
+
+      case "pong":
+        if (!this.server.clients[packet.from.id as number]) {
+          if (packet.from instanceof Client) {
+            if (packet.from.socket) {
+              this.server.createClient(packet.from.id, packet.from.socket);
+              this.hydrateClient(packet.from.id);
+            }
+          }
+        } else {
+          if (packet.from instanceof Client) {
+            this.server.clients[packet.from.id].pong_received = true;
+          }
+        }
+        break;
+
       case "reconnect":
         // do something on an reconnect event
         // could be useful to add a flag to this client
         break;
+
       default:
-        this.socket_server.addClientToChannel(channelName, client.id);
         break;
     }
   }
@@ -147,8 +136,8 @@ export class Transmitter {
    */
   public hydrateClient(clientId: number): void {
     if (this.reconnect) {
-      this.socket_server.clients[clientId].pong_received = true;
-      this.socket_server.clients[clientId].heartbeat_id = this.startHeartbeat(
+      this.server.clients[clientId].pong_received = true;
+      this.server.clients[clientId].heartbeat_id = this.startHeartbeat(
         clientId,
       );
     }
@@ -164,8 +153,8 @@ export class Transmitter {
    * @param clientId - The WebSocket connection ID of the client in question.
    */
   private ping(clientId: number): void {
-    if (this.socket_server.clients[clientId]) {
-      const client = this.socket_server.clients[clientId];
+    if (this.server.clients[clientId]) {
+      const client = this.server.clients[clientId];
       if (client.pong_received) {
         client.socket.send("ping");
         client.pong_received = false;
@@ -195,9 +184,9 @@ export class Transmitter {
    * @param clientId - The WebSocket connection ID of the client in question.
    */
   private timeoutPing(clientId: number): void {
-    if (this.socket_server.clients[clientId]) {
-      this.socket_server.removeClient(clientId);
-      const heartbeatId = this.socket_server.clients[clientId].heartbeat_id;
+    if (this.server.clients[clientId]) {
+      this.server.removeClient(clientId);
+      const heartbeatId = this.server.clients[clientId].heartbeat_id;
       if (heartbeatId) {
         clearInterval(heartbeatId);
       }

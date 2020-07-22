@@ -2,12 +2,12 @@ import { Sender } from "./sender.ts";
 import { Channel } from "./channel.ts";
 import { Client } from "./client.ts";
 import { WebSocket } from "../deps.ts";
-import { Package } from "./package.ts";
-import { PackageQueueItem } from "./package_queue_item.ts";
+import { Packet } from "./packet.ts";
 import { RESERVED_EVENT_NAMES } from "./reserved_event_names.ts";
 
 // TODO(sara) Add description
 export class EventEmitter {
+  public id = "Server";
   public channels: { [key: string]: Channel } = {};
   public clients: { [key: number]: Client } = {};
   public sender: Sender;
@@ -72,10 +72,7 @@ export class EventEmitter {
    * @param channelName - The name of the channel.
    * @param message - The message to broadcast.
    */
-  public broadcast(channelName: string, message: Package | string): void {
-    if (typeof message !== "string" && message.sender_id) {
-      message.sender_id = null;
-    }
+  public broadcast(channelName: string, message: unknown): void {
     this.to(channelName, message);
   }
 
@@ -200,12 +197,12 @@ export class EventEmitter {
    * @param channelName - The name of the channel.
    * @param message - The message to send.
    */
-  public to(channelName: string, message: Package | string): void {
-    if (typeof message === "string") {
-      this.addToPackageQueue(channelName, new Package(message));
-      return;
-    }
-    this.addToPackageQueue(channelName, message);
+  public to(channelName: string, message: unknown): void {
+    this.queuePacket(new Packet(
+      this,
+      channelName,
+      message
+    ));
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -216,13 +213,12 @@ export class EventEmitter {
    * Add a package to the queue so that the message contained in the package can
    * be sent to the client(s).
    *
-   * @param channelName - The name of the channel.
-   * @param message - The message to send.
+   * @param packet - The packet instance.
    */
-  private addToPackageQueue(channelName: string, pkg: Package): void {
-    if (!this.channels[channelName]) {
-      throw new Error(`No receivers for "${channelName}" channel.`);
+  private queuePacket(packet: Packet): void {
+    if (!this.channels[packet.to]) {
+      throw new Error(`Channel "${packet.to}" not found.`);
     }
-    this.sender.add(new PackageQueueItem(pkg, this.channels[channelName]));
+    this.sender.add(packet, this.channels[packet.to]);
   }
 }

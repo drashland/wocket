@@ -5,10 +5,10 @@ This is an interactive application where you send messages to the socket server 
 1. Create your `app.ts` file.
 
     ```typescript
-    import { SocketServer } from "https://deno.land/x/sockets/mod.ts";
+    import { Server } from "https://deno.land/x/sockets/mod.ts";
 
     // Create the socket server
-    const socketServer = new SocketServer();
+    const socketServer = new Server();
     socketServer.run({
       hostname: "localhost",
       port: 3000,
@@ -47,7 +47,7 @@ This is an interactive application where you send messages to the socket server 
     $ deno run --allow-net app.ts
     ```
 
-3. Create your `index.html` file. This file contains an import for https://cdn.jsdelivr.net/gh/drashland/sockets-client@latest/client.js, which is Sockets' `SocketClient` class. It has an API that is nearly identical to the `SocketServer` class.
+3. Create your `index.html` file. This file contains an import for https://cdn.jsdelivr.net/gh/drashland/sockets-client@latest/client.js, which is Sockets' `SocketClient` class. It has an API that is nearly identical to the `Server` class.
 
     ```html
     <!DOCTYPE html>

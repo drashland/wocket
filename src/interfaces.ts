@@ -1,26 +1,3 @@
-export interface IPacket {
-  /**
-   * A property to hold an array of callbacks that should be executed with this
-   * packet.
-   */
-  callbacks: Function[];
-
-  /**
-   * A property to hold the sender's ID.
-   */
-  from: number;
-
-  /**
-   * A property to hold the message this packet contains.
-   */
-  message: unknown;
-
-  /**
-   * A property to hold the address this packet is going to.
-   */
-  to: string;
-}
-
 export interface ITransmitterOptions {
   /**
    * A property to determine number of ms to wait for a pong event before

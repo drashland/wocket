@@ -9,6 +9,7 @@ export {
 
 export {
   WebSocket,
+  WebSocketMessage,
   acceptWebSocket,
   connectWebSocket,
   isWebSocketCloseEvent,

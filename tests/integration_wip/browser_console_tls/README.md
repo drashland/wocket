@@ -5,10 +5,10 @@ This is an interactive application where you send messages to the socket server 
 1. Create your `app.ts` file.
 
     ```typescript
-    import { SocketServer } from "https://deno.land/x/sockets/mod.ts";
+    import { Server } from "https://deno.land/x/sockets/mod.ts";
 
     // Create the socket server
-    const socketServer = new SocketServer();
+    const socketServer = new Server();
     socketServer.runTLS({
       hostname: "localhost",
       port: 3000,
