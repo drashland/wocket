@@ -1,35 +1,20 @@
-import { Server } from "../../../mod.ts";
-import {
-  Drash,
-  assertEquals,
-  connectWebSocket,
-  WebSocketMessage,
-} from "../../deps.ts";
+import { Packet, Server } from "../../../mod.ts";
+import { Rhum, Drash, connectWebSocket } from "../../deps.ts";
 
-let storage: any = {
-  "chan1": {
-    messages: [],
-  },
-  "chan2": {
-    messages: [],
-  },
-};
-
-interface IMessage {
-  to: string;
-  message: unknown;
-}
+////////////////////////////////////////////////////////////////////////////////
+// SERVER SETUP ////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 
 class Resource extends Drash.Http.Resource {
   static paths = ["/"];
   protected messages: any = {};
   public async POST() {
-    const packet = this.request.getBodyParam("send_packet");
-    if (packet) {
+    const data = this.request.getBodyParam("data");
+    if (data) {
       const socketClient = await connectWebSocket(
         `ws://${socketServer.hostname}:${socketServer.port}`,
       );
-      await socketClient.send(JSON.stringify({ send_packet: packet }));
+      await socketClient.send(JSON.stringify(data));
       socketClient.close();
     }
     return this.response;
@@ -42,118 +27,108 @@ const webServer = new Drash.Http.Server({
   ],
 });
 
+const socketServer = new Server({ reconnect: false });
+
 webServer.run({
   hostname: "localhost",
   port: 3001,
 });
+
 console.log(`Web server started on ${webServer.hostname}:${webServer.port}`);
 
-const socketServer = new Server({ reconnect: false });
 socketServer.run({
   hostname: "localhost",
   port: 3000,
 });
+
 console.log(
   `socketServer listening: http://${socketServer.hostname}:${socketServer.port}`,
 );
+
+////////////////////////////////////////////////////////////////////////////////
+// TESTS ///////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
 console.log(
-  "\nIntegration tests: testing different resources can be made and targeted.\n",
+  "\nIntegration tests: testing different channels can be opened and work.\n",
 );
 
-// Set up the events
+let storage: any = {
+  "chan1": {
+    messages: [],
+  },
+  "chan2": {
+    messages: [],
+  },
+};
 
-socketServer.openChannel("chan1");
-socketServer.on(
-  "chan1",
-  ((packet: any) => {
+Rhum.testPlan("app_3000", () => {
+  socketServer.openChannel("chan1");
+
+  socketServer.on("chan1", (packet: Packet) => {
     storage["chan1"].messages.push(packet.message);
-  }),
-);
+  });
 
-Deno.test("chan1 should exist", () => {
-  assertEquals("chan1", socketServer.getChannel("chan1").name);
+  Rhum.testSuite("channel 1", () => {
+    Rhum.testCase("chan1 should exist", () => {
+      Rhum.asserts.assertEquals("chan1", socketServer.getChannel("chan1").name);
+    });
+    Rhum.testCase("chan1 should have a message", async () => {
+      await sendMessage(JSON.stringify({
+        data: {
+          send_packet: {
+            to: "chan1",
+            message: "chan message 1-1"
+          }
+        }
+      }));
+      Rhum.asserts.assertEquals(
+        storage["chan1"].messages,
+        ["chan message 1-1"],
+      );
+    });
+    Rhum.testCase("chan2 should have a message", async () => {
+      socketServer.openChannel("chan2");
+      socketServer.on("chan2", () => {
+        socketServer.on("chan2", (packet: Packet) => {
+          storage["chan2"].messages.push(packet.message);
+        });
+      });
+      await sendMessage(JSON.stringify({
+        data: {
+          send_packet: {
+            to: "chan2",
+            message: "chan message 2-1"
+          }
+        }
+      }));
+      Rhum.asserts.assertEquals(
+        storage["chan2"].messages,
+        ["chan message 2-1"],
+      );
+    });
+  });
 });
 
-Deno.test("chan2 should exist again", () => {
-  socketServer.openChannel("chan2");
-  socketServer.on(
-    "chan2",
-    ((packet: any) => {
-      storage["chan2"].messages.push(packet.message);
-    }),
-  );
-  assertEquals("chan2", socketServer.getChannel("chan2").name);
-});
-
-Deno.test("chan1 should have 1 message", async () => {
-  await sendMessage("chan1", "This is a chan1 message.");
-  assertEquals(
-    storage["chan1"].messages,
-    [
-      "This is a chan1 message.",
-    ],
-  );
-});
-
-Deno.test("chan1 should have 2 messages", async () => {
-  await sendMessage("chan1", "This is a chan1 message #2.");
-  assertEquals(
-    storage["chan1"].messages,
-    [
-      "This is a chan1 message.",
-      "This is a chan1 message #2.",
-    ],
-  );
-});
-
-Deno.test("chan2 should have 1 message", async () => {
-  await sendMessage("chan2", "This is a chan2 message.");
-  assertEquals(
-    storage["chan2"].messages,
-    [
-      "This is a chan2 message.",
-    ],
-  );
-});
-
-Deno.test("chan2 should be closed", () => {
-  socketServer.closeChannel("chan2");
-  assertEquals(undefined, socketServer.getChannel("chan2"));
-});
-
-Deno.test("chan2 should not receive this message", async () => {
-  socketServer.openChannel("chan2");
-  await sendMessage("chan2", "Test");
-  assertEquals(
-    storage["chan2"].messages,
-    [
-      "This is a chan2 message.",
-    ],
-  );
-});
+Rhum.run();
 
 Deno.test({
   name: "Stop the server",
-  async fn() {
-    await webServer.close();
-    await socketServer.close();
+  fn() {
+    webServer.close();
+    socketServer.close();
   },
   sanitizeResources: false,
   sanitizeOps: false,
 });
 
-async function sendMessage(channel: string, message: string) {
+async function sendMessage(message: string) {
   const response = await fetch("http://localhost:3001", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({
-      send_packet: {
-        to: channel,
-        message,
-      },
-    }),
+    body: message,
   });
   await response.text();
 }
