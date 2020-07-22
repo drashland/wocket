@@ -80,9 +80,9 @@ Rhum.testPlan("app_3000", () => {
         data: {
           send_packet: {
             to: "chan1",
-            message: "chan message 1-1"
-          }
-        }
+            message: "chan message 1-1",
+          },
+        },
       }));
       Rhum.asserts.assertEquals(
         storage["chan1"].messages,
@@ -100,9 +100,9 @@ Rhum.testPlan("app_3000", () => {
         data: {
           send_packet: {
             to: "chan2",
-            message: "chan message 2-1"
-          }
-        }
+            message: "chan message 2-1",
+          },
+        },
       }));
       Rhum.asserts.assertEquals(
         storage["chan2"].messages,
