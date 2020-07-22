@@ -2,14 +2,39 @@ import { Sender } from "./sender.ts";
 import { Channel } from "./channel.ts";
 import { Client } from "./client.ts";
 import { WebSocket } from "../deps.ts";
-import { Package } from "./package.ts";
-import { PackageQueueItem } from "./package_queue_item.ts";
+import { Packet } from "./packet.ts";
 import { RESERVED_EVENT_NAMES } from "./reserved_event_names.ts";
 
-// TODO(sara) Add description
+/**
+ * The EventEmitter class is responsible for the logic
+ * of sending and receiving messages. To do this,
+ * it aggregates information on clients, such as
+ * tracking how many clients are connected and what
+ * channels are open
+ */
 export class EventEmitter {
-  public clients: { [key: number]: Client } = {};
+  /**
+   * Used to identify this class (when having sent messages) as the Server.
+   */
+  public id = "Server";
+
+  /**
+   * A list of key value pairs describing all created
+   * channels, where the key is the channel name,
+   * and the value represents the channel object
+   */
   public channels: { [key: string]: Channel } = {};
+
+  /**
+   * A list of key value pairs describing all clients connected,
+   * where the key is the client id, and the value represents
+   * the client object
+   */
+  public clients: { [key: number]: Client } = {};
+
+  /**
+   * Instance of the Sender class
+   */
   public sender: Sender;
 
   //////////////////////////////////////////////////////////////////////////////
@@ -29,25 +54,27 @@ export class EventEmitter {
 
   /**
    * Adds a new client.
-   * @param int - Client's socket connection id.
+   *
+   * @param clientId - Client's socket connection id.
    * @param clientSocket - The client as a WebSocket instance.
    *
    * @returns A Client instance for use in the socket-client connection
    * lifecycle.
    */
-  public addClient(clientId: number, clientSocket: WebSocket): Client {
+  public createClient(clientId: number, clientSocket: WebSocket): Client {
     const client = new Client(clientId, clientSocket);
     this.clients[clientId] = client;
     return client;
   }
 
   /**
-   * Adds a new listener to an event.
+   * Adds a new client to a channel. Once the client is added, the client will
+   * be able to receive messages sent to the channel.
    *
    * @param channelName - The name of the channel.
    * @param clientId - Client's socket connection id.
    */
-  public addListener(channelName: string, clientId: number): void {
+  public addClientToChannel(channelName: string, clientId: number): void {
     if (!this.channels[channelName]) {
       this.channels[channelName] = new Channel(channelName);
     }
@@ -71,10 +98,7 @@ export class EventEmitter {
    * @param channelName - The name of the channel.
    * @param message - The message to broadcast.
    */
-  public broadcast(channelName: string, message: Package | string): void {
-    if (typeof message !== "string" && message.sender_id) {
-      message.sender_id = null;
-    }
+  public broadcast(channelName: string, message: unknown): void {
     this.to(channelName, message);
   }
 
@@ -88,23 +112,6 @@ export class EventEmitter {
   }
 
   /**
-   * Create a new channel. Basically, this creates a new event that clients can
-   * listen to. Ther server can also send messages to this new event/channel.
-   *
-   * @param channelName - The name of the channel.
-   *
-   * @returns this
-   */
-  public createChannel(channelName: string): this {
-    if (!this.channels[channelName]) {
-      this.channels[channelName] = new Channel(channelName);
-      return this;
-    }
-
-    throw new Error(`Channel "${channelName}" already exists!`);
-  }
-
-  /**
    * Get all clients.
    *
    * @returns All clients.
@@ -114,6 +121,10 @@ export class EventEmitter {
   }
 
   /**
+   * Get a channel by the channel name
+   *
+   * @param channelName - The name of the channel to retrieve
+   *
    * @returns The specified channel.
    */
   public getChannel(channelName: string): Channel {
@@ -138,10 +149,10 @@ export class EventEmitter {
   }
 
   /**
-   * This is the same as creating a new channel (createChannel()), but for
+   * This is the same as creating a new channel (openChannel()), but for
    * internal use.
    *
-   * @param channelName - The name of the channel.
+   * @param name - The name of the channel.
    * @param cb - Callback to be invoked when a message is sent to the channel.
    */
   public on(name: string, cb: Function): void {
@@ -149,6 +160,23 @@ export class EventEmitter {
       this.channels[name] = new Channel(name);
     }
     this.channels[name].callbacks.push(cb);
+  }
+
+  /**
+   * Create a new channel. Basically, this creates a new event that clients can
+   * listen to. Ther server can also send messages to this new event/channel.
+   *
+   * @param channelName - The name of the channel.
+   *
+   * @returns this
+   */
+  public openChannel(channelName: string): this {
+    if (!this.channels[channelName]) {
+      this.channels[channelName] = new Channel(channelName);
+      return this;
+    }
+
+    throw new Error(`Channel "${channelName}" already exists!`);
   }
 
   /**
@@ -171,14 +199,14 @@ export class EventEmitter {
   }
 
   /**
-   * Removes a listener from a channel.
+   * Removes a client from a channel.
    *
    * @param channelName - The name of the channel.
    * @param clientId - Client's socket connection id.
    */
-  public removeListener(channelName: string, clientId: number): void {
+  public removeClientFromChannel(channelName: string, clientId: number): void {
     if (!this.channels[channelName]) {
-      throw new Error("Channel not found.");
+      throw new Error(`Channel "${channelName}" not found.`);
     }
 
     if (this.channels[channelName].listeners.has(clientId)) {
@@ -199,12 +227,14 @@ export class EventEmitter {
    * @param channelName - The name of the channel.
    * @param message - The message to send.
    */
-  public to(channelName: string, message: Package | string): void {
-    if (typeof message === "string") {
-      this.addToPackageQueue(channelName, new Package(message));
-      return;
-    }
-    this.addToPackageQueue(channelName, message);
+  public to(channelName: string, message: unknown): void {
+    this.queuePacket(
+      new Packet(
+        this,
+        channelName,
+        message,
+      ),
+    );
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -215,13 +245,12 @@ export class EventEmitter {
    * Add a package to the queue so that the message contained in the package can
    * be sent to the client(s).
    *
-   * @param channelName - The name of the channel.
-   * @param message - The message to send.
+   * @param packet - See Packet.
    */
-  private addToPackageQueue(channelName: string, pkg: Package): void {
-    if (!this.channels[channelName]) {
-      throw new Error(`No receivers for "${channelName}" channel.`);
+  private queuePacket(packet: Packet): void {
+    if (!this.channels[packet.to]) {
+      throw new Error(`Channel "${packet.to}" not found.`);
     }
-    this.sender.add(new PackageQueueItem(pkg, this.channels[channelName]));
+    this.sender.add(packet, this.channels[packet.to]);
   }
 }

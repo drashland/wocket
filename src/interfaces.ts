@@ -1,10 +1,3 @@
-export interface IPacket {
-  to: string;
-  message: Uint8Array | string;
-  from: number;
-  callbacks: Function[];
-}
-
 export interface ITransmitterOptions {
   /**
    * A property to determine number of ms to wait for a pong event before
