@@ -140,7 +140,7 @@ async function sendMessage(channel: string, message: string) {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      send_message: {
+      send_packet: {
         to: channel,
         message,
       }

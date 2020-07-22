@@ -223,7 +223,7 @@ export class Server extends EventEmitter {
     try {
       const json = JSON.parse(message);
 
-      // A send_message message should be in the following format:
+      // A send_packet message should be in the following format:
       //
       //     {
       //       "send_packet": {
@@ -232,11 +232,11 @@ export class Server extends EventEmitter {
       //       }
       //     }
       //
-      if (json.send_message) {
+      if (json.send_packet) {
         const packet = new Packet(
           client,
-          json.send_message.to,
-          json.send_message.message
+          json.send_packet.to,
+          json.send_packet.message
         );
         return await this.transmitter.handlePacket(packet);
       }
