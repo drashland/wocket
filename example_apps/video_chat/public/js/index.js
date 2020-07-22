@@ -120,7 +120,6 @@ async function handleAnswerMade(data) {
  * Display the users video and add the tracks to the peer connection
  */
 function displayMyVideoAndGetTracks() {
-  console.log(1)
   // Display stream and set tracks
   navigator.getUserMedia(
     {video: true, audio: true},
@@ -166,7 +165,7 @@ window.addEventListener("DOMContentLoaded", function () {
   }
 
   setTimeout(() => {
-    socketClient.send(JSON.stringify({ connect_to: ["room"] }))
+    socketClient.send(JSON.stringify({ send_message: { to: "room", message: "" }}))
   }, 2000)
 
   socketClient.addEventListener("message", async (data) => {
