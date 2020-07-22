@@ -27,8 +27,6 @@ const server = new Server();
 server.run({
   hostname: "localhost",
   port: 3000,
-}, {
-  reconnect: false,
 });
 console.log(
   `Socket server started on ws://${server.hostname}:${server.port}`,

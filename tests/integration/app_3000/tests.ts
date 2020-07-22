@@ -1,6 +1,5 @@
 import { Server } from "../../../mod.ts";
-import { Drash } from "../../deps.ts";
-import { assertEquals, connectWebSocket } from "../../deps.ts";
+import { Drash, assertEquals, connectWebSocket, WebSocketMessage } from "../../deps.ts";
 
 let storage: any = {
   "chan1": {
@@ -11,18 +10,23 @@ let storage: any = {
   },
 };
 
+interface IMessage {
+  to: string;
+  message: unknown;
+}
+
 class Resource extends Drash.Http.Resource {
   static paths = ["/"];
   protected messages: any = {};
   public async POST() {
-    const channel = this.request.getBodyParam("channel");
-    const message = this.request.getBodyParam("message") as string;
-    const socketClient = await connectWebSocket(
-      `ws://${socketServer.hostname}:${socketServer.port}`,
-    );
-    let encoded = new TextEncoder().encode(message);
-    await socketClient.send(encoded);
-    socketClient.close();
+    const packet = this.request.getBodyParam("send_packet");
+    if (packet) {
+      const socketClient = await connectWebSocket(
+        `ws://${socketServer.hostname}:${socketServer.port}`,
+      );
+      await socketClient.send(JSON.stringify({send_packet:packet}));
+      socketClient.close();
+    }
     return this.response;
   }
 }

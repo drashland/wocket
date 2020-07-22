@@ -1,4 +1,4 @@
-import { Server } from "../../mod.ts";
+import { Packet, Server } from "../../mod.ts";
 
 // Create the socket server
 const server = new Server({
@@ -25,13 +25,12 @@ server.on("disconnect", () => {
 });
 
 // Create "Channel 1" so that clients can send messages to it
-server
-  .on("Channel 1", (packet: any) => {
-    console.log(packet);
-    console.log("Sending a message back to the client.");
-    // Send messages to all clients listening to "Channel 1"
-    server.to(
-      "Channel 1",
-      `Message received! You sent "${packet.message}" as the message.`,
-    );
-  });
+server.on("Channel 1", (packet: Packet) => {
+  console.log(packet);
+  console.log("Sending a message back to the client.");
+  // Send messages to all clients listening to "Channel 1"
+  server.to(
+    "Channel 1",
+    `Message received! You sent "${packet.message}" as the message.`,
+  );
+});
