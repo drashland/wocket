@@ -72,6 +72,14 @@ export class Transmitter {
       return this.handleReservedEvent(packet);
     }
 
+    // Don't allow clients to send messages to channels they aren't in
+    const channelsClientIsIn: string[] = Object.keys(this.server.channels).filter(channelName => {
+      return this.server.channels[channelName].listeners.has(Number(packet.from.id))
+    });
+    if (channelsClientIsIn.indexOf(packet.to) < 0) {
+      throw new Error(`Client ${packet.from.id} is not connected to ${packet.to}`)
+    }
+
     // Invoke all callbacks (aka the handlers for this packet)
     if (this.server.channels[packet.to]) {
       for await (let cb of this.server.channels[packet.to].callbacks) {
