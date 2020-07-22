@@ -2,9 +2,23 @@ import { Packet } from "./packet.ts";
 import { Channel } from "./channel.ts";
 import { EventEmitter } from "./event_emitter.ts";
 
-// TODO(sara) Add description
+/**
+ * The Sender class is responsible for adding
+ * messages to the message queue, and then to work
+ * through the queue stack which will send the message
+ */
 export class Sender {
-  private packet_queue: Array<{packet: Packet, channel: Channel}> = [];
+  /**
+   * A queue of packets.
+   */
+  private packet_queue: Array<{ packet: Packet; channel: Channel }> = [];
+
+  /**
+   * Tells `Sender` when it is ready to work through
+   * the package queue. For instance, whilst sending
+   * a package, `ready` is `false` and once the package
+   * is sent, the class is ready to send another package
+   */
   private ready = true;
 
   //////////////////////////////////////////////////////////////////////////////
@@ -20,7 +34,7 @@ export class Sender {
    * messages. Messages are not sent concurrently.
    */
   public add(packet: Packet, channel: Channel) {
-    this.packet_queue.push({packet, channel});
+    this.packet_queue.push({ packet, channel });
     this.send();
   }
 
@@ -47,7 +61,7 @@ export class Sender {
                   ? "Server"
                   : queueItem.packet.from.id.toString(),
                 to: queueItem.packet.to,
-                message: queueItem.packet.message
+                message: queueItem.packet.message,
               });
               // Send the message
               await socketConn.send(message);

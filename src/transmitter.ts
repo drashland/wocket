@@ -4,7 +4,11 @@ import { RESERVED_EVENT_NAMES } from "./reserved_event_names.ts";
 import { Server } from "./server.ts";
 import { Packet } from "./packet.ts";
 
-// TODO(sara) Add description
+/**
+ * The `Transmitter` class is used as the middleman
+ * between the client and server, when sending messages,
+ * to connect the 'wires' between them.
+ */
 export class Transmitter {
   /**
    * See ITransmitterOptions
@@ -61,7 +65,7 @@ export class Transmitter {
   /**
    * Decodes and validates incoming messages.
    *
-   * @param packet
+   * @param packet - See Packet.
    */
   public async handlePacket(packet: Packet): Promise<void> {
     if (RESERVED_EVENT_NAMES.includes(packet.to)) {
@@ -80,13 +84,13 @@ export class Transmitter {
   }
 
   /**
-   * @param channelName
-   * @param client
+   * Handles connection states, and actions based on those states.
+   *
+   * @param packet - See Packet.
    */
   public handleReservedEvent(packet: Packet): void {
     const eventName = packet.to;
     switch (eventName) {
-
       case "connection":
       case "disconnect":
         if (this.server.channels[eventName]) {

@@ -14,7 +14,11 @@ import { ITransmitterOptions } from "./interfaces.ts";
 import { Packet } from "./packet.ts";
 import { Transmitter } from "./transmitter.ts";
 
-// TODO(sara) Add description
+/**
+ * The `SocketServer` class is responsible for creating a users
+ * socket server. Similar to how Drash.Http.Server creates a
+ * server instance
+ */
 export class Server extends EventEmitter {
   /**
    * A property to hold the Deno server. This property is set in this.run()
@@ -128,36 +132,34 @@ export class Server extends EventEmitter {
         bufReader,
         bufWriter,
       })
-      .then(async (socket: WebSocket): Promise<void> => {
-        const clientId = conn.rid;
-        const client = super.createClient(clientId, socket);
+        .then(async (socket: WebSocket): Promise<void> => {
+          const clientId = conn.rid;
+          const client = super.createClient(clientId, socket);
+          try {
+            for await (const message of socket) {
+              // Handle binary
+              if (message instanceof Uint8Array) {
+                this.handleMessageAsBinary(client, message);
 
-        try {
-          for await (const message of socket) {
+                // Handle strings
+              } else if (typeof message === "string") {
+                await this.handleMessageAsString(client, message);
 
-            // Handle binary
-            if (message instanceof Uint8Array) {
-              this.handleMessageAsBinary(client, message);
-
-            // Handle strings
-            } else if (typeof message === "string") {
-              await this.handleMessageAsString(client, message);
-
-            // Handle disconnects
-            } else if (isWebSocketCloseEvent(message)) {
+                // Handle disconnects
+              } else if (isWebSocketCloseEvent(message)) {
+                super.removeClient(client.id);
+              }
+            }
+          } catch (e) {
+            if (!socket.isClosed) {
+              await socket.close(1000).catch(console.error);
               super.removeClient(client.id);
             }
           }
-        } catch (e) {
-          if (!socket.isClosed) {
-            await socket.close(1000).catch(console.error);
-            super.removeClient(client.id);
-          }
-        }
-      })
-      .catch((err: Error): void => {
-        console.error(`failed to accept websocket: ${err}`);
-      });
+        })
+        .catch((err: Error): void => {
+          console.error(`failed to accept websocket: ${err}`);
+        });
     }
   }
 
@@ -236,7 +238,7 @@ export class Server extends EventEmitter {
         const packet = new Packet(
           client,
           json.send_packet.to,
-          json.send_packet.message
+          json.send_packet.message,
         );
         return await this.transmitter.handlePacket(packet);
       }
@@ -290,7 +292,9 @@ export class Server extends EventEmitter {
       if (json.open_channel) {
         try {
           super.openChannel(json.open_channel.channel_name);
-          client.socket.send(`Opened channel: ${json.open_channel.channel_name}.`);
+          client.socket.send(
+            `Opened channel: ${json.open_channel.channel_name}.`,
+          );
         } catch (error) {
           client.socket.send(error.message);
         }
@@ -306,7 +310,9 @@ export class Server extends EventEmitter {
       if (json.close_channel) {
         try {
           super.closeChannel(json.close_channel.channel_name);
-          client.socket.send(`Closed channel: ${json.close_channel.channel_name}.`);
+          client.socket.send(
+            `Closed channel: ${json.close_channel.channel_name}.`,
+          );
         } catch (error) {
           client.socket.send(error.message);
         }

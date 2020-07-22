@@ -11,11 +11,11 @@ export default class ChatResource extends Drash.Http.Resource {
   public GET() {
     let channel = this.request.getPathParam("channel");
     if (channel !== null) {
-      channel = decodeURIComponent(channel)
+      channel = decodeURIComponent(channel);
       this.response.body = messages[channel].messages;
     } else {
       this.response.status_code = 400;
-      this.response.body = "Unable to parse the channel param"
+      this.response.body = "Unable to parse the channel param";
     }
     return this.response;
   }
@@ -40,8 +40,8 @@ export default class ChatResource extends Drash.Http.Resource {
     const channelName = this.request.getBodyParam("channel_name");
     if (!channelName) {
       this.response.status_code = 400;
-      this.response.body = "Channel name must be passed in"
-      return this.response
+      this.response.body = "Channel name must be passed in";
+      return this.response;
     }
     try {
       // Create the channel if it doesn't exist

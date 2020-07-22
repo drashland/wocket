@@ -5,11 +5,36 @@ import { WebSocket } from "../deps.ts";
 import { Packet } from "./packet.ts";
 import { RESERVED_EVENT_NAMES } from "./reserved_event_names.ts";
 
-// TODO(sara) Add description
+/**
+ * The EventEmitter class is responsible for the logic
+ * of sending and receiving messages. To do this,
+ * it aggregates information on clients, such as
+ * tracking how many clients are connected and what
+ * channels are open
+ */
 export class EventEmitter {
+  /**
+   * Used to identify this class (when having sent messages) as the Server.
+   */
   public id = "Server";
+
+  /**
+   * A list of key value pairs describing all created
+   * channels, where the key is the channel name,
+   * and the value represents the channel object
+   */
   public channels: { [key: string]: Channel } = {};
+
+  /**
+   * A list of key value pairs describing all clients connected,
+   * where the key is the client id, and the value represents
+   * the client object
+   */
   public clients: { [key: number]: Client } = {};
+
+  /**
+   * Instance of the Sender class
+   */
   public sender: Sender;
 
   //////////////////////////////////////////////////////////////////////////////
@@ -29,7 +54,8 @@ export class EventEmitter {
 
   /**
    * Adds a new client.
-   * @param int - Client's socket connection id.
+   *
+   * @param clientId - Client's socket connection id.
    * @param clientSocket - The client as a WebSocket instance.
    *
    * @returns A Client instance for use in the socket-client connection
@@ -95,6 +121,10 @@ export class EventEmitter {
   }
 
   /**
+   * Get a channel by the channel name
+   *
+   * @param channelName - The name of the channel to retrieve
+   *
    * @returns The specified channel.
    */
   public getChannel(channelName: string): Channel {
@@ -122,7 +152,7 @@ export class EventEmitter {
    * This is the same as creating a new channel (openChannel()), but for
    * internal use.
    *
-   * @param channelName - The name of the channel.
+   * @param name - The name of the channel.
    * @param cb - Callback to be invoked when a message is sent to the channel.
    */
   public on(name: string, cb: Function): void {
@@ -198,11 +228,13 @@ export class EventEmitter {
    * @param message - The message to send.
    */
   public to(channelName: string, message: unknown): void {
-    this.queuePacket(new Packet(
-      this,
-      channelName,
-      message
-    ));
+    this.queuePacket(
+      new Packet(
+        this,
+        channelName,
+        message,
+      ),
+    );
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -213,7 +245,7 @@ export class EventEmitter {
    * Add a package to the queue so that the message contained in the package can
    * be sent to the client(s).
    *
-   * @param packet - The packet instance.
+   * @param packet - See Packet.
    */
   private queuePacket(packet: Packet): void {
     if (!this.channels[packet.to]) {

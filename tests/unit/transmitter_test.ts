@@ -1,10 +1,10 @@
 import { Rhum } from "../deps.ts";
 import { Transmitter } from "../../src/transmitter.ts";
-import { Server  } from "../../src/server.ts";
+import { Server } from "../../src/server.ts";
 import { Packet } from "../../src/packet.ts";
 import { Client } from "../../src/client.ts";
 import { WebSocket } from "../../deps.ts";
-import {EventEmitter} from "../../src/event_emitter.ts";
+import { EventEmitter } from "../../src/event_emitter.ts";
 
 const ClientSocket = () => {
   return {
@@ -13,8 +13,7 @@ const ClientSocket = () => {
   };
 };
 
-Rhum.testPlan("unit/transmitter_test.ts",  () => {
-
+Rhum.testPlan("unit/transmitter_test.ts", () => {
   // Unable to test as properties are private
   // Rhum.testSuite("constructor()", () => {
   //   Rhum.testCase("Sets the properties", () => {
@@ -82,12 +81,10 @@ Rhum.testPlan("unit/transmitter_test.ts",  () => {
 
   // Unable to test as it's a private method
   Rhum.testSuite("startHeartbeat()", () => {
-
   });
   // Unable to test as it's a private test
   Rhum.testSuite("timeoutPing()", () => {
+  });
+});
 
-  })
-})
-
-Rhum.run()
+Rhum.run();
