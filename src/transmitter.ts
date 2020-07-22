@@ -5,9 +5,8 @@ import { Server } from "./server.ts";
 import { Packet } from "./packet.ts";
 
 /**
- * The `Transmitter` class is used as the middleman
- * between the client and server, when sending messages,
- * to connect the 'wires' between them.
+ * The `Transmitter` class is used as the middleman between the client and
+ * server, when sending messages, to connect the 'wires' between them.
  */
 export class Transmitter {
   /**

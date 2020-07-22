@@ -6,11 +6,9 @@ import { Packet } from "./packet.ts";
 import { RESERVED_EVENT_NAMES } from "./reserved_event_names.ts";
 
 /**
- * The EventEmitter class is responsible for the logic
- * of sending and receiving messages. To do this,
- * it aggregates information on clients, such as
- * tracking how many clients are connected and what
- * channels are open
+ * The EventEmitter class is responsible for the logic of sending and receiving
+ * messages. To do this, it aggregates information on clients, such as tracking
+ * how many clients are connected and what channels are open.
  */
 export class EventEmitter {
   /**
@@ -19,16 +17,14 @@ export class EventEmitter {
   public id = "Server";
 
   /**
-   * A list of key value pairs describing all created
-   * channels, where the key is the channel name,
-   * and the value represents the channel object
+   * A list of key value pairs describing all created channels, where the key is
+   * the channel name, and the value represents the channel object.
    */
   public channels: { [key: string]: Channel } = {};
 
   /**
-   * A list of key value pairs describing all clients connected,
-   * where the key is the client id, and the value represents
-   * the client object
+   * A list of key value pairs describing all clients connected, where the key
+   * is the client id, and the value represents the client object.
    */
   public clients: { [key: number]: Client } = {};
 
@@ -242,7 +238,7 @@ export class EventEmitter {
   //////////////////////////////////////////////////////////////////////////////
 
   /**
-   * Add a package to the queue so that the message contained in the package can
+   * Add a packet to the queue so that the message contained in the packet can
    * be sent to the client(s).
    *
    * @param packet - See Packet.
