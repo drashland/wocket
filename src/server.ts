@@ -8,26 +8,18 @@ import {
   serve,
   serveTLS,
 } from "../deps.ts";
-import {
-  Client,
-} from "./client.ts";
-import {
-  EventEmitter,
-} from "./event_emitter.ts";
-import {
-  ITransmitterOptions,
-} from "./interfaces.ts";
-import {
-  Transmitter,
-} from "./transmitter.ts";
-const encoder = new TextEncoder();
+import { Client } from "./client.ts";
+import { EventEmitter } from "./event_emitter.ts";
+import { ITransmitterOptions } from "./interfaces.ts";
+import { Packet } from "./packet.ts";
+import { Transmitter } from "./transmitter.ts";
 
 /**
  * The `SocketServer` class is responsible for creating a users
  * socket server. Similar to how Drash.Http.Server creates a
  * server instance
  */
-export class SocketServer extends EventEmitter {
+export class Server extends EventEmitter {
   /**
    * A property to hold the Deno server. This property is set in this.run()
    * like so:
@@ -140,35 +132,34 @@ export class SocketServer extends EventEmitter {
         bufReader,
         bufWriter,
       })
-        .then(async (socket: WebSocket): Promise<void> => {
-          const clientId = conn.rid;
-          const client = super.createClient(clientId, socket);
+      .then(async (socket: WebSocket): Promise<void> => {
+        const clientId = conn.rid;
+        const client = super.createClient(clientId, socket);
+        try {
+          for await (const message of socket) {
+            // Handle binary
+            if (message instanceof Uint8Array) {
+              this.handleMessageAsBinary(client, message);
 
-          try {
-            for await (const message of socket) {
-              // Handle binary
-              if (message instanceof Uint8Array) {
-                this.handleMessageAsBinary(client, message);
+              // Handle strings
+            } else if (typeof message === "string") {
+              await this.handleMessageAsString(client, message);
 
-                // Handle strings
-              } else if (typeof message === "string") {
-                await this.handleMessageAsString(client, message);
-
-                // Handle disconnects
-              } else if (isWebSocketCloseEvent(message)) {
-                super.removeClient(client.id);
-              }
-            }
-          } catch (e) {
-            if (!socket.isClosed) {
-              await socket.close(1000).catch(console.error);
+              // Handle disconnects
+            } else if (isWebSocketCloseEvent(message)) {
               super.removeClient(client.id);
             }
           }
-        })
-        .catch((err: Error): void => {
-          console.error(`failed to accept websocket: ${err}`);
-        });
+        } catch (e) {
+          if (!socket.isClosed) {
+            await socket.close(1000).catch(console.error);
+            super.removeClient(client.id);
+          }
+        }
+      })
+      .catch((err: Error): void => {
+        console.error(`failed to accept websocket: ${err}`);
+      });
     }
   }
 
@@ -182,11 +173,10 @@ export class SocketServer extends EventEmitter {
    * @param client - The client instance.
    * @param message - The message the client sent.
    */
-  protected async handleMessageAsBinary(
-    client: Client,
-    message: Uint8Array,
-  ): Promise<void> {
-    return await this.transmitter.handleMessage(message, client);
+  protected async handleMessageAsBinary(client: Client, message: Uint8Array) {
+    const decoded = JSON.parse(new TextDecoder().decode(message));
+    const packet = new Packet(client, decoded.to, decoded.message);
+    return await this.transmitter.handlePacket(packet);
   }
 
   /**
@@ -199,16 +189,19 @@ export class SocketServer extends EventEmitter {
     client: Client,
     message: string,
   ): Promise<void> {
-    switch (true) {
-      case message == "ping":
+    switch (message) {
+      case "id":
+        return client.socket.send(`Client ID: ${client.id}`);
+
+      case "ping":
         return client.socket.send("pong");
 
-      case message == "pong":
+      case "pong":
         return client.socket.send("ping");
 
-      case message == "test":
+      case "test":
         return client.socket.send(
-          `Socket server is listening at ${this.hostname}:${this.port}.`,
+          `Server started on ${this.hostname}:${this.port}.`,
         );
 
       // If the message isn't any of the above, then it we expect the message
@@ -232,23 +225,22 @@ export class SocketServer extends EventEmitter {
     try {
       const json = JSON.parse(message);
 
-      // A send_message message should be in the following format:
+      // A send_packet message should be in the following format:
       //
       //     {
-      //       "send_message": {
+      //       "send_packet": {
       //         "to": ["array", "of", "channels"],
       //         "message": "the message"
       //       }
       //     }
       //
-      if (json.send_message) {
-        return await this.transmitter.handleMessage(
-          JSON.stringify({
-            to: json.send_message.to,
-            message: json.send_message.message,
-          }),
+      if (json.send_packet) {
+        const packet = new Packet(
           client,
+          json.send_packet.to,
+          json.send_packet.message
         );
+        return await this.transmitter.handlePacket(packet);
       }
 
       // A connect_to message should be in the following format:
@@ -282,7 +274,7 @@ export class SocketServer extends EventEmitter {
       if (json.disconnect_from) {
         json.disconnect_from.forEach((channelName: string) => {
           try {
-            super.removeListener(channelName, client.id);
+            super.removeClientFromChannel(channelName, client.id);
             client.socket.send(`Disconnected from ${channelName}.`);
           } catch (error) {
             client.socket.send(error.message);

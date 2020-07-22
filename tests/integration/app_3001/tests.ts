@@ -1,4 +1,4 @@
-import { SocketServer } from "../../../mod.ts";
+import { Server } from "../../../mod.ts";
 import { Drash } from "../../deps.ts";
 import { assert, assertEquals, connectWebSocket } from "../../deps.ts";
 
@@ -18,7 +18,7 @@ class Resource extends Drash.Http.Resource {
     const channel = this.request.getBodyParam("channel");
     const message = this.request.getBodyParam("message");
     const socketClient = await connectWebSocket(
-      `wss://${socketServer.hostname}:${socketServer.port}`,
+      `wss://${server.hostname}:${server.port}`,
     );
     let encoded = new TextEncoder().encode(
       JSON.stringify({ [channel as string]: message }),
@@ -41,15 +41,15 @@ webServer.run({
 });
 console.log(`Web server started on ${webServer.hostname}:${webServer.port}`);
 
-const socketServer = new SocketServer();
-socketServer.runTLS({
+const server = new Server();
+server.runTLS({
   hostname: "localhost",
   port: 3000,
   certFile: "./tests/integration/app_3001/server.crt",
   keyFile: "./tests/integration/app_3001/server.key",
 });
 console.log(
-  `socketServer listening: http://${socketServer.hostname}:${socketServer.port}`,
+  `server listening: http://${server.hostname}:${server.port}`,
 );
 console.log(
   "\nIntegration tests: testing channel creation and deletion on wss.\n",
@@ -57,7 +57,7 @@ console.log(
 
 // Set up the events
 
-socketServer
+server
   .createChannel("chan1")
   .on(
     "chan1",
@@ -67,11 +67,11 @@ socketServer
   );
 
 Deno.test("chan1 should exist", () => {
-  assertEquals("chan1", socketServer.getChannel("chan1").name);
+  assertEquals("chan1", server.getChannel("chan1").name);
 });
 
 Deno.test("chan2 should exist again", () => {
-  socketServer
+  server
     .createChannel("chan2")
     .on(
       "chan2",
@@ -79,7 +79,7 @@ Deno.test("chan2 should exist again", () => {
         storage["chan2"].messages.push(packet.message);
       }),
     );
-  assertEquals("chan2", socketServer.getChannel("chan2").name);
+  assertEquals("chan2", server.getChannel("chan2").name);
 });
 
 Deno.test("chan1 should have 1 message", async () => {
@@ -114,12 +114,12 @@ Deno.test("chan2 should have 1 message", async () => {
 });
 
 Deno.test("chan2 should be closed", () => {
-  socketServer.closeChannel("chan2");
-  assertEquals(undefined, socketServer.getChannel("chan2"));
+  server.closeChannel("chan2");
+  assertEquals(undefined, server.getChannel("chan2"));
 });
 
 Deno.test("chan2 should not receive this message", async () => {
-  socketServer.createChannel("chan2");
+  server.createChannel("chan2");
   await sendMessage("chan2", "Test");
   assertEquals(
     storage["chan2"].messages,
@@ -133,7 +133,7 @@ Deno.test({
   name: "Stop the server",
   async fn() {
     await webServer.close();
-    await socketServer.close();
+    await server.close();
   },
   sanitizeResources: false,
   sanitizeOps: false,

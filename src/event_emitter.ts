@@ -2,8 +2,7 @@ import { Sender } from "./sender.ts";
 import { Channel } from "./channel.ts";
 import { Client } from "./client.ts";
 import { WebSocket } from "../deps.ts";
-import { Package } from "./package.ts";
-import { PackageQueueItem } from "./package_queue_item.ts";
+import { Packet } from "./packet.ts";
 import { RESERVED_EVENT_NAMES } from "./reserved_event_names.ts";
 
 /**
@@ -14,6 +13,12 @@ import { RESERVED_EVENT_NAMES } from "./reserved_event_names.ts";
  * channels are open
  */
 export class EventEmitter {
+
+  /**
+   * Used to identify this class (when having sent messages) as the Server.
+   */
+  public id = "Server";
+
   /**
    * A list of key value pairs describing all created
    * channels, where the key is the channel name,
@@ -94,10 +99,7 @@ export class EventEmitter {
    * @param channelName - The name of the channel.
    * @param message - The message to broadcast.
    */
-  public broadcast(channelName: string, message: Package | string): void {
-    if (typeof message !== "string" && message.sender_id) {
-      message.sender_id = null;
-    }
+  public broadcast(channelName: string, message: unknown): void {
     this.to(channelName, message);
   }
 
@@ -198,14 +200,14 @@ export class EventEmitter {
   }
 
   /**
-   * Removes a listener from a channel.
+   * Removes a client from a channel.
    *
    * @param channelName - The name of the channel.
    * @param clientId - Client's socket connection id.
    */
-  public removeListener(channelName: string, clientId: number): void {
+  public removeClientFromChannel(channelName: string, clientId: number): void {
     if (!this.channels[channelName]) {
-      throw new Error("Channel not found.");
+      throw new Error(`Channel "${channelName}" not found.`);
     }
 
     if (this.channels[channelName].listeners.has(clientId)) {
@@ -226,12 +228,12 @@ export class EventEmitter {
    * @param channelName - The name of the channel.
    * @param message - The message to send.
    */
-  public to(channelName: string, message: Package | string): void {
-    if (typeof message === "string") {
-      this.addToPackageQueue(channelName, new Package(message));
-      return;
-    }
-    this.addToPackageQueue(channelName, message);
+  public to(channelName: string, message: unknown): void {
+    this.queuePacket(new Packet(
+      this,
+      channelName,
+      message
+    ));
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -242,13 +244,12 @@ export class EventEmitter {
    * Add a package to the queue so that the message contained in the package can
    * be sent to the client(s).
    *
-   * @param channelName - The name of the channel.
-   * @param pkg - The message to send.
+   * @param packet - See Packet.
    */
-  private addToPackageQueue(channelName: string, pkg: Package): void {
-    if (!this.channels[channelName]) {
-      throw new Error(`No receivers for "${channelName}" channel.`);
+  private queuePacket(packet: Packet): void {
+    if (!this.channels[packet.to]) {
+      throw new Error(`Channel "${packet.to}" not found.`);
     }
-    this.sender.add(new PackageQueueItem(pkg, this.channels[channelName]));
+    this.sender.add(packet, this.channels[packet.to]);
   }
 }

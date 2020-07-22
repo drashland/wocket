@@ -1,14 +1,19 @@
-import { SocketServer } from "../../src/server.ts";
-import { assertEquals } from "../deps.ts";
+import { Server } from "../../src/server.ts";
+import { Rhum } from "../deps.ts";
 
-Deno.test("should connect to 3000 if port is not provided", () => {
-  const expect = 1557;
-  const server = new SocketServer();
-  assertEquals(server.port, expect);
-});
+Rhum.testPlan("unit/server_test.ts", () => {
+  Rhum.testSuite("constructor()", () => {
+    Rhum.testCase("should connect to 3000 if port is not provided", () => {
+      const expect = 1557;
+      const server = new Server();
+      Rhum.asserts.assertEquals(server.port, expect);
+    });
+    Rhum.testCase("should connect to localhost if hostname is not provided", () => {
+      const expect = "localhost";
+      const server = new Server();
+      Rhum.asserts.assertEquals(server.hostname, expect);
+    });
+  })
+})
 
-Deno.test("should connect to localhost if hostname is not provided", () => {
-  const expect = "localhost";
-  const server = new SocketServer();
-  assertEquals(server.hostname, expect);
-});
+Rhum.run()
