@@ -11,7 +11,7 @@ export class Sender {
   /**
    * A queue of packets.
    */
-  private packet_queue: Array<{packet: Packet, channel: Channel}> = [];
+  private packet_queue: Array<{ packet: Packet; channel: Channel }> = [];
 
   /**
    * Tells `Sender` when it is ready to work through
@@ -34,7 +34,7 @@ export class Sender {
    * messages. Messages are not sent concurrently.
    */
   public add(packet: Packet, channel: Channel) {
-    this.packet_queue.push({packet, channel});
+    this.packet_queue.push({ packet, channel });
     this.send();
   }
 
@@ -61,7 +61,7 @@ export class Sender {
                   ? "Server"
                   : queueItem.packet.from.id.toString(),
                 to: queueItem.packet.to,
-                message: queueItem.packet.message
+                message: queueItem.packet.message,
               });
               // Send the message
               await socketConn.send(message);

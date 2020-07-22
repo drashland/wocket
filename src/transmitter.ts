@@ -91,7 +91,6 @@ export class Transmitter {
   public handleReservedEvent(packet: Packet): void {
     const eventName = packet.to;
     switch (eventName) {
-
       case "connection":
       case "disconnect":
         if (this.server.channels[eventName]) {

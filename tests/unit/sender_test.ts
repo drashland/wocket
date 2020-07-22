@@ -1,9 +1,9 @@
 import { Rhum } from "../deps.ts";
-import {Sender} from "../../src/sender.ts";
-import {Packet} from "../../src/packet.ts";
-import {Client} from "../../src/client.ts";
-import {WebSocket} from "../../deps.ts";
-import {Channel} from "../../src/channel.ts";
+import { Sender } from "../../src/sender.ts";
+import { Packet } from "../../src/packet.ts";
+import { Client } from "../../src/client.ts";
+import { WebSocket } from "../../deps.ts";
+import { Channel } from "../../src/channel.ts";
 
 const ClientSocket = () => {
   return {
@@ -12,7 +12,7 @@ const ClientSocket = () => {
   };
 };
 
-Rhum.testPlan("unit/sender_test.ts",  () => {
+Rhum.testPlan("unit/sender_test.ts", () => {
   Rhum.testSuite("add()", () => {
     // Unable to test, as `packet_queue` property is private
     // Rhum.testCase("Pushes a new packet queue item", () => {
@@ -33,12 +33,12 @@ Rhum.testPlan("unit/sender_test.ts",  () => {
     // Rhum.testCase("Sends an event", () => {
     //
     // })
-  })
+  });
 
   // Cannot test as  the  method is private
   // Rhum.testSuite("send()", () => {
   //
   // })
-})
+});
 
-Rhum.run()
+Rhum.run();

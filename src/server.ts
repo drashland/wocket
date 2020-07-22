@@ -132,34 +132,34 @@ export class Server extends EventEmitter {
         bufReader,
         bufWriter,
       })
-      .then(async (socket: WebSocket): Promise<void> => {
-        const clientId = conn.rid;
-        const client = super.createClient(clientId, socket);
-        try {
-          for await (const message of socket) {
-            // Handle binary
-            if (message instanceof Uint8Array) {
-              this.handleMessageAsBinary(client, message);
+        .then(async (socket: WebSocket): Promise<void> => {
+          const clientId = conn.rid;
+          const client = super.createClient(clientId, socket);
+          try {
+            for await (const message of socket) {
+              // Handle binary
+              if (message instanceof Uint8Array) {
+                this.handleMessageAsBinary(client, message);
 
-              // Handle strings
-            } else if (typeof message === "string") {
-              await this.handleMessageAsString(client, message);
+                // Handle strings
+              } else if (typeof message === "string") {
+                await this.handleMessageAsString(client, message);
 
-              // Handle disconnects
-            } else if (isWebSocketCloseEvent(message)) {
+                // Handle disconnects
+              } else if (isWebSocketCloseEvent(message)) {
+                super.removeClient(client.id);
+              }
+            }
+          } catch (e) {
+            if (!socket.isClosed) {
+              await socket.close(1000).catch(console.error);
               super.removeClient(client.id);
             }
           }
-        } catch (e) {
-          if (!socket.isClosed) {
-            await socket.close(1000).catch(console.error);
-            super.removeClient(client.id);
-          }
-        }
-      })
-      .catch((err: Error): void => {
-        console.error(`failed to accept websocket: ${err}`);
-      });
+        })
+        .catch((err: Error): void => {
+          console.error(`failed to accept websocket: ${err}`);
+        });
     }
   }
 
@@ -238,7 +238,7 @@ export class Server extends EventEmitter {
         const packet = new Packet(
           client,
           json.send_packet.to,
-          json.send_packet.message
+          json.send_packet.message,
         );
         return await this.transmitter.handlePacket(packet);
       }

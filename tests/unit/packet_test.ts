@@ -10,19 +10,19 @@ const ClientSocket = () => {
   };
 };
 
-Rhum.testPlan("unit/packet_test.ts",  () => {
+Rhum.testPlan("unit/packet_test.ts", () => {
   Rhum.testSuite("constructor()", () => {
     Rhum.testCase("Sets the properties", () => {
-      const client = new Client(1, ClientSocket() as unknown as WebSocket)
+      const client = new Client(1, ClientSocket() as unknown as WebSocket);
       const packet = new Packet(
-          client,
-          "The moon",
-          "Hello, I am a message"
-      )
-      Rhum.asserts.assertEquals(packet.message, "Hello, I am a message")
-      Rhum.asserts.assertEquals(packet.to, "The moon")
-    })
-  })
-})
+        client,
+        "The moon",
+        "Hello, I am a message",
+      );
+      Rhum.asserts.assertEquals(packet.message, "Hello, I am a message");
+      Rhum.asserts.assertEquals(packet.to, "The moon");
+    });
+  });
+});
 
-Rhum.run()
+Rhum.run();

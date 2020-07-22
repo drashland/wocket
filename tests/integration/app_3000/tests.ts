@@ -1,5 +1,10 @@
 import { Server } from "../../../mod.ts";
-import { Drash, assertEquals, connectWebSocket, WebSocketMessage } from "../../deps.ts";
+import {
+  Drash,
+  assertEquals,
+  connectWebSocket,
+  WebSocketMessage,
+} from "../../deps.ts";
 
 let storage: any = {
   "chan1": {
@@ -24,7 +29,7 @@ class Resource extends Drash.Http.Resource {
       const socketClient = await connectWebSocket(
         `ws://${socketServer.hostname}:${socketServer.port}`,
       );
-      await socketClient.send(JSON.stringify({send_packet:packet}));
+      await socketClient.send(JSON.stringify({ send_packet: packet }));
       socketClient.close();
     }
     return this.response;
@@ -59,11 +64,11 @@ console.log(
 
 socketServer.openChannel("chan1");
 socketServer.on(
-    "chan1",
-    ((packet: any) => {
-      storage["chan1"].messages.push(packet.message);
-    }),
-  );
+  "chan1",
+  ((packet: any) => {
+    storage["chan1"].messages.push(packet.message);
+  }),
+);
 
 Deno.test("chan1 should exist", () => {
   assertEquals("chan1", socketServer.getChannel("chan1").name);
@@ -72,11 +77,11 @@ Deno.test("chan1 should exist", () => {
 Deno.test("chan2 should exist again", () => {
   socketServer.openChannel("chan2");
   socketServer.on(
-      "chan2",
-      ((packet: any) => {
-        storage["chan2"].messages.push(packet.message);
-      }),
-    );
+    "chan2",
+    ((packet: any) => {
+      storage["chan2"].messages.push(packet.message);
+    }),
+  );
   assertEquals("chan2", socketServer.getChannel("chan2").name);
 });
 
@@ -147,7 +152,7 @@ async function sendMessage(channel: string, message: string) {
       send_packet: {
         to: channel,
         message,
-      }
+      },
     }),
   });
   await response.text();

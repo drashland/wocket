@@ -13,7 +13,6 @@ import { RESERVED_EVENT_NAMES } from "./reserved_event_names.ts";
  * channels are open
  */
 export class EventEmitter {
-
   /**
    * Used to identify this class (when having sent messages) as the Server.
    */
@@ -229,11 +228,13 @@ export class EventEmitter {
    * @param message - The message to send.
    */
   public to(channelName: string, message: unknown): void {
-    this.queuePacket(new Packet(
-      this,
-      channelName,
-      message
-    ));
+    this.queuePacket(
+      new Packet(
+        this,
+        channelName,
+        message,
+      ),
+    );
   }
 
   //////////////////////////////////////////////////////////////////////////////
