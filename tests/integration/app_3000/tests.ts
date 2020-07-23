@@ -89,10 +89,8 @@ Rhum.testPlan("app_3000", () => {
     });
     Rhum.testCase("chan2 should have a message", async () => {
       socketServer.openChannel("chan2");
-      socketServer.on("chan2", () => {
-        socketServer.on("chan2", (packet: Packet) => {
-          storage["chan2"].messages.push(packet.message);
-        });
+      socketServer.on("chan2", (packet: Packet) => {
+        storage["chan2"].messages.push(packet.message);
       });
       await sendMessage(JSON.stringify({
         data: {
