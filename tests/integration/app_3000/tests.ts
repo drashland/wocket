@@ -5,7 +5,6 @@ import { Rhum, Drash, connectWebSocket } from "../../deps.ts";
 // SERVER SETUP ////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-
 const socketServer = new Server({ reconnect: false });
 
 socketServer.run({
@@ -30,7 +29,7 @@ class Resource extends Drash.Http.Resource {
       if ((data as any).send_packet) {
         const to = (data as any).send_packet.to;
         await socketClient.send(JSON.stringify({
-          connect_to: [to]
+          connect_to: [to],
         }));
       }
       await socketClient.send(JSON.stringify(data));
