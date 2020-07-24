@@ -236,8 +236,8 @@ export class Server extends EventEmitter {
       //
       //     {
       //       "send_packet": {
-      //         "to": ["array", "of", "channels"],
-      //         "message": "the message"
+      //         "to": string,
+      //         "message": unknown
       //       }
       //     }
       //
