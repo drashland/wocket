@@ -275,10 +275,14 @@ export class Server extends EventEmitter {
       //     }
       //
       if (json.disconnect_from) {
-        json.disconnect_from.forEach((channelName: string) => {
+        json.disconnect_from.forEach(async (channelName: string) => {
           try {
             super.removeClientFromChannel(channelName, client.id);
             client.socket.send(`Disconnected from ${channelName}.`);
+            await this.transmitter.handlePacket(new Packet(
+              client,
+              "disconnect"
+            ));
           } catch (error) {
             client.socket.send(error.message);
           }
