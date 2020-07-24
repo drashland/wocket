@@ -72,7 +72,7 @@ export class EventEmitter {
    */
   public addClientToChannel(channelName: string, clientId: number): void {
     if (!this.channels[channelName]) {
-      this.channels[channelName] = new Channel(channelName);
+      throw new Error(`Channel "${channelName}" does not exist.`);
     }
 
     if (!this.channels[channelName].listeners.has(clientId)) {
