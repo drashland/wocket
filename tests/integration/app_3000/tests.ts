@@ -5,6 +5,18 @@ import { Rhum, Drash, connectWebSocket } from "../../deps.ts";
 // SERVER SETUP ////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
+
+const socketServer = new Server({ reconnect: false });
+
+socketServer.run({
+  hostname: "localhost",
+  port: 3000,
+});
+
+console.log(
+  `socketServer listening: http://${socketServer.hostname}:${socketServer.port}`,
+);
+
 class Resource extends Drash.Http.Resource {
   static paths = ["/"];
   protected messages: any = {};
@@ -14,6 +26,13 @@ class Resource extends Drash.Http.Resource {
       const socketClient = await connectWebSocket(
         `ws://${socketServer.hostname}:${socketServer.port}`,
       );
+      // Connect to the channel
+      if ((data as any).send_packet) {
+        const to = (data as any).send_packet.to;
+        await socketClient.send(JSON.stringify({
+          connect_to: [to]
+        }));
+      }
       await socketClient.send(JSON.stringify(data));
       socketClient.close();
     }
@@ -27,23 +46,12 @@ const webServer = new Drash.Http.Server({
   ],
 });
 
-const socketServer = new Server({ reconnect: false });
-
 webServer.run({
   hostname: "localhost",
   port: 3001,
 });
 
 console.log(`Web server started on ${webServer.hostname}:${webServer.port}`);
-
-socketServer.run({
-  hostname: "localhost",
-  port: 3000,
-});
-
-console.log(
-  `socketServer listening: http://${socketServer.hostname}:${socketServer.port}`,
-);
 
 ////////////////////////////////////////////////////////////////////////////////
 // TESTS ///////////////////////////////////////////////////////////////////////
@@ -63,17 +71,18 @@ let storage: any = {
 };
 
 Rhum.testPlan("app_3000", () => {
+  // Set up chan1
   socketServer.openChannel("chan1");
-
   socketServer.on("chan1", (packet: Packet) => {
     storage["chan1"].messages.push(packet.message);
   });
 
-  Rhum.testSuite("channel 1", () => {
+  Rhum.testSuite("channels", () => {
     Rhum.testCase("chan1 should exist", () => {
       Rhum.asserts.assertEquals("chan1", socketServer.getChannel("chan1").name);
     });
     Rhum.testCase("chan1 should have a message", async () => {
+      // Send the message
       await sendMessage(JSON.stringify({
         data: {
           send_packet: {
