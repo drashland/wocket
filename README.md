@@ -78,9 +78,7 @@ $ wscat -c ws://127.0.0.1:1777
 ## Features
 
 - JSON encoding
-- Binary encoding
 - Zero dependencies
-- Auto-reconnect using heartbeats
 
 ## Contributing
 
