@@ -166,10 +166,10 @@ export class EventEmitter {
    *
    * @returns this
    */
-  public openChannel(channelName: string): this {
+  public openChannel(channelName: string): void {
     if (!this.channels[channelName]) {
       this.channels[channelName] = new Channel(channelName);
-      return this;
+      return;
     }
 
     throw new Error(`Channel "${channelName}" already exists!`);
