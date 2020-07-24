@@ -3,9 +3,8 @@ import { Channel } from "./channel.ts";
 import { EventEmitter } from "./event_emitter.ts";
 
 /**
- * The Sender class is responsible for adding
- * messages to the message queue, and then to work
- * through the queue stack which will send the message
+ * The Sender class is responsible for adding messages to the message queue, and
+ * then to work through the queue stack which will send the message.
  */
 export class Sender {
   /**
@@ -14,10 +13,9 @@ export class Sender {
   private packet_queue: Array<{ packet: Packet; channel: Channel }> = [];
 
   /**
-   * Tells `Sender` when it is ready to work through
-   * the package queue. For instance, whilst sending
-   * a package, `ready` is `false` and once the package
-   * is sent, the class is ready to send another package
+   * Tells `Sender` when it is ready to work through the packet queue. For
+   * instance, whilst sending a packet, `ready` is `false` and once the packet
+   * is sent, the class is ready to send another packet.
    */
   private ready = true;
 
@@ -28,10 +26,11 @@ export class Sender {
   /**
    * Adds a new message to the message queue to be sent.
    *
-   * @param packageQueueItem - The item to store in the queue. This item will be
-   * sent in the order it was received as long as the queue is in a "ready"
-   * state. Being "ready" means that the queue is not currently sending any
-   * messages. Messages are not sent concurrently.
+   * @param packet - The item to store in the queue. This item will be sent in
+   * the order it was received as long as the queue is in a "ready" state. Being
+   * "ready" means that the queue is not currently sending any messages.
+   * Messages are not sent concurrently.
+   * @param channel - The channel instance this packet is going to.
    */
   public add(packet: Packet, channel: Channel) {
     this.packet_queue.push({ packet, channel });

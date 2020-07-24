@@ -15,9 +15,8 @@ import { Packet } from "./packet.ts";
 import { Transmitter } from "./transmitter.ts";
 
 /**
- * The `SocketServer` class is responsible for creating a users
- * socket server. Similar to how Drash.Http.Server creates a
- * server instance
+ * The `SocketServer` class is responsible for creating a users socket server.
+ * Similar to how Drash.Http.Server creates a server instance.
  */
 export class Server extends EventEmitter {
   /**

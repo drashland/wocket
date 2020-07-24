@@ -1,8 +1,8 @@
 import { WebSocket } from "../deps.ts";
 
 /**
- * Channel represents channels, also known as "rooms".
- * This class describes open channels, and is used to place clients into
+ * Channel represents channels, also known as "rooms". This class describes open
+ * channels, and is used to place clients into
  */
 export class Channel {
   /**
@@ -23,9 +23,8 @@ export class Channel {
   public name: string;
 
   /**
-   * Acts as the list of clients connected to the channel.
-   * A listener would contain the clients socket id and
-   * and the socket connection sent across
+   * Acts as the list of clients connected to the channel.  A listener would
+   * contain the clients socket id and and the socket connection sent across
    *
    *     new Channel("channel 1").listeners.set(
    *       2, // clients socket id
