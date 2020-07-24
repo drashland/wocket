@@ -11,7 +11,7 @@ export class Packet {
   /**
    * A property to hold the message this packet contains.
    */
-  message: unknown;
+  message?: unknown;
 
   /**
    * A property to hold the address this packet is going to.
@@ -28,10 +28,12 @@ export class Packet {
   constructor(
     from: Client | EventEmitter,
     to: string,
-    message: unknown,
+    message?: unknown,
   ) {
     this.from = from;
     this.to = to;
-    this.message = message;
+    if (message) {
+      this.message = message;
+    }
   }
 }

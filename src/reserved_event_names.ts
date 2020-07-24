@@ -1,5 +1,5 @@
 export const RESERVED_EVENT_NAMES = [
-  "connection",
+  "connect",
   "disconnect",
   "error",
   "listening_to",

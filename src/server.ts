@@ -251,10 +251,14 @@ export class Server extends EventEmitter {
       //     }
       //
       if (json.connect_to) {
-        json.connect_to.forEach((channelName: string) => {
+        json.connect_to.forEach(async (channelName: string) => {
           try {
             super.addClientToChannel(channelName, client.id);
             client.socket.send(`Connected to ${channelName}.`);
+            await this.transmitter.handlePacket(new Packet(
+              client,
+              "connect"
+            ));
           } catch (error) {
             client.socket.send(error.message);
           }
