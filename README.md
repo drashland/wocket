@@ -33,6 +33,42 @@
 
 ## Quickstart
 
+Create your server.
+
+```typescript
+// File: app.ts
+
+import { Server } from "https://deno.land/x/sockets@v0.x/mod.ts";
+
+// Create the server
+const server = new Server();
+
+// Run the server
+server.run({
+  hostname: "127.0.0.1",
+  port: 1777,
+});
+
+console.log(
+  `Server started on ws://${server.hostname}:${server.port}`,
+);
+```
+
+Run your server.
+
+```
+$ deno run --allow-net app.ts
+Server started on ws://127.0.0.1:1777
+```
+
+Connect to your server using `wscat` and send a `ping` packet.
+
+```
+$ npm install -g wscat
+$ wscat -c ws://127.0.0.1:1777
+> ping
+< pong
+```
 
 ## Documentation
 
@@ -41,8 +77,10 @@
 
 ## Features
 
-- Binary-support
-- Auto-reconnection support
+- JSON encoding
+- Binary encoding
+- Zero dependencies
+- Auto-reconnect using heartbeats
 
 ## Contributing
 
