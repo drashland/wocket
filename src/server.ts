@@ -135,6 +135,10 @@ export class Server extends EventEmitter {
           const clientId = conn.rid;
           const client = super.createClient(clientId, socket);
           try {
+            await this.transmitter.handlePacket(new Packet(
+              client,
+              "connect"
+            ));
             for await (const message of socket) {
               // Handle binary
               if (message instanceof Uint8Array) {
@@ -153,6 +157,10 @@ export class Server extends EventEmitter {
             if (!socket.isClosed) {
               await socket.close(1000).catch(console.error);
               super.removeClient(client.id);
+              await this.transmitter.handlePacket(new Packet(
+                client,
+                "disconnect"
+              ));
             }
           }
         })
@@ -255,10 +263,6 @@ export class Server extends EventEmitter {
           try {
             super.addClientToChannel(channelName, client.id);
             client.socket.send(`Connected to ${channelName}.`);
-            await this.transmitter.handlePacket(new Packet(
-              client,
-              "connect"
-            ));
           } catch (error) {
             client.socket.send(error.message);
           }
@@ -279,10 +283,6 @@ export class Server extends EventEmitter {
           try {
             super.removeClientFromChannel(channelName, client.id);
             client.socket.send(`Disconnected from ${channelName}.`);
-            await this.transmitter.handlePacket(new Packet(
-              client,
-              "disconnect"
-            ));
           } catch (error) {
             client.socket.send(error.message);
           }
