@@ -289,42 +289,6 @@ export class Server extends EventEmitter {
         });
         return;
       }
-
-      // A open_channel message should be in the following format:
-      //
-      //     {
-      //       "open_channel": "channel name"
-      //     }
-      //
-      if (json.open_channel) {
-        try {
-          super.openChannel(json.open_channel.channel_name);
-          client.socket.send(
-            `Opened channel: ${json.open_channel.channel_name}.`,
-          );
-        } catch (error) {
-          client.socket.send(error.message);
-        }
-        return;
-      }
-
-      // A close_channel message should be in the following format:
-      //
-      //     {
-      //       "close_channel": "channel name"
-      //     }
-      //
-      if (json.close_channel) {
-        try {
-          super.closeChannel(json.close_channel.channel_name);
-          client.socket.send(
-            `Closed channel: ${json.close_channel.channel_name}.`,
-          );
-        } catch (error) {
-          client.socket.send(error.message);
-        }
-        return;
-      }
     } catch (error) {
       client.socket.send(error.message);
     }
