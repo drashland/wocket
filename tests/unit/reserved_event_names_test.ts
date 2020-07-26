@@ -5,7 +5,7 @@ Rhum.testPlan("unit/reserved_event_names_test.ts", () => {
   Rhum.testSuite("values", () => {
     Rhum.testCase("Should have the correct values", () => {
       Rhum.asserts.assertEquals(RESERVED_EVENT_NAMES, [
-        "connection",
+        "connect",
         "disconnect",
         "error",
         "listening_to",

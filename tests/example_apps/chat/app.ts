@@ -32,7 +32,7 @@ console.log(
   `Socket server started on ws://${server.hostname}:${server.port}`,
 );
 
-server.on("connection", () => {
+server.on("connect", () => {
   console.log("A user connected.");
 });
 
