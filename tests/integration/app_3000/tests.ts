@@ -80,6 +80,16 @@ await sendPacket(JSON.stringify({
   },
 }));
 
+async function sendPacket(packet?: string) {
+  const headers = new Headers();
+  headers.set("Content-Type", "application/json");
+  const response = await fetch("http://localhost:3001", {
+    headers,
+    body: packet ?? "",
+  });
+  await response.text();
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 // TESTS ///////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
@@ -115,13 +125,3 @@ Deno.test({
   sanitizeResources: false,
   sanitizeOps: false,
 });
-
-async function sendPacket(packet?: string) {
-  const headers = new Headers();
-  headers.set("Content-Type", "application/json");
-  const response = await fetch("http://localhost:3001", {
-    headers,
-    body: packet ?? "",
-  });
-  await response.text();
-}
