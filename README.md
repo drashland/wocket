@@ -25,8 +25,8 @@
 **_Although Sockets has working code, it is still very much under development and unstable. APIs will change without notice. Sorry for any inconvenience!_**
 
 ## Table of Contents
-- [Quickstart](#getting-started)
-- [Documentation](#integrating)
+- [Quickstart](#quickstart)
+- [Documentation](#documentation)
 - [Features](#features)
 - [Contributing](#contributing)
 - [License](#license)
@@ -78,9 +78,7 @@ $ wscat -c ws://127.0.0.1:1777
 ## Features
 
 - JSON encoding
-- Binary encoding
 - Zero dependencies
-- Auto-reconnect using heartbeats
 
 ## Contributing
 
