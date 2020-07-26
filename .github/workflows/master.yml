@@ -30,8 +30,8 @@ jobs:
 
       - name: Integration
         run: |
-          deno test --allow-all tests/integration/app_3000/tests.ts
-          #deno test --allow-all tests/integration/app_3001/tests.ts # throwing rust errors
+          #deno test --allow-all tests/integration/app_3000/tests.ts # throws Bad resource ID error
+          #deno test --allow-all tests/integration/app_3001/tests.ts # throws rust errors
 
   linter:
     strategy:
