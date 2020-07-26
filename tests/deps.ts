@@ -13,3 +13,7 @@ export {
 export {
   Rhum,
 } from "https://deno.land/x/rhum@v1.0.1/mod.ts";
+
+export {
+  serve,
+} from "https://deno.land/std@0.62.0/http/server.ts";

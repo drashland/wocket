@@ -37,6 +37,15 @@ export class Sender {
     this.send();
   }
 
+  /**
+   * Does this sender have packets that still need to be sent?
+   *
+   * @returns True if yes, false if not.
+   */
+  public hasPackets(): boolean {
+    return this.packet_queue.length > 0;
+  }
+
   //////////////////////////////////////////////////////////////////////////////
   // FILE MARKER - METHODS - PRIVATE ///////////////////////////////////////////
   //////////////////////////////////////////////////////////////////////////////

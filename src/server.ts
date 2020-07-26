@@ -64,8 +64,16 @@ export class Server extends EventEmitter {
   /**
    * Close the server.
    */
-  public close(): void {
-    this.deno_server!.close();
+  public async close(): Promise<void> {
+    // If there are messages still being sent, then make sure all of them are
+    // sent before closing.
+    while (true) {
+      if (!this.sender.hasPackets()) {
+        if (this.deno_server) {
+          this.deno_server.close();
+        }
+      }
+    }
   }
 
   /**
@@ -90,7 +98,7 @@ export class Server extends EventEmitter {
 
     this.acceptWebSockets();
 
-    return this.deno_server!;
+    return this.deno_server;
   }
 
   /**
@@ -115,7 +123,7 @@ export class Server extends EventEmitter {
 
     this.acceptWebSockets();
 
-    return this.deno_server!;
+    return this.deno_server;
   }
 
   /**
@@ -123,22 +131,29 @@ export class Server extends EventEmitter {
    */
   protected async acceptWebSockets() {
     for await (const req of this.deno_server!) {
-      const { conn, r: bufReader, w: bufWriter, headers } = req;
-
-      acceptWebSocket({
+      const {
         conn,
         headers,
+        r: bufReader,
+        w: bufWriter,
+      } = req;
+
+      acceptWebSocket({
         bufReader,
         bufWriter,
+        conn,
+        headers,
       })
         .then(async (socket: WebSocket): Promise<void> => {
           const clientId = conn.rid;
           const client = super.createClient(clientId, socket);
           try {
-            await this.transmitter.handlePacket(new Packet(
-              client,
-              "connect"
-            ));
+            await this.transmitter.handlePacket(
+              new Packet(
+                client,
+                "connect",
+              ),
+            );
             for await (const message of socket) {
               // Handle binary
               if (message instanceof Uint8Array) {
@@ -157,15 +172,18 @@ export class Server extends EventEmitter {
             if (!socket.isClosed) {
               await socket.close(1000).catch(console.error);
               super.removeClient(client.id);
-              await this.transmitter.handlePacket(new Packet(
-                client,
-                "disconnect"
-              ));
+              await this.transmitter.handlePacket(
+                new Packet(
+                  client,
+                  "disconnect",
+                ),
+              );
             }
           }
         })
-        .catch((err: Error): void => {
+        .catch(async (err: Error): Promise<void> => {
           console.error(`failed to accept websocket: ${err}`);
+          await req.respond({ status: 400 });
         });
     }
   }
