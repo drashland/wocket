@@ -119,8 +119,12 @@ Rhum.run();
 Deno.test({
   name: "Stop the server",
   async fn() {
-    server.close();
-    webServer.close();
+    try {
+      server.close();
+      webServer.close();
+    } catch (error) {
+      // Do nothing
+    }
   },
   sanitizeResources: false,
   sanitizeOps: false,

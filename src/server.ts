@@ -70,7 +70,11 @@ export class Server extends EventEmitter {
     while (true) {
       if (!this.sender.hasPackets()) {
         if (this.deno_server) {
-          this.deno_server.close();
+          try {
+            this.deno_server.close();
+          } catch (error) {
+            break;
+          }
         }
       }
     }
