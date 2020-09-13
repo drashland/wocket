@@ -1,5 +1,5 @@
 <p align="center">
-  <a href="https://drash.io">
+  <a href="https://drash.land/sockets">
     <img height="200" src="logo.svg" alt="Sockets">
   </a>
   <h1 align="center">Sockets</h1>
@@ -38,7 +38,7 @@ Create your server.
 ```typescript
 // File: app.ts
 
-import { Server } from "https://deno.land/x/sockets@v0.x/mod.ts";
+import { Server } from "https://deno.land/x/sockets@v0.5.0/mod.ts";
 
 // Create the server
 const server = new Server();
@@ -73,7 +73,6 @@ $ wscat -c ws://127.0.0.1:1777
 ## Documentation
 
 - [Full Documentation](https://drash.land/sockets)
-- [Lifecycle Diagrams](https://drash.land/sockets/#/lifecycle-diagrams)
 
 ## Features
 
