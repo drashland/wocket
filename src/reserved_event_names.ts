@@ -1,12 +1,8 @@
-const RESERVED_EVENT_NAMES = [
-  "connection",
+export const RESERVED_EVENT_NAMES = [
+  "connect",
   "disconnect",
   "error",
   "listening_to",
   "pong",
   "reconnect",
 ];
-
-export {
-  RESERVED_EVENT_NAMES,
-};

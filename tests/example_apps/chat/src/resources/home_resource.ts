@@ -11,8 +11,7 @@ export default class HomeResource extends Drash.Http.Resource {
         messages: [],
       };
       socketServer
-        .createChannel("Channel 1")
-        .onMessage((incomingMessage: any) => {
+        .on("Channel 1", (incomingMessage: any) => {
           const { message } = incomingMessage;
           messages["Channel 1"].messages.push({ ...message });
           socketServer.to("Channel 1", incomingMessage);

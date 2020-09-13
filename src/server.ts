@@ -8,22 +8,17 @@ import {
   serve,
   serveTLS,
 } from "../deps.ts";
-import {
-  Client,
-} from "./client.ts";
-import {
-  EventEmitter,
-} from "./event_emitter.ts";
-import {
-  ITransmitterOptions,
-} from "./interfaces.ts";
-import {
-  Transmitter,
-} from "./transmitter.ts";
-const encoder = new TextEncoder();
+import { Client } from "./client.ts";
+import { EventEmitter } from "./event_emitter.ts";
+import { ITransmitterOptions } from "./interfaces.ts";
+import { Packet } from "./packet.ts";
+import { Transmitter } from "./transmitter.ts";
 
-// TODO(sara) Add description
-export class SocketServer extends EventEmitter {
+/**
+ * The `SocketServer` class is responsible for creating a users socket server.
+ * Similar to how Drash.Http.Server creates a server instance.
+ */
+export class Server extends EventEmitter {
   /**
    * A property to hold the Deno server. This property is set in this.run()
    * like so:
@@ -69,8 +64,20 @@ export class SocketServer extends EventEmitter {
   /**
    * Close the server.
    */
-  public close(): void {
-    this.deno_server!.close();
+  public async close(): Promise<void> {
+    // If there are messages still being sent, then make sure all of them are
+    // sent before closing.
+    while (true) {
+      if (!this.sender.hasPackets()) {
+        if (this.deno_server) {
+          try {
+            this.deno_server.close();
+          } catch (error) {
+            break;
+          }
+        }
+      }
+    }
   }
 
   /**
@@ -95,7 +102,7 @@ export class SocketServer extends EventEmitter {
 
     this.acceptWebSockets();
 
-    return this.deno_server!;
+    return this.deno_server;
   }
 
   /**
@@ -120,7 +127,7 @@ export class SocketServer extends EventEmitter {
 
     this.acceptWebSockets();
 
-    return this.deno_server!;
+    return this.deno_server;
   }
 
   /**
@@ -128,30 +135,39 @@ export class SocketServer extends EventEmitter {
    */
   protected async acceptWebSockets() {
     for await (const req of this.deno_server!) {
-      const { conn, r: bufReader, w: bufWriter, headers } = req;
-
-      acceptWebSocket({
+      const {
         conn,
         headers,
+        r: bufReader,
+        w: bufWriter,
+      } = req;
+
+      acceptWebSocket({
         bufReader,
         bufWriter,
+        conn,
+        headers,
       })
         .then(async (socket: WebSocket): Promise<void> => {
           const clientId = conn.rid;
-          const client = super.addClient(clientId, socket);
-
+          const client = super.createClient(clientId, socket);
           try {
+            await this.transmitter.handlePacket(
+              new Packet(
+                client,
+                "connect",
+              ),
+            );
             for await (const message of socket) {
-
               // Handle binary
               if (message instanceof Uint8Array) {
                 this.handleMessageAsBinary(client, message);
 
-              // Handle strings
+                // Handle strings
               } else if (typeof message === "string") {
                 await this.handleMessageAsString(client, message);
 
-              // Handle disconnects
+                // Handle disconnects
               } else if (isWebSocketCloseEvent(message)) {
                 super.removeClient(client.id);
               }
@@ -160,11 +176,18 @@ export class SocketServer extends EventEmitter {
             if (!socket.isClosed) {
               await socket.close(1000).catch(console.error);
               super.removeClient(client.id);
+              await this.transmitter.handlePacket(
+                new Packet(
+                  client,
+                  "disconnect",
+                ),
+              );
             }
           }
         })
-        .catch((err: Error): void => {
+        .catch(async (err: Error): Promise<void> => {
           console.error(`failed to accept websocket: ${err}`);
+          await req.respond({ status: 400 });
         });
     }
   }
@@ -180,7 +203,9 @@ export class SocketServer extends EventEmitter {
    * @param message - The message the client sent.
    */
   protected async handleMessageAsBinary(client: Client, message: Uint8Array) {
-    return await this.transmitter.handleMessage(message, client);
+    const decoded = JSON.parse(new TextDecoder().decode(message));
+    const packet = new Packet(client, decoded.to, decoded.message);
+    return await this.transmitter.handlePacket(packet);
   }
 
   /**
@@ -193,16 +218,19 @@ export class SocketServer extends EventEmitter {
     client: Client,
     message: string,
   ): Promise<void> {
-    switch (true) {
-      case message == "ping":
+    switch (message) {
+      case "id":
+        return client.socket.send(`Client ID: ${client.id}`);
+
+      case "ping":
         return client.socket.send("pong");
 
-      case message == "pong":
+      case "pong":
         return client.socket.send("ping");
 
-      case message == "test":
+      case "test":
         return client.socket.send(
-          `Socket server is listening at ${this.hostname}:${this.port}.`,
+          `Server started on ${this.hostname}:${this.port}.`,
         );
 
       // If the message isn't any of the above, then it we expect the message
@@ -226,33 +254,36 @@ export class SocketServer extends EventEmitter {
     try {
       const json = JSON.parse(message);
 
-      // A send_message message should be in the following format:
+      // A send_packet message should be in the following format:
       //
       //     {
-      //       "send_message": {
-      //         "to": "channel name / event name",
-      //         "message": "the message"
+      //       "send_packet": {
+      //         "to": string,
+      //         "message": unknown
       //       }
       //     }
       //
-      if (json.send_message) {
-        return await this.transmitter.handleMessage(
-          JSON.stringify({
-            to: json.send_message.to,
-            message: json.send_message.message,
-          }),
+      if (json.send_packet) {
+        const packet = new Packet(
           client,
+          json.send_packet.to,
+          json.send_packet.message,
         );
+        return await this.transmitter.handlePacket(packet);
       }
 
-      // A listen_to message should be in the following format:
+      // A connect_to message should be in the following format:
       //
-      //     {"listen_to":"channel name / event name"}
+      //     {
+      //       "connect_to": [
+      //         "array", "of", "channels"
+      //       ]
+      //     }
       //
       if (json.connect_to) {
-        json.connect_to.forEach((channelName: string) => {
+        json.connect_to.forEach(async (channelName: string) => {
           try {
-            super.addListener(channelName, client.id);
+            super.addClientToChannel(channelName, client.id);
             client.socket.send(`Connected to ${channelName}.`);
           } catch (error) {
             client.socket.send(error.message);
@@ -261,14 +292,18 @@ export class SocketServer extends EventEmitter {
         return;
       }
 
-      // A listen_to message should be in the following format:
+      // A disconnect_from message should be in the following format:
       //
-      //     {"listen_to":"channel name / event name"}
+      //     {
+      //       "disconnect_from": [
+      //         "array", "of", "channels"
+      //       ]
+      //     }
       //
       if (json.disconnect_from) {
-        json.disconnect_from.forEach((channelName: string) => {
+        json.disconnect_from.forEach(async (channelName: string) => {
           try {
-            super.removeListener(channelName, client.id);
+            super.removeClientFromChannel(channelName, client.id);
             client.socket.send(`Disconnected from ${channelName}.`);
           } catch (error) {
             client.socket.send(error.message);

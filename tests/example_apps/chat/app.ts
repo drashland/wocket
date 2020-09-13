@@ -1,4 +1,4 @@
-import { Drash, SocketServer } from "./deps.ts";
+import { Drash, Server } from "./deps.ts";
 
 import HomeResource from "./src/resources/home_resource.ts";
 import ChatResource from "./src/resources/chat_resource.ts";
@@ -23,25 +23,23 @@ console.log(
   `Web server started on http://${webServer.hostname}:${webServer.port}`,
 );
 
-const socketServer = new SocketServer();
-socketServer.run({
+const server = new Server();
+server.run({
   hostname: "localhost",
   port: 3000,
-}, {
-  reconnect: false,
 });
 console.log(
-  `Socket server started on ws://${socketServer.hostname}:${socketServer.port}`,
+  `Socket server started on ws://${server.hostname}:${server.port}`,
 );
 
-socketServer.on("connection", () => {
+server.on("connect", () => {
   console.log("A user connected.");
 });
 
-socketServer.on("disconnect", () => {
+server.on("disconnect", () => {
   console.log("A user disconnected.");
 });
 
 export {
-  socketServer,
+  server,
 };

@@ -25,50 +25,60 @@
 **_Although Sockets has working code, it is still very much under development and unstable. APIs will change without notice. Sorry for any inconvenience!_**
 
 ## Table of Contents
-- [Getting Started](#getting-started)
-- [Integrating](#integrating)
-- Documentation (in progress)
+- [Quickstart](#quickstart)
+- [Documentation](#documentation)
 - [Features](#features)
-- [Roadmap](#roadmap)
 - [Contributing](#contributing)
 - [License](#license)
 
-## Getting Started
+## Quickstart
 
-To get you started as quickly as possible with a simple client and server, check out the following example app:
+Create your server.
 
-* [Browser Console](./example_apps/browser_console)
+```typescript
+// File: app.ts
 
-We also have a more advanced example app:
+import { Server } from "https://deno.land/x/sockets@v0.x/mod.ts";
 
-* [Chat](./example_apps/chat)
+// Create the server
+const server = new Server();
 
-All example apps in the `example_apps` directory have their own `README.md` file. The `README.md` files have all the instructions you need to get started.
+// Run the server
+server.run({
+  hostname: "127.0.0.1",
+  port: 1777,
+});
 
-## Integrating
+console.log(
+  `Server started on ws://${server.hostname}:${server.port}`,
+);
+```
 
-Sockets is composed of two parts:
+Run your server.
 
-* A `SocketServer` class that is used to instantiate a socket server on the back-end
+```
+$ deno run --allow-net app.ts
+Server started on ws://127.0.0.1:1777
+```
 
-    ```typescript
-    import { SocketServer } from "https://deno.land/x/sockets@master/mod.ts";
-    ```
+Connect to your server using `wscat` and send a `ping` packet.
 
-* A [SocketClient](https://github.com/drashland/sockets-client) that loads on the front-end
+```
+$ npm install -g wscat
+$ wscat -c ws://127.0.0.1:1777
+> ping
+< pong
+```
 
-    ```html
-    <script type="module" src="https://cdn.jsdelivr.net/gh/drashland/sockets-client@latest/client.js">
-    ```
+## Documentation
+
+- [Full Documentation](https://drash.land/sockets)
+- [Lifecycle Diagrams](https://drash.land/sockets/#/lifecycle-diagrams)
 
 ## Features
 
-- Binary-support
-- Auto-reconnection support
-
-## Roadmap
-
-- [ ] Docs website
+- JSON encoding
+- Zero dependencies
 
 ## Contributing
 

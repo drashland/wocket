@@ -9,8 +9,14 @@ export default class ChatResource extends Drash.Http.Resource {
   ];
 
   public GET() {
-    const channel = decodeURIComponent(this.request.getPathParam("channel"));
-    this.response.body = messages[channel].messages;
+    let channel = this.request.getPathParam("channel");
+    if (channel !== null) {
+      channel = decodeURIComponent(channel);
+      this.response.body = messages[channel].messages;
+    } else {
+      this.response.status_code = 400;
+      this.response.body = "Unable to parse the channel param";
+    }
     return this.response;
   }
 
@@ -32,6 +38,11 @@ export default class ChatResource extends Drash.Http.Resource {
 
   protected createChannel(): Drash.Http.Response {
     const channelName = this.request.getBodyParam("channel_name");
+    if (!channelName) {
+      this.response.status_code = 400;
+      this.response.body = "Channel name must be passed in";
+      return this.response;
+    }
     try {
       // Create the channel if it doesn't exist
       if (!socketServer.getChannel(channelName)) {
@@ -39,8 +50,7 @@ export default class ChatResource extends Drash.Http.Resource {
           messages: [],
         };
         socketServer
-          .createChannel(channelName)
-          .onMessage((incomingMessage: any) => {
+          .on(channelName, (incomingMessage: any) => {
             const { message } = incomingMessage;
             messages[channelName].messages.push({ ...message });
             socketServer.to(channelName, incomingMessage);

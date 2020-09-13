@@ -1,152 +1,131 @@
-import { SocketServer } from "../../../mod.ts";
-import { Drash } from "../../deps.ts";
-import { assertEquals, connectWebSocket } from "../../deps.ts";
+import { Packet, Server } from "../../../mod.ts";
+import { Rhum, WebSocket, connectWebSocket, serve } from "../../deps.ts";
+const decoder = new TextDecoder();
 
-let storage: any = {
-  "chan1": {
-    messages: [],
-  },
-  "chan2": {
-    messages: [],
-  },
-};
+////////////////////////////////////////////////////////////////////////////////
+// SERVER SETUP ////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 
-class Resource extends Drash.Http.Resource {
-  static paths = ["/"];
-  protected messages: any = {};
-  public async POST() {
-    const channel = this.request.getBodyParam("channel");
-    const message = this.request.getBodyParam("message");
-    const socketClient = await connectWebSocket(
-      `ws://${socketServer.hostname}:${socketServer.port}`,
-    );
-    let encoded = new TextEncoder().encode(
-      JSON.stringify({ [channel as string]: message }),
-    );
-    await socketClient.send(encoded);
-    socketClient.close();
-    return this.response;
-  }
-}
+const server = new Server({ reconnect: false });
 
-const webServer = new Drash.Http.Server({
-  resources: [
-    Resource,
-  ],
-});
-
-webServer.run({
-  hostname: "localhost",
-  port: 3001,
-});
-console.log(`Web server started on ${webServer.hostname}:${webServer.port}`);
-
-const socketServer = new SocketServer({ reconnect: false });
-socketServer.run({
-  hostname: "localhost",
+await server.run({
+  hostname: "127.0.0.1",
   port: 3000,
 });
+
 console.log(
-  `socketServer listening: http://${socketServer.hostname}:${socketServer.port}`,
-);
-console.log(
-  "\nIntegration tests: testing different resources can be made and targeted.\n",
+  `Server listening: http://${server.hostname}:${server.port}`,
 );
 
-// Set up the events
+let storage: any = {
+  chan1: [],
+  chan2: [],
+  connected: [],
+};
 
-socketServer
-  .createChannel("chan1")
-  .on(
-    "chan1",
-    ((packet: any) => {
-      storage["chan1"].messages.push(packet.message);
-    }),
-  );
-
-Deno.test("chan1 should exist", () => {
-  assertEquals("chan1", socketServer.getChannel("chan1").name);
+// Set up connect channel
+server.on("connect", (packet: Packet) => {
+  storage.connected.push(packet);
 });
 
-Deno.test("chan2 should exist again", () => {
-  socketServer
-    .createChannel("chan2")
-    .on(
-      "chan2",
-      ((packet: any) => {
-        storage["chan2"].messages.push(packet.message);
-      }),
-    );
-  assertEquals("chan2", socketServer.getChannel("chan2").name);
+// Set up the chan1 channel
+server.openChannel("chan1");
+server.on("chan1", (packet: Packet) => {
+  storage.chan1.push(packet.message);
 });
 
-Deno.test("chan1 should have 1 message", async () => {
-  await sendMessage("chan1", "This is a chan1 message.");
-  assertEquals(
-    storage["chan1"].messages,
-    [
-      "This is a chan1 message.",
-    ],
-  );
+let client: WebSocket | null = null;
+
+// Create a basic raw Deno web server. This web server will take in HTTP
+// requests and make calls to the socket server based on what is passed in the
+// body of the HTTP request. For example, if {"connect_to": ["chan1"]} was
+// passed in the body of the request, then the web server will pass that
+// information to the socket server and the socket server will handle that
+// packet accordingly.
+const webServer = serve({ hostname: "localhost", port: 3001 });
+(async () => {
+  for await (const req of webServer) {
+    const packet =
+      JSON.parse(decoder.decode(await Deno.readAll(req.body))).data;
+    if (!client) {
+      client = await connectWebSocket(`ws://${server.hostname}:${server.port}`);
+    }
+    if (packet) {
+      await client.send(JSON.stringify(packet));
+    }
+    req.respond({});
+  }
+})();
+
+console.log(
+  `Web server listening: http://localhost:3001`,
+);
+
+////////////////////////////////////////////////////////////////////////////////
+// PERFORM EVENTS TO TEST AGAINST //////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
+await sendPacket(JSON.stringify({
+  data: {
+    connect_to: ["chan1"],
+  },
+}));
+
+await sendPacket(JSON.stringify({
+  data: {
+    send_packet: {
+      to: "chan1",
+      message: "hello",
+    },
+  },
+}));
+
+async function sendPacket(packet?: string) {
+  const headers = new Headers();
+  headers.set("Content-Type", "application/json");
+  const response = await fetch("http://localhost:3001", {
+    headers,
+    body: packet ?? "",
+  });
+  await response.text();
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// TESTS ///////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
+console.log(
+  "\nIntegration tests: testing different channels can be opened and work.\n",
+);
+
+Rhum.testPlan("app_3000", () => {
+  Rhum.testSuite("server", () => {
+    Rhum.testCase("should allow clients to connect", async () => {
+      Rhum.asserts.assertEquals(storage.connected.length, 1);
+    });
+  });
+  Rhum.testSuite("chan1", () => {
+    Rhum.testCase("should exist", () => {
+      Rhum.asserts.assertEquals(server.getChannel("chan1").name, "chan1");
+    });
+    Rhum.testCase("should have one message", () => {
+      Rhum.asserts.assertEquals(storage.chan1, ["hello"]);
+    });
+  });
 });
 
-Deno.test("chan1 should have 2 messages", async () => {
-  await sendMessage("chan1", "This is a chan1 message #2.");
-  assertEquals(
-    storage["chan1"].messages,
-    [
-      "This is a chan1 message.",
-      "This is a chan1 message #2.",
-    ],
-  );
-});
-
-Deno.test("chan2 should have 1 message", async () => {
-  await sendMessage("chan2", "This is a chan2 message.");
-  assertEquals(
-    storage["chan2"].messages,
-    [
-      "This is a chan2 message.",
-    ],
-  );
-});
-
-Deno.test("chan2 should be closed", () => {
-  socketServer.closeChannel("chan2");
-  assertEquals(undefined, socketServer.getChannel("chan2"));
-});
-
-Deno.test("chan2 should not receive this message", async () => {
-  socketServer.createChannel("chan2");
-  await sendMessage("chan2", "Test");
-  assertEquals(
-    storage["chan2"].messages,
-    [
-      "This is a chan2 message.",
-    ],
-  );
-});
+Rhum.run();
 
 Deno.test({
   name: "Stop the server",
   async fn() {
-    await webServer.close();
-    await socketServer.close();
+    try {
+      server.close();
+      webServer.close();
+    } catch (error) {
+      // Do nothing
+    }
   },
   sanitizeResources: false,
   sanitizeOps: false,
 });
-
-async function sendMessage(channel: string, message: string) {
-  const response = await fetch("http://localhost:3001", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      channel,
-      message,
-    }),
-  });
-  await response.text();
-}

@@ -29,16 +29,17 @@
         <select id="channelsDropdown" onchange="changeChannel(this.value)">
         </select>
       </div>
-    </body>
-    <script>
-      const WEB_SERVER = {
-        hostname: "localhost",
-        port: 3001,
-      };
-      const SOCKET_SERVER = {
-        hostname: "localhost",
-        port: 3000,
-      };
-    </script>
+    </div>
     <script type="module" src="/public/chat.js"></script>
+  </body>
+  <script>
+    const WEB_SERVER = {
+      hostname: "localhost",
+      port: 3001,
+    };
+    const SOCKET_SERVER = {
+      hostname: "localhost",
+      port: 3000,
+    };
+  </script>
 </html>
