@@ -67,21 +67,58 @@ Rhum.testPlan("app_3000", () => {
       }
 
       WSClient.onmessage = function (message: any) {
-        console.log("got msg")
-        console.log(message)
           Rhum.asserts.assertEquals(message.data, "Connected to chan1.")
-          //Rhum.asserts.assertEquals(message.data, '{"from":"Server","to":"chan1","message":"hello"}')
           WSClient.close()
       }
-      
+
+      WSClient.onclose = function () {
+        promise.resolve()
+      }
+
       await promise;
     });
+    Rhum.testCase("should allow messages to be sent back and forth", async () => {
+      const promise = createResolvable();
+
+      const WSClient = new WebSocket(`ws://${WSServer.hostname}:${WSServer.port}`);
+
+      WSClient.onopen = function () {
+        WSClient.send(JSON.stringify({
+            connect_to: ["chan1"]
+        }))
+        WSClient.send(JSON.stringify({
+          send_packet: {
+            to: "chan1",
+            message: "Hi server :)"
+          }
+        }))
+      }
+
+      let messageCount = 0
+      WSClient.onmessage = function (message: any) {
+        messageCount++
+        if (messageCount === 2) {
+          Rhum.asserts.assertEquals(JSON.parse(message.data), {
+            from: "Server",
+            to: "chan1",
+            message: "Hi server :)"
+          })
+          WSClient.close()
+        }
+      }
+
+      WSClient.onclose = function () {
+        promise.resolve()
+      }
+
+      await promise;
+    })
   });
 });
 
 Rhum.run();
 
-await Deno.test({
+Deno.test({
   name: "Stop the server",
   async fn() {
     console.log('hmm')
