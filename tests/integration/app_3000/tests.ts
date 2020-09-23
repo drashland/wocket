@@ -51,22 +51,21 @@ console.log(
 );
 
 Rhum.testPlan("app_3000", () => {
+
   Rhum.testSuite("server", () => {
+
     Rhum.testCase("should allow clients to connect", async () => {
+
       const promise = createResolvable();
+
       const WSClient = new WebSocket(`ws://${WSServer.hostname}:${WSServer.port}`);
-      WSClient.onopen = async function () {
+
+      WSClient.onopen = function () {
         WSClient.send(JSON.stringify({
             connect_to: ["chan1"]
         }))
-        // WSClient.send(JSON.stringify({
-        //     send_packet: {
-        //       to: "chan1",
-        //       message: "hello",
-        //     },
-        // }))
       }
-      WSClient.onerror = (err): void => console.error(err)
+
       WSClient.onmessage = function (message: any) {
         console.log("got msg")
         console.log(message)
@@ -74,17 +73,10 @@ Rhum.testPlan("app_3000", () => {
           //Rhum.asserts.assertEquals(message.data, '{"from":"Server","to":"chan1","message":"hello"}')
           WSClient.close()
       }
+      
       await promise;
     });
   });
-  // Rhum.testSuite("chan1", () => {
-  //   Rhum.testCase("should exist", () => {
-  //     Rhum.asserts.assertEquals(WSServer.getChannel("chan1").name, "chan1");
-  //   });
-  //   Rhum.testCase("should have one message", () => {
-  //     Rhum.asserts.assertEquals(storage.chan1, ["hello"]);
-  //   })
-  // });
 });
 
 Rhum.run();
