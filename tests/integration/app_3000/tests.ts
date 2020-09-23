@@ -131,38 +131,47 @@ Rhum.testPlan("app_3000", () => {
     //   };
     //   await promise;
     // })
-    Rhum.testCase("Does not allow connecting and sending a message to a channel that isn't opened", async () => {
-      const promise = deferred();
-      const WSClient = new WebSocket(
+    Rhum.testCase(
+      "Does not allow connecting and sending a message to a channel that isn't opened",
+      async () => {
+        const promise = deferred();
+        const WSClient = new WebSocket(
           `ws://${WSServer.hostname}:${WSServer.port}`,
-      );
-      WSClient.onopen = function () {
-        WSClient.send(JSON.stringify({
-          connect_to: ["chan2"],
-        }));
-        WSClient.send(JSON.stringify({
-          send_packet: {
-            to: "chan2",
-            message: "Message to chan2 from client"
+        );
+        WSClient.onopen = function () {
+          WSClient.send(JSON.stringify({
+            connect_to: ["chan2"],
+          }));
+          WSClient.send(JSON.stringify({
+            send_packet: {
+              to: "chan2",
+              message: "Message to chan2 from client",
+            },
+          }));
+        };
+        let messageCount = 0;
+        WSClient.onmessage = function (message: any) {
+          messageCount++;
+          if (messageCount === 1) {
+            Rhum.asserts.assertEquals(
+              message.data,
+              'Channel \"chan2\" does not exist.',
+            );
+          } else {
+            Rhum.asserts.assertEquals(
+              message.data,
+              "Client 8 is not connected to chan2",
+            );
+            WSClient.close();
           }
-        }))
-      };
-      let messageCount = 0;
-      WSClient.onmessage = function (message: any) {
-        messageCount++;
-        if (messageCount === 1) {
-          Rhum.asserts.assertEquals(message.data, 'Channel \"chan2\" does not exist.')
-        } else {
-          Rhum.asserts.assertEquals(message.data, "Client 8 is not connected to chan2");
-          WSClient.close();
-        }
-      };
-      WSClient.onclose = function () {
-        promise.resolve();
-      };
-      await promise;
-    })
-  })
+        };
+        WSClient.onclose = function () {
+          promise.resolve();
+        };
+        await promise;
+      },
+    );
+  });
 });
 
 Rhum.run();
