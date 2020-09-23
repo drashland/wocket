@@ -1,7 +1,6 @@
 export {
   WebSocket,
   acceptWebSocket,
-  connectWebSocket,
   isWebSocketCloseEvent,
   serve,
 } from "../deps.ts";

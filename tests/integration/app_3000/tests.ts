@@ -1,94 +1,46 @@
 import { Packet, Server } from "../../../mod.ts";
-import { Rhum, WebSocket, connectWebSocket, serve } from "../../deps.ts";
+import { Rhum, WebSocket, serve } from "../../deps.ts";
 const decoder = new TextDecoder();
 
+interface ResolvableMethods<T> {
+  resolve: (value?: T | PromiseLike<T>) => void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  reject: (reason?: any) => void;
+}
+
+type Resolvable<T> = Promise<T> & ResolvableMethods<T>;
+
+function createResolvable<T>(): Resolvable<T> {
+  let methods: ResolvableMethods<T>;
+  const promise = new Promise<T>((resolve, reject): void => {
+    methods = { resolve, reject };
+  });
+  // TypeScript doesn't know that the Promise callback occurs synchronously
+  // therefore use of not null assertion (`!`)
+  return Object.assign(promise, methods!) as Resolvable<T>;
+}
+
 ////////////////////////////////////////////////////////////////////////////////
-// SERVER SETUP ////////////////////////////////////////////////////////////////
+// WEB SOCKET SERVER SETUP /////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-const server = new Server({ reconnect: false });
+const WSServer = new Server({ reconnect: false });
 
-await server.run({
+await WSServer.run({
   hostname: "127.0.0.1",
   port: 3000,
 });
 
-console.log(
-  `Server listening: http://${server.hostname}:${server.port}`,
-);
-
-let storage: any = {
-  chan1: [],
-  chan2: [],
-  connected: [],
-};
-
 // Set up connect channel
-server.on("connect", (packet: Packet) => {
-  storage.connected.push(packet);
+WSServer.on("connect", (packet: Packet) => {
+  WSServer.to("chan1", packet.message)
 });
 
 // Set up the chan1 channel
-server.openChannel("chan1");
-server.on("chan1", (packet: Packet) => {
-  storage.chan1.push(packet.message);
+WSServer.openChannel("chan1");
+WSServer.on("chan1", (packet: Packet) => {
+  WSServer.to("chan1", packet.message)
 });
-
-let client: WebSocket | null = null;
-
-// Create a basic raw Deno web server. This web server will take in HTTP
-// requests and make calls to the socket server based on what is passed in the
-// body of the HTTP request. For example, if {"connect_to": ["chan1"]} was
-// passed in the body of the request, then the web server will pass that
-// information to the socket server and the socket server will handle that
-// packet accordingly.
-const webServer = serve({ hostname: "localhost", port: 3001 });
-(async () => {
-  for await (const req of webServer) {
-    const packet =
-      JSON.parse(decoder.decode(await Deno.readAll(req.body))).data;
-    if (!client) {
-      client = await connectWebSocket(`ws://${server.hostname}:${server.port}`);
-    }
-    if (packet) {
-      await client.send(JSON.stringify(packet));
-    }
-    req.respond({});
-  }
-})();
-
-console.log(
-  `Web server listening: http://localhost:3001`,
-);
-
-////////////////////////////////////////////////////////////////////////////////
-// PERFORM EVENTS TO TEST AGAINST //////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-
-await sendPacket(JSON.stringify({
-  data: {
-    connect_to: ["chan1"],
-  },
-}));
-
-await sendPacket(JSON.stringify({
-  data: {
-    send_packet: {
-      to: "chan1",
-      message: "hello",
-    },
-  },
-}));
-
-async function sendPacket(packet?: string) {
-  const headers = new Headers();
-  headers.set("Content-Type", "application/json");
-  const response = await fetch("http://localhost:3001", {
-    headers,
-    body: packet ?? "",
-  });
-  await response.text();
-}
 
 ////////////////////////////////////////////////////////////////////////////////
 // TESTS ///////////////////////////////////////////////////////////////////////
@@ -101,27 +53,48 @@ console.log(
 Rhum.testPlan("app_3000", () => {
   Rhum.testSuite("server", () => {
     Rhum.testCase("should allow clients to connect", async () => {
-      Rhum.asserts.assertEquals(storage.connected.length, 1);
+      const promise = createResolvable();
+      const WSClient = new WebSocket(`ws://${WSServer.hostname}:${WSServer.port}`);
+      WSClient.onopen = async function () {
+        WSClient.send(JSON.stringify({
+            connect_to: ["chan1"]
+        }))
+        // WSClient.send(JSON.stringify({
+        //     send_packet: {
+        //       to: "chan1",
+        //       message: "hello",
+        //     },
+        // }))
+      }
+      WSClient.onerror = (err): void => console.error(err)
+      WSClient.onmessage = function (message: any) {
+        console.log("got msg")
+        console.log(message)
+          Rhum.asserts.assertEquals(message.data, "Connected to chan1.")
+          //Rhum.asserts.assertEquals(message.data, '{"from":"Server","to":"chan1","message":"hello"}')
+          WSClient.close()
+      }
+      await promise;
     });
   });
-  Rhum.testSuite("chan1", () => {
-    Rhum.testCase("should exist", () => {
-      Rhum.asserts.assertEquals(server.getChannel("chan1").name, "chan1");
-    });
-    Rhum.testCase("should have one message", () => {
-      Rhum.asserts.assertEquals(storage.chan1, ["hello"]);
-    });
-  });
+  // Rhum.testSuite("chan1", () => {
+  //   Rhum.testCase("should exist", () => {
+  //     Rhum.asserts.assertEquals(WSServer.getChannel("chan1").name, "chan1");
+  //   });
+  //   Rhum.testCase("should have one message", () => {
+  //     Rhum.asserts.assertEquals(storage.chan1, ["hello"]);
+  //   })
+  // });
 });
 
 Rhum.run();
 
-Deno.test({
+await Deno.test({
   name: "Stop the server",
   async fn() {
+    console.log('hmm')
     try {
-      server.close();
-      webServer.close();
+      WSServer.close();
     } catch (error) {
       // Do nothing
     }

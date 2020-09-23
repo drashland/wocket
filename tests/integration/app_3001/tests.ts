@@ -1,5 +1,5 @@
 import { Packet, Server } from "../../../mod.ts";
-import { Rhum, Drash, connectWebSocket } from "../../deps.ts";
+import { Rhum, Drash } from "../../deps.ts";
 
 ////////////////////////////////////////////////////////////////////////////////
 // SERVER SETUP ////////////////////////////////////////////////////////////////
@@ -11,7 +11,7 @@ class Resource extends Drash.Http.Resource {
   public async POST() {
     const data = this.request.getBodyParam("data");
     if (data) {
-      const socketClient = await connectWebSocket(
+      const socketClient = new WebSocket(
         `wss://${socketServer.hostname}:${socketServer.port}`,
       );
       await socketClient.send(JSON.stringify(data));
