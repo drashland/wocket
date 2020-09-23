@@ -1,23 +1,11 @@
 import { Packet, Server } from "../../../mod.ts";
-import { Rhum, WebSocket, serve } from "../../deps.ts";
+import { Rhum, WebSocket, deferred } from "../../deps.ts";
 const decoder = new TextDecoder();
 
 interface ResolvableMethods<T> {
   resolve: (value?: T | PromiseLike<T>) => void;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   reject: (reason?: any) => void;
-}
-
-type Resolvable<T> = Promise<T> & ResolvableMethods<T>;
-
-function createResolvable<T>(): Resolvable<T> {
-  let methods: ResolvableMethods<T>;
-  const promise = new Promise<T>((resolve, reject): void => {
-    methods = { resolve, reject };
-  });
-  // TypeScript doesn't know that the Promise callback occurs synchronously
-  // therefore use of not null assertion (`!`)
-  return Object.assign(promise, methods!) as Resolvable<T>;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -53,7 +41,7 @@ console.log(
 Rhum.testPlan("app_3000", () => {
   Rhum.testSuite("server", () => {
     Rhum.testCase("should allow clients to connect", async () => {
-      const promise = createResolvable();
+      const promise = deferred();
 
       const WSClient = new WebSocket(
         `ws://${WSServer.hostname}:${WSServer.port}`,
@@ -79,7 +67,7 @@ Rhum.testPlan("app_3000", () => {
     Rhum.testCase(
       "should allow messages to be sent back and forth",
       async () => {
-        const promise = createResolvable();
+        const promise = deferred();
 
         const WSClient = new WebSocket(
           `ws://${WSServer.hostname}:${WSServer.port}`,
