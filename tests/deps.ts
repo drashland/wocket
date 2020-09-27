@@ -11,4 +11,4 @@ export {
 
 export {
   deferred,
-} from "https://deno.land/std@0.70.0/async/deferred.ts";
+} from "https://deno.land/std@0.71.0/async/deferred.ts";
