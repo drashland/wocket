@@ -40,6 +40,4 @@ server.on("disconnect", () => {
   console.log("A user disconnected.");
 });
 
-export {
-  server,
-};
+export { server };

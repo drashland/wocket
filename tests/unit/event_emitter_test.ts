@@ -1,8 +1,5 @@
 import { EventEmitter } from "../../src/event_emitter.ts";
-import {
-  WebSocket,
-  Rhum,
-} from "../deps.ts";
+import { Rhum, WebSocket } from "../deps.ts";
 
 const ClientSocket = () => {
   return {

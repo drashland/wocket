@@ -1,5 +1,5 @@
 import { Packet, Server } from "../../../mod.ts";
-import { Rhum, WebSocket, deferred } from "../../deps.ts";
+import { deferred, Rhum, WebSocket } from "../../deps.ts";
 const decoder = new TextDecoder();
 
 interface ResolvableMethods<T> {

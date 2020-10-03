@@ -1,12 +1,12 @@
 import {
+  acceptWebSocket,
   DenoServer,
   HTTPOptions,
   HTTPSOptions,
-  WebSocket,
-  acceptWebSocket,
   isWebSocketCloseEvent,
   serve,
   serveTLS,
+  WebSocket,
 } from "../deps.ts";
 import { Client } from "./client.ts";
 import { EventEmitter } from "./event_emitter.ts";
