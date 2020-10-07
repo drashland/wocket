@@ -1,5 +1,5 @@
 {
-  "name": "drash_sockets",
+  "name": "sockets",
   "description": "A WebSocket library for Deno.",
   "version": "0.5.0",
   "stable": true,
@@ -10,6 +10,10 @@
     "./src/*",
     "./README.md",
     "./logo.svg",
-    "LICENSE"
-  ]
+    "LICENSE",
+    "./mod.ts"
+  ],
+  "checkAll": false,
+  "entry": "/mod.ts",
+  "unlisted": false
 }
