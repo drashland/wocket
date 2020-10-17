@@ -104,6 +104,9 @@ export class EventEmitter {
    * @param channelName - The name of the channel.
    */
   public closeChannel(channelName: string): void {
+    for (const client of Object.values(this.clients)) {
+      client.socket.send(`${channelName} closed.`);
+    }
     delete this.channels[channelName];
   }
 

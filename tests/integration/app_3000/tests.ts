@@ -27,7 +27,11 @@ WSServer.on("connect", (packet: Packet) => {
 // Set up the chan1 channel
 WSServer.openChannel("chan1");
 WSServer.on("chan1", (packet: Packet) => {
-  WSServer.to("chan1", packet.message);
+  if (packet.message === "close") {
+    WSServer.closeChannel("chan1");
+  } else {
+    WSServer.to("chan1", packet.message);
+  }
 });
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -171,6 +175,31 @@ Rhum.testPlan("app_3000", () => {
         await promise;
       },
     );
+    Rhum.testCase("Must send message before closing channel", async () => {
+      const promise = deferred();
+      const WSClient = new WebSocket(
+        `ws://${WSServer.hostname}:${WSServer.port}`,
+      );
+      WSClient.onopen = function () {
+        WSClient.send(JSON.stringify({
+          connect_to: ["chan1"],
+        }));
+      };
+      WSClient.onmessage = function (message: any) {
+        if (message.data == "Connected to chan1.") {
+          WSClient.send(
+            JSON.stringify({ send_packet: { to: "chan1", message: "close" } }),
+          );
+        } else {
+          Rhum.asserts.assertEquals(message.data, "chan1 closed.");
+          WSClient.close();
+        }
+      };
+      WSClient.onclose = function () {
+        promise.resolve();
+      };
+      await promise;
+    });
   });
 });
 
