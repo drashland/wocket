@@ -28,6 +28,7 @@
 - [Quickstart](#quickstart)
 - [Documentation](#documentation)
 - [Features](#features)
+- [Mirrors](#mirrors)
 - [Contributing](#contributing)
 - [License](#license)
 
