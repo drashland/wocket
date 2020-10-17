@@ -79,6 +79,10 @@ $ wscat -c ws://127.0.0.1:1777
 - JSON encoding
 - Zero dependencies
 
+## Mirrors
+
+* https://nest.land/package/sockets
+
 ## Contributing
 
 Contributors are welcomed!
