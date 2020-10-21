@@ -1,42 +1,13 @@
 import { Packet, Server } from "../../../mod.ts";
-import { Drash, Rhum } from "../../deps.ts";
+import {deferred, Drash, Rhum} from "../../deps.ts";
 
 ////////////////////////////////////////////////////////////////////////////////
 // SERVER SETUP ////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-class Resource extends Drash.Http.Resource {
-  static paths = ["/"];
-  protected messages: any = {};
-  public async POST() {
-    const data = this.request.getBodyParam("data");
-    if (data) {
-      const socketClient = new WebSocket(
-        `wss://${socketServer.hostname}:${socketServer.port}`,
-      );
-      await socketClient.send(JSON.stringify(data));
-      socketClient.close();
-    }
-    return this.response;
-  }
-}
-
-const webServer = new Drash.Http.Server({
-  resources: [
-    Resource,
-  ],
-});
-
 const socketServer = new Server({ reconnect: false });
 
-webServer.run({
-  hostname: "localhost",
-  port: 3002,
-});
-
-console.log(`Web server started on ${webServer.hostname}:${webServer.port}`);
-
-socketServer.runTLS({
+await socketServer.runTLS({
   hostname: "localhost",
   port: 3001,
   certFile: "./tests/integration/app_3001/server.crt",
@@ -44,18 +15,17 @@ socketServer.runTLS({
 });
 
 console.log(
-  `socketServer listening: http://${socketServer.hostname}:${socketServer.port}`,
+    `socketServer listening: http://${socketServer.hostname}:${socketServer.port}`,
 );
 
-////////////////////////////////////////////////////////////////////////////////
-// TESTS ///////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-
-console.log(
-  "\nIntegration tests: testing different channels can be opened and work.\n",
-);
-
-let storage: any = {
+const storage: {
+  "chan1": {
+    messages: unknown[]
+  },
+  "chan2": {
+    messages: unknown[]
+  }
+} = {
   "chan1": {
     messages: [],
   },
@@ -64,44 +34,83 @@ let storage: any = {
   },
 };
 
-Rhum.testPlan("app_3000", () => {
-  socketServer.openChannel("chan1");
+socketServer.openChannel("chan1");
+socketServer.on("chan1", (packet: Packet) => {
+  storage["chan1"].messages.push(packet.message);
+});
 
-  socketServer.on("chan1", (packet: Packet) => {
-    storage["chan1"].messages.push(packet.message);
-  });
+socketServer.openChannel("chan2");
+socketServer.on("chan2", (packet: Packet) => {
+  storage["chan2"].messages.push(packet.message);
+});
 
+////////////////////////////////////////////////////////////////////////////////
+// TESTS ///////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
+Rhum.testPlan("app_3001", () => {
   Rhum.testSuite("channel 1", () => {
     Rhum.testCase("chan1 should exist", () => {
-      Rhum.asserts.assertEquals("chan1", socketServer.getChannel("chan1").name);
+      Rhum.asserts.assertEquals(socketServer.getChannel("chan1").name, "chan1");
     });
     Rhum.testCase("chan1 should have a message", async () => {
-      await sendMessage(JSON.stringify({
-        data: {
-          send_packet: {
-            to: "chan1",
-            message: "chan message 1-1",
+      const promise = deferred()
+      const socketClient = new WebSocket(
+          `wss://${socketServer.hostname}:${socketServer.port}`,
+      );
+      socketClient.onerror = function (e) {
+        console.log('error:')
+        console.log(e)
+      }
+      socketClient.onmessage = function (msg) {
+        console.log('msg')
+      }
+      socketClient.onopen = function () {
+        console.log('opened')
+        console.log('socket client ready state: ' + socketClient.readyState)
+        socketClient.send(JSON.stringify({
+          data: {
+            send_packet: {
+              to: "chan1",
+              message: "chan message 1-1",
+            },
           },
-        },
-      }));
+        }));
+        socketClient.close()
+      }
+      socketClient.onclose = function () {
+        console.log('closed')
+        promise.resolve()
+      }
+      console.log('before promise')
+      await promise
+      console.log('after promise')
+      console.log(storage)
       Rhum.asserts.assertEquals(
         storage["chan1"].messages,
         ["chan message 1-1"],
       );
     });
     Rhum.testCase("chan2 should have a message", async () => {
-      socketServer.openChannel("chan2");
-      socketServer.on("chan2", (packet: Packet) => {
-        storage["chan2"].messages.push(packet.message);
-      });
-      await sendMessage(JSON.stringify({
-        data: {
-          send_packet: {
-            to: "chan2",
-            message: "chan message 2-1",
+      const promise = deferred()
+      const socketClient = new WebSocket(
+          `wss://${socketServer.hostname}:${socketServer.port}`,
+      );
+      socketClient.onopen = function () {
+        socketClient.send(JSON.stringify({
+          data: {
+            send_packet: {
+              to: "chan2",
+              message: "chan message 2-1",
+            },
           },
-        },
-      }));
+        }));
+        socketClient.close()
+      }
+      socketClient.onclose = function () {
+        promise.resolve()
+      }
+      await promise
       Rhum.asserts.assertEquals(
         storage["chan2"].messages,
         ["chan message 2-1"],
@@ -111,24 +120,3 @@ Rhum.testPlan("app_3000", () => {
 });
 
 Rhum.run();
-
-Deno.test({
-  name: "Stop the server",
-  fn() {
-    webServer.close();
-    socketServer.close();
-  },
-  sanitizeResources: false,
-  sanitizeOps: false,
-});
-
-async function sendMessage(message: string) {
-  const response = await fetch("http://localhost:3002", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: message,
-  });
-  await response.text();
-}
