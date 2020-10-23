@@ -13,7 +13,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-        deno: ["1.4.5"]
+        deno: ["1.4.6"]
     runs-on: ${{ matrix.os }}
 
     steps:
@@ -30,13 +30,13 @@ jobs:
 
       - name: Integration
         run: |
-          deno test --allow-all tests/integration/app_3000/tests.ts
+          #deno test --allow-all tests/integration/app_3000/tests.ts
           #deno test --allow-all tests/integration/app_3001/tests.ts # throws rust errors
 
   linter:
     strategy:
       matrix:
-        deno: ["1.4.5"]
+        deno: ["1.4.6"]
     # Only one OS is required since fmt is cross platform
     runs-on: ubuntu-latest
 
