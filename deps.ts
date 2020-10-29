@@ -1,9 +1,11 @@
 export {
-  HTTPOptions,
-  HTTPSOptions,
   serve,
   Server as DenoServer,
   serveTLS,
+} from "https://deno.land/std@0.74.0/http/server.ts";
+export type {
+  HTTPOptions,
+  HTTPSOptions,
 } from "https://deno.land/std@0.74.0/http/server.ts";
 
 export {
