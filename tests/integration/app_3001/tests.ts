@@ -65,8 +65,6 @@ let storage: any = {
 };
 
 Rhum.testPlan("app_3000", () => {
-  socketServer.openChannel("chan1");
-
   socketServer.on("chan1", (packet: Packet) => {
     storage["chan1"].messages.push(packet.message);
   });
@@ -90,7 +88,6 @@ Rhum.testPlan("app_3000", () => {
       );
     });
     Rhum.testCase("chan2 should have a message", async () => {
-      socketServer.openChannel("chan2");
       socketServer.on("chan2", (packet: Packet) => {
         storage["chan2"].messages.push(packet.message);
       });
