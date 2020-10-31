@@ -1,13 +1,17 @@
 export {
-  HTTPOptions,
-  HTTPSOptions,
   serve,
   Server as DenoServer,
   serveTLS,
-} from "https://deno.land/std@0.74.0/http/server.ts";
+} from "https://deno.land/std@0.75.0/http/server.ts";
+
+export type {
+  HTTPOptions,
+  HTTPSOptions,
+} from "https://deno.land/std@0.75.0/http/server.ts";
 
 export {
   acceptWebSocket,
   isWebSocketCloseEvent,
-  WebSocket,
-} from "https://deno.land/std@0.74.0/ws/mod.ts";
+} from "https://deno.land/std@0.75.0/ws/mod.ts";
+
+export type { WebSocket } from "https://deno.land/std@0.75.0/ws/mod.ts";
