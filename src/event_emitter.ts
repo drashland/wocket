@@ -225,14 +225,20 @@ export class EventEmitter {
    *
    * @param channelName - The name of the channel.
    * @param message - The message to send.
+   * @param clientToSendTo - Optional. If you wish to send the event to a specific client, specify the client id
    */
-  public to(channelName: string, message: unknown): void {
+  public to(
+    channelName: string,
+    message: unknown,
+    clientToSendTo?: number,
+  ): void {
     this.queuePacket(
       new Packet(
         this,
         channelName,
         message,
       ),
+      clientToSendTo,
     );
   }
 
@@ -245,11 +251,12 @@ export class EventEmitter {
    * be sent to the client(s).
    *
    * @param packet - See Packet.
+   * @param clientToSendTo - If set, only send the packet to that client
    */
-  private queuePacket(packet: Packet): void {
+  private queuePacket(packet: Packet, clientToSendTo?: number): void {
     if (!this.channels[packet.to]) {
       throw new Error(`Channel "${packet.to}" not found.`);
     }
-    this.sender.add(packet, this.channels[packet.to]);
+    this.sender.add(packet, this.channels[packet.to], clientToSendTo);
   }
 }

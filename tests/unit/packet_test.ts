@@ -19,6 +19,7 @@ Rhum.testPlan("unit/packet_test.ts", () => {
         "The moon",
         "Hello, I am a message",
       );
+      Rhum.asserts.assertEquals(packet.from, client);
       Rhum.asserts.assertEquals(packet.message, "Hello, I am a message");
       Rhum.asserts.assertEquals(packet.to, "The moon");
     });

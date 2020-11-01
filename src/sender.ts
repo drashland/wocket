@@ -10,7 +10,9 @@ export class Sender {
   /**
    * A queue of packets.
    */
-  private packet_queue: Array<{ packet: Packet; channel: Channel }> = [];
+  private packet_queue: Array<
+    { packet: Packet; channel: Channel; clientToSendTo?: number }
+  > = [];
 
   /**
    * Tells `Sender` when it is ready to work through the packet queue. For
@@ -31,9 +33,10 @@ export class Sender {
    * "ready" means that the queue is not currently sending any messages.
    * Messages are not sent concurrently.
    * @param channel - The channel instance this packet is going to.
+   * @param clientToSendTo - If set, only send to the specific client with that id
    */
-  public add(packet: Packet, channel: Channel) {
-    this.packet_queue.push({ packet, channel });
+  public add(packet: Packet, channel: Channel, clientToSendTo?: number) {
+    this.packet_queue.push({ packet, channel, clientToSendTo });
     this.send();
   }
 
@@ -54,28 +57,34 @@ export class Sender {
    * Encodes messages and sends event to all clients listening to the channel or
    * event except for the sender.
    */
-  private async send() {
+  private async send(): Promise<void> {
     if (this.ready && this.packet_queue.length) {
       this.ready = false;
       const queueItem = this.packet_queue.shift();
       if (queueItem) {
         for await (let listener of queueItem.channel.listeners) {
           const [clientId, socketConn] = listener;
-          if (clientId !== queueItem.packet.from.id) {
-            try {
-              // Serialize the message
-              const message = JSON.stringify({
-                from: queueItem.packet.from instanceof EventEmitter
-                  ? "Server"
-                  : queueItem.packet.from.id.toString(),
-                to: queueItem.packet.to,
-                message: queueItem.packet.message,
-              });
-              // Send the message
-              await socketConn.send(message);
-            } catch (err) {
-              console.log(`Unable to send message to Client #${clientId}.`);
-            }
+          if (clientId === queueItem.packet.from.id) { // Don't send it to the initiator
+            continue;
+          }
+          if (
+            queueItem.clientToSendTo && queueItem.clientToSendTo != clientId
+          ) { // If wanting to send to a specific client, don't send it to others
+            continue;
+          }
+          try {
+            // Serialize the message
+            const message = JSON.stringify({
+              from: queueItem.packet.from instanceof EventEmitter
+                ? "Server"
+                : queueItem.packet.from.id.toString(),
+              to: queueItem.packet.to,
+              message: queueItem.packet.message,
+            });
+            // Send the message
+            await socketConn.send(message);
+          } catch (err) {
+            console.log(`Unable to send message to Client #${clientId}.`);
           }
         }
         this.ready = true;
