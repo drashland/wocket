@@ -1,5 +1,6 @@
 import { Packet, Server } from "../../../mod.ts";
 import { deferred, Rhum, WebSocket } from "../../deps.ts";
+
 const decoder = new TextDecoder();
 
 interface ResolvableMethods<T> {
@@ -32,6 +33,18 @@ WSServer.on("chan1", (packet: Packet) => {
   } else {
     WSServer.to("chan1", packet.message);
   }
+});
+
+// Set up emit to specific client channel
+WSServer.openChannel("emit to specific client");
+WSServer.on("emit to specific client", (packet: Packet) => {
+  const idToSendTo = Number(packet.message);
+  console.log("sending to client " + idToSendTo + " from " + packet.from.id);
+  WSServer.to(
+    "emit to specific client",
+    `Hello from ${packet.from.id}`,
+    idToSendTo,
+  );
 });
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -99,6 +112,130 @@ Rhum.testPlan("app_3000", () => {
         await promise;
       },
     );
+    Rhum.testCase(
+      "Should be able to emit events to a specific client",
+      async () => {
+        const untilClientOneIsReady = deferred();
+        const untilClientTwoIsReady = deferred();
+        const untilClientThreeIsReady = deferred();
+        const clientOne = new WebSocket(
+          `ws://${WSServer.hostname}:${WSServer.port}`,
+        );
+        const clientTwo = new WebSocket(
+          `ws://${WSServer.hostname}:${WSServer.port}`,
+        );
+        const clientThree = new WebSocket(
+          `ws://${WSServer.hostname}:${WSServer.port}`,
+        );
+        // Wait until everyone is connected
+        clientOne.onopen = function () {
+          clientOne.send(JSON.stringify({
+            connect_to: ["emit to specific client"],
+          }));
+          untilClientOneIsReady.resolve();
+        };
+        clientTwo.onopen = function () {
+          clientTwo.send(JSON.stringify({
+            connect_to: ["emit to specific client"],
+          }));
+          untilClientTwoIsReady.resolve();
+        };
+        clientThree.onopen = function () {
+          clientThree.send(JSON.stringify({
+            connect_to: ["emit to specific client"],
+          }));
+          untilClientThreeIsReady.resolve();
+        };
+        await untilClientOneIsReady;
+        await untilClientTwoIsReady;
+        await untilClientThreeIsReady;
+        // Create message handlers
+        const clientOneMessages: any[] = [];
+        const clientTwoMessages: any[] = [];
+        const clientThreeMessages: any[] = [];
+        clientOne.onmessage = function (message: any) {
+          clientOneMessages.push(message);
+          if (clientOneMessages.length === 2) {
+            clientOne.close();
+          }
+        };
+        clientTwo.onmessage = function (message: any) {
+          clientTwoMessages.push(message);
+          if (clientTwoMessages.length === 2) {
+            clientTwo.close();
+          }
+        };
+        clientThree.onmessage = function (message: any) {
+          clientThreeMessages.push(message);
+          if (clientThreeMessages.length === 2) {
+            clientThree.close();
+          }
+        };
+        // Send a message to client 3 and expect only client 3 gets it and not client 1 or 2
+        clientThree.send(JSON.stringify({
+          send_packet: {
+            to: "emit to specific client",
+            message: "8", // id of client 1
+          },
+        }));
+        clientOne.send(JSON.stringify({
+          send_packet: {
+            to: "emit to specific client",
+            message: "9", // id of client 2
+          },
+        }));
+        clientTwo.send(JSON.stringify({
+          send_packet: {
+            to: "emit to specific client",
+            message: "10", // id of client 3
+          },
+        }));
+        // Now close the connections
+        const untilClientOneIsClosed = deferred();
+        const untilClientTwoIsClosed = deferred();
+        const untilClientThreeIsClosed = deferred();
+        clientOne.onclose = function () {
+          untilClientOneIsClosed.resolve();
+        };
+        clientTwo.onclose = function () {
+          untilClientTwoIsClosed.resolve();
+        };
+        clientThree.onclose = function () {
+          untilClientThreeIsClosed.resolve();
+        };
+        await untilClientOneIsClosed;
+        await untilClientTwoIsClosed;
+        await untilClientThreeIsClosed;
+        //console.log([clientOneMessages, clientTwoMessages])
+        Rhum.asserts.assertEquals(clientOneMessages.length, 2);
+        Rhum.asserts.assertEquals(
+          clientOneMessages[0].data,
+          "Connected to emit to specific client.",
+        );
+        Rhum.asserts.assertEquals(
+          clientOneMessages[1].data,
+          '{"from":"Server","to":"emit to specific client","message":"Hello from 10"}',
+        );
+        Rhum.asserts.assertEquals(clientTwoMessages.length, 2);
+        Rhum.asserts.assertEquals(
+          clientTwoMessages[0].data,
+          "Connected to emit to specific client.",
+        );
+        Rhum.asserts.assertEquals(
+          clientTwoMessages[1].data,
+          '{"from":"Server","to":"emit to specific client","message":"Hello from 8"}',
+        );
+        Rhum.asserts.assertEquals(clientThreeMessages.length, 2);
+        Rhum.asserts.assertEquals(
+          clientThreeMessages[0].data,
+          "Connected to emit to specific client.",
+        );
+        Rhum.asserts.assertEquals(
+          clientThreeMessages[1].data,
+          '{"from":"Server","to":"emit to specific client","message":"Hello from 9"}',
+        );
+      },
+    );
     // Rhum.testCase("Cannot send messages to channels a user hasn't connected to", async () => {
     //   const promise = deferred();
     //   const WSClient1 = new WebSocket(
@@ -164,7 +301,7 @@ Rhum.testPlan("app_3000", () => {
           } else {
             Rhum.asserts.assertEquals(
               message.data,
-              "Client 8 is not connected to chan2",
+              "Client 14 is not connected to chan2",
             );
             WSClient.close();
           }
