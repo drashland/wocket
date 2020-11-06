@@ -1,0 +1,37 @@
+export const regexes = {
+  const_statements: /version = ".+"/g,
+  egg_json: /"version": ".+"/,
+  import_export_statements: /sockets@v[0-9\.]+[0-9\.]+[0-9\.]/g,
+  yml_deno: /deno: \[".+"\]/g,
+};
+
+export const moduleVersionFiles = [
+  {
+    filename: "./egg.json",
+    replaceTheRegex: regexes.egg_json,
+    replaceWith: `"version": "{{ thisModulesLatestVersion }}"`,
+  },
+  {
+    filename: "./README.md",
+    replaceTheRegex: regexes.import_export_statements,
+    replaceWith: `sockets@v{{ thisModulesLatestVersion }}`,
+  },
+];
+
+export const denoVersionFiles = [
+  {
+    filename: "./.github/workflows/master.yml",
+    replaceTheRegex: regexes.yml_deno,
+    replaceWith: `deno: ["{{ latestDenoVersion }}"]`,
+  },
+  {
+    filename: "./.github/workflows/bumper.yml",
+    replaceTheRegex: regexes.yml_deno,
+    replaceWith: `deno: ["{{ latestDenoVersion }}"]`,
+  },
+  {
+    filename: "./.github/workflows/pre_release.yml",
+    replaceTheRegex: regexes.yml_deno,
+    replaceWith: `deno: ["{{ latestDenoVersion }}"]`,
+  },
+];
