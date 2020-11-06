@@ -27,7 +27,7 @@ jobs:
           comment: ${{ github.event.release.body }}
       - uses: ethomson/send-tweet-action@v1
         with:
-          status: "New Sockets Version Released! https://github.com/drashland/drash/releases/latest"
+          status: "New Sockets Version Released! https://github.com/drashland/sockets/releases/latest"
           consumer-key: ${{ secrets.TWITTER_CONSUMER_API_KEY }}
           consumer-secret: ${{ secrets.TWITTER_CONSUMER_API_SECRET }}
           access-token: ${{ secrets.TWITTER_ACCESS_TOKEN }}
