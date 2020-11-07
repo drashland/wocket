@@ -24,8 +24,9 @@ jobs:
         with:
           ref: master
 
-      - name: Delete Remote Release Branch
-        run: git push --delete origin ${{ github.ref }}
+# Commenting out because we want to keep a reference to the branches for each release
+#      - name: Delete Remote Release Branch
+#        run: git push --delete origin ${{ github.ref }}
 
       - name: Install Deno
         uses: denolib/setup-deno@v2
