@@ -1,9 +1,9 @@
 {
-  "name": "sockets",
+  "name": "wocket",
   "description": "A WebSocket library for Deno.",
   "version": "0.5.0",
   "stable": true,
-  "repository": "https://github.com/drashland/sockets",
+  "repository": "https://github.com/drashland/wocket",
   "files": [
     "./mod.ts",
     "./deps.ts",

@@ -1,16 +1,16 @@
 <p align="center">
-  <a href="https://drash.land/sockets">
-    <img height="200" src="logo.svg" alt="Sockets">
+  <a href="https://drash.land/wocket">
+    <img height="200" src="logo.svg" alt="Wocket">
   </a>
-  <h1 align="center">Sockets</h1>
+  <h1 align="center">Wocket</h1>
 </p>
 <p align="center">A WebSocket library for <a href="https://github.com/denoland/deno">Deno</a>.</p>
 <p align="center">
-  <a href="https://github.com/drashland/socketse/releases">
-    <img src="https://img.shields.io/github/release/drashland/sockets.svg?color=bright_green&label=latest">
+  <a href="https://github.com/drashland/wocket/releases">
+    <img src="https://img.shields.io/github/release/drashland/wocket.svg?color=bright_green&label=latest">
   </a>
-  <a href="https://github.com/drashland/sockets/actions">
-    <img src="https://img.shields.io/github/workflow/status/drashland/sockets/master?label=ci">
+  <a href="https://github.com/drashland/wocket/actions">
+    <img src="https://img.shields.io/github/workflow/status/drashland/wocket/master?label=ci">
   </a>
   <a href="https://discord.gg/SgejNXq">
     <img src="https://img.shields.io/badge/chat-on%20discord-blue">
@@ -22,7 +22,7 @@
 
 ---
 
-**_Although Sockets has working code, it is still very much under development and unstable. APIs will change without notice. Sorry for any inconvenience!_**
+**_Although Wocket has working code, it is still very much under development and unstable. APIs will change without notice. Sorry for any inconvenience!_**
 
 ## Table of Contents
 - [Quickstart](#quickstart)
@@ -39,7 +39,7 @@ Create your server.
 ```typescript
 // File: app.ts
 
-import { Server } from "https://deno.land/x/sockets@v0.5.0/mod.ts";
+import { Server } from "https://deno.land/x/wocket@v0.5.0/mod.ts";
 
 // Create the server
 const server = new Server();
@@ -73,7 +73,7 @@ $ wscat -c ws://127.0.0.1:1777
 
 ## Documentation
 
-- [Full Documentation](https://drash.land/sockets)
+- [Full Documentation](https://drash.land/wocket)
 
 ## Features
 
@@ -82,7 +82,7 @@ $ wscat -c ws://127.0.0.1:1777
 
 ## Mirrors
 
-* https://nest.land/package/sockets
+* https://nest.land/package/wocket
 
 ## Contributing
 
