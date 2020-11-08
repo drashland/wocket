@@ -148,34 +148,17 @@ export class EventEmitter {
   }
 
   /**
-   * This is the same as creating a new channel (openChannel()), but for
-   * internal use.
+   * Create and open a channel, and create a listener for events on that channel
    *
    * @param name - The name of the channel.
    * @param cb - Callback to be invoked when a message is sent to the channel.
    */
   public on(name: string, cb: Function): void {
-    if (!this.channels[name]) {
-      this.channels[name] = new Channel(name);
+    if (this.channels[name]) {
+      throw new Error(`Channel "${name}" already exists!`);
     }
+    this.channels[name] = new Channel(name);
     this.channels[name].callbacks.push(cb);
-  }
-
-  /**
-   * Create a new channel. Basically, this creates a new event that clients can
-   * listen to. Ther server can also send messages to this new event/channel.
-   *
-   * @param channelName - The name of the channel.
-   *
-   * @returns this
-   */
-  public openChannel(channelName: string): void {
-    if (!this.channels[channelName]) {
-      this.channels[channelName] = new Channel(channelName);
-      return;
-    }
-
-    throw new Error(`Channel "${channelName}" already exists!`);
   }
 
   /**

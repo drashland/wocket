@@ -26,7 +26,6 @@ WSServer.on("connect", (packet: Packet) => {
 });
 
 // Set up the chan1 channel
-WSServer.openChannel("chan1");
 WSServer.on("chan1", (packet: Packet) => {
   if (packet.message === "close") {
     WSServer.closeChannel("chan1");

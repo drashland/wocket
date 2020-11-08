@@ -41,7 +41,7 @@ Rhum.testPlan("unit/event_emitter_test.ts", () => {
           1337,
           ClientSocket() as unknown as WebSocket,
         );
-        io.openChannel("chat");
+        io.on("chat", () => {});
         io.addClientToChannel("chat", client1.id);
         Rhum.asserts.assert(io.getChannel("chat").listeners.has(1337));
         Rhum.asserts.assertEquals(io.getChannel("chat").listeners.size, 1);
@@ -57,7 +57,7 @@ Rhum.testPlan("unit/event_emitter_test.ts", () => {
     Rhum.testCase("Creates the channel if it doesn't already exist", () => {
       const io = new EventEmitter();
       Rhum.asserts.assertEquals(io.channels["chat"], undefined);
-      io.openChannel("chat");
+      io.on("chat", () => {});
       const client1 = io.createClient(
         1337,
         ClientSocket() as unknown as WebSocket,
@@ -74,7 +74,7 @@ Rhum.testPlan("unit/event_emitter_test.ts", () => {
           1337,
           ClientSocket() as unknown as WebSocket,
         );
-        io.openChannel("chat");
+        io.on("chat", () => {});
         io.addClientToChannel("chat", client1.id);
         let err = {
           thrown: false,
@@ -108,7 +108,7 @@ Rhum.testPlan("unit/event_emitter_test.ts", () => {
         ClientSocket() as unknown as WebSocket,
       );
 
-      io.openChannel("My channel");
+      io.on("My channel", () => {});
       await io.addClientToChannel("My channel", client.id);
       // Make sure the channel is set up so we know our tests work
       const channel = io.getChannel("My channel");
@@ -137,7 +137,7 @@ Rhum.testPlan("unit/event_emitter_test.ts", () => {
   Rhum.testSuite("getChannel()", () => {
     Rhum.testCase("Returns the channel when it exists", () => {
       const io = new EventEmitter();
-      io.openChannel("My channel");
+      io.on("My channel", () => {});
       io.createClient(1337, ClientSocket() as unknown as WebSocket);
       io.addClientToChannel("My channel", 1337);
       const channel = io.getChannel("My channel");
@@ -159,8 +159,8 @@ Rhum.testPlan("unit/event_emitter_test.ts", () => {
     });
     Rhum.testCase("Returns the list of channels when channels exist", () => {
       const io = new EventEmitter();
-      io.openChannel("my channel");
-      io.openChannel("another channel");
+      io.on("My channel", () => {});
+      io.on("another channel", () => {});
       const channels = io.getChannels();
       Rhum.asserts.assertEquals(channels.length, 2);
     });
@@ -168,8 +168,8 @@ Rhum.testPlan("unit/event_emitter_test.ts", () => {
       "Does not return channels where the name is a reserved event name",
       () => {
         const io = new EventEmitter();
-        io.openChannel("my channel");
-        io.openChannel("connect");
+        io.on("my channel", () => {});
+        io.on("connect", () => {});
         const channels = io.getChannels();
         Rhum.asserts.assertEquals(channels.length, 1);
       },
@@ -177,6 +177,29 @@ Rhum.testPlan("unit/event_emitter_test.ts", () => {
   });
 
   Rhum.testSuite("on()", () => {
+    Rhum.testCase("Creates a channel when it doesn't already exist", () => {
+      const io = new EventEmitter();
+      io.on("My channel", () => {});
+      Rhum.asserts.assertEquals(io.channels["My channel"].name, "My channel");
+    });
+    Rhum.testCase("Throws ann error when that channel already exists", () => {
+      const io = new EventEmitter();
+      io.on("My channel", () => {});
+      let err = {
+        thrown: false,
+        msg: "",
+      };
+      try {
+        io.on("My channel", () => {});
+      } catch (error) {
+        err.thrown = true;
+        err.msg = error.message;
+      }
+      Rhum.asserts.assertEquals(err, {
+        thrown: true,
+        msg: 'Channel "My channel" already exists!',
+      });
+    });
     Rhum.testCase("should add channels for server to listen to", () => {
       const io = new EventEmitter();
       const expect = ["chat", "room"];
@@ -206,32 +229,6 @@ Rhum.testPlan("unit/event_emitter_test.ts", () => {
     });
   });
 
-  Rhum.testSuite("openChannel()", () => {
-    Rhum.testCase("Creates a channel when it doesn't already exist", () => {
-      const io = new EventEmitter();
-      io.openChannel("My channel");
-      Rhum.asserts.assertEquals(io.channels["My channel"].name, "My channel");
-    });
-    Rhum.testCase("Throws ann error when that channel already exists", () => {
-      const io = new EventEmitter();
-      io.openChannel("My channel");
-      let err = {
-        thrown: false,
-        msg: "",
-      };
-      try {
-        io.openChannel("My channel");
-      } catch (error) {
-        err.thrown = true;
-        err.msg = error.message;
-      }
-      Rhum.asserts.assertEquals(err, {
-        thrown: true,
-        msg: 'Channel "My channel" already exists!',
-      });
-    });
-  });
-
   Rhum.testSuite("removeClient()", () => {
     Rhum.testCase("should remove client", async () => {
       const io = new EventEmitter();
@@ -251,7 +248,7 @@ Rhum.testPlan("unit/event_emitter_test.ts", () => {
       "should remove client from channels[channelName].listeners",
       async () => {
         const io = new EventEmitter();
-        io.openChannel("chat");
+        io.on("chat", () => {});
         const client1 = io.createClient(
           1,
           ClientSocket() as unknown as WebSocket,
@@ -307,7 +304,7 @@ Rhum.testPlan("unit/event_emitter_test.ts", () => {
       "Throws an error when the client id isn't connected to the channel",
       () => {
         const io = new EventEmitter();
-        io.openChannel("My channel");
+        io.on("My channel", () => {});
         const err = {
           thrown: false,
           msg: "",
@@ -330,7 +327,7 @@ Rhum.testPlan("unit/event_emitter_test.ts", () => {
         1,
         ClientSocket() as unknown as WebSocket,
       );
-      io.openChannel("my channel");
+      io.on("my channel", () => {});
       io.addClientToChannel("my channel", client1.id);
       Rhum.asserts.assertEquals(io.channels["my channel"].name, "my channel");
       Rhum.asserts.assertEquals(
