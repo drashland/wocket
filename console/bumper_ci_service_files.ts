@@ -1,7 +1,7 @@
 export const regexes = {
   const_statements: /version = ".+"/g,
   egg_json: /"version": ".+"/,
-  import_export_statements: /sockets@v[0-9\.]+[0-9\.]+[0-9\.]/g,
+  import_export_statements: /wocket@v[0-9\.]+[0-9\.]+[0-9\.]/g,
   yml_deno: /deno: \[".+"\]/g,
 };
 
@@ -14,7 +14,7 @@ export const preReleaseFiles = [
   {
     filename: "./README.md",
     replaceTheRegex: regexes.import_export_statements,
-    replaceWith: `sockets@v{{ thisModulesLatestVersion }}`,
+    replaceWith: `wocket@v{{ thisModulesLatestVersion }}`,
   },
 ];
 
