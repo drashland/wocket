@@ -24,72 +24,17 @@
 
 **_Although Wocket has working code, it is still very much under development and unstable. APIs will change without notice. Sorry for any inconvenience!_**
 
-## Table of Contents
-- [Quickstart](#quickstart)
-- [Documentation](#documentation)
-- [Features](#features)
-- [Mirrors](#mirrors)
-- [Contributing](#contributing)
-- [License](#license)
+### Getting Started
 
-## Quickstart
+Get started [here](https://drash.land/wocket/#/#quickstart) to build a basic WebSocket server using Wocket.
 
-Create your server.
+Alternatively, you can navigate through the [full documentation](https://drash.land/wocket) and check out the tutorials.
 
-```typescript
-// File: app.ts
-
-import { Server } from "https://deno.land/x/wocket@v0.5.0/mod.ts";
-
-// Create the server
-const server = new Server();
-
-// Run the server
-server.run({
-  hostname: "127.0.0.1",
-  port: 1777,
-});
-
-console.log(
-  `Server started on ws://${server.hostname}:${server.port}`,
-);
-```
-
-Run your server.
-
-```
-$ deno run --allow-net app.ts
-Server started on ws://127.0.0.1:1777
-```
-
-Connect to your server using `wscat` and send a `ping` packet.
-
-```
-$ npm install -g wscat
-$ wscat -c ws://127.0.0.1:1777
-> ping
-< pong
-```
-
-## Documentation
-
-- [Full Documentation](https://drash.land/wocket)
-
-## Features
+### Features
 
 - JSON encoding
 - Zero dependencies
 
-## Mirrors
+---
 
-* https://nest.land/package/wocket
-
-## Contributing
-
-Contributors are welcomed!
-
-Please read through our [contributing guidelines](./.github/CONTRIBUTING.md). Included are directions for opening issues, coding standards, and notes on development.
-
-## License
-
-By contributing your code, you agree to license your contribution under the [MIT License](./LICENSE).
+Want to contribute? Follow the Contributing Guidelines [here](https://github.com/drashland/.github/blob/master/CONTRIBUTING.md). All code is released under the [MIT License](./LICENSE).

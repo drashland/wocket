@@ -13,16 +13,13 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-        deno: ["1.5.2"]
     runs-on: ${{ matrix.os }}
 
     steps:
       - uses: actions/checkout@v2
 
-      - name: Install Deno v${{ matrix.deno }}
+      - name: Install Deno
         uses: denolib/setup-deno@master
-        with:
-          deno-version: ${{ matrix.deno }}
 
       - name: Unit
         run: |
@@ -34,19 +31,14 @@ jobs:
           #deno test --allow-all tests/integration/app_3001/tests.ts # throws rust errors
 
   linter:
-    strategy:
-      matrix:
-        deno: ["1.5.2"]
     # Only one OS is required since fmt is cross platform
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v2
 
-      - name: Install Deno v${{ matrix.deno }}
+      - name: Install Deno
         uses: denolib/setup-deno@master
-        with:
-          deno-version: ${{ matrix.deno }}
 
       - name: Formatter
         run: deno fmt --check
