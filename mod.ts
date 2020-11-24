@@ -6,4 +6,4 @@ export { Packet } from "./src/packet.ts";
 export { Sender } from "./src/sender.ts";
 export { Server } from "./src/server.ts";
 export { Transmitter } from "./src/transmitter.ts";
-export { ITransmitterOptions } from "./src/interfaces.ts";
+export type { ITransmitterOptions } from "./src/interfaces.ts";
