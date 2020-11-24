@@ -10,10 +10,13 @@
     "./src/*",
     "./README.md",
     "./logo.svg",
-    "LICENSE",
-    "./mod.ts"
+    "LICENSE"
   ],
   "checkAll": false,
-  "entry": "/mod.ts",
-  "unlisted": false
+  "entry": "./mod.ts",
+  "unlisted": false,
+  "checkTests": false,
+  "check": true,
+  "homepage": "",
+  "ignore": []
 }
