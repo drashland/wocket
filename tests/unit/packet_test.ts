@@ -1,5 +1,5 @@
 import { Rhum } from "../deps.ts";
-import { Packet, Client } from "../../mod.ts";
+import { Client, Packet } from "../../mod.ts";
 import { WebSocket } from "../../deps.ts";
 
 const ClientSocket = () => {

@@ -1,5 +1,11 @@
 import { Rhum } from "../deps.ts";
-import { Transmitter, Server, Packet, Client, EventEmitter } from "../../mod.ts";
+import {
+  Client,
+  EventEmitter,
+  Packet,
+  Server,
+  Transmitter,
+} from "../../mod.ts";
 import { WebSocket } from "../../deps.ts";
 
 const ClientSocket = () => {
