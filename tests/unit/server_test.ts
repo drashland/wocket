@@ -1,4 +1,4 @@
-import { Server } from "../../src/server.ts";
+import { Server } from "../../mod.ts";
 import { Rhum } from "../deps.ts";
 
 Rhum.testPlan("unit/server_test.ts", () => {
