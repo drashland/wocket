@@ -23,9 +23,9 @@ Rhum.testPlan("app_3001", () => {
         client.close();
       };
       client.onerror = function (err) {
-        console.error(err)
-        throw new Error('Fix meeeee, i dont work :(')
-      }
+        console.error(err);
+        throw new Error("Fix meeeee, i dont work :(");
+      };
       client.onclose = function () {
         promise.resolve();
       };
