@@ -8,25 +8,29 @@ import { deferred, Rhum } from "../../deps.ts";
 Rhum.testPlan("app_3001", () => {
   Rhum.testSuite("Connecting using SSL", () => {
     Rhum.testCase("Should be able to connect", async () => {
-      const socketServer = new Server({ reconnect: false });
-      await socketServer.runTLS({
+      const server = new Server({ reconnect: false });
+      await server.runTLS({
         hostname: "localhost",
         port: 3001,
         certFile: "./tests/integration/app_3001/server.crt",
         keyFile: "./tests/integration/app_3001/server.key",
       });
-      const socketClient = new WebSocket(
-        `wss://${socketServer.hostname}:${socketServer.port}`,
+      const client = new WebSocket(
+        `wss://${server.hostname}:${server.port}`,
       );
       const promise = deferred();
-      socketClient.onopen = function () {
-        socketClient.close();
+      client.onopen = function () {
+        client.close();
       };
-      socketClient.onclose = function () {
+      client.onerror = function (err) {
+        console.error(err)
+        throw new Error('Fix meeeee, i dont work :(')
+      }
+      client.onclose = function () {
         promise.resolve();
       };
       await promise;
-      socketServer.close();
+      await server.close();
     });
   });
 });
