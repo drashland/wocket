@@ -104,6 +104,9 @@ export class EventEmitter {
    * @param channelName - The name of the channel.
    */
   public closeChannel(channelName: string): void {
+    for (const client of Object.values(this.clients)) {
+      client.socket.send(`${channelName} closed.`);
+    }
     delete this.channels[channelName];
   }
 
@@ -145,34 +148,17 @@ export class EventEmitter {
   }
 
   /**
-   * This is the same as creating a new channel (openChannel()), but for
-   * internal use.
+   * Create and open a channel, and create a listener for events on that channel
    *
    * @param name - The name of the channel.
    * @param cb - Callback to be invoked when a message is sent to the channel.
    */
   public on(name: string, cb: Function): void {
-    if (!this.channels[name]) {
-      this.channels[name] = new Channel(name);
+    if (this.channels[name]) {
+      throw new Error(`Channel "${name}" already exists!`);
     }
+    this.channels[name] = new Channel(name);
     this.channels[name].callbacks.push(cb);
-  }
-
-  /**
-   * Create a new channel. Basically, this creates a new event that clients can
-   * listen to. Ther server can also send messages to this new event/channel.
-   *
-   * @param channelName - The name of the channel.
-   *
-   * @returns this
-   */
-  public openChannel(channelName: string): void {
-    if (!this.channels[channelName]) {
-      this.channels[channelName] = new Channel(channelName);
-      return;
-    }
-
-    throw new Error(`Channel "${channelName}" already exists!`);
   }
 
   /**
@@ -222,14 +208,20 @@ export class EventEmitter {
    *
    * @param channelName - The name of the channel.
    * @param message - The message to send.
+   * @param clientToSendTo - Optional. If you wish to send the event to a specific client, specify the client id
    */
-  public to(channelName: string, message: unknown): void {
+  public to(
+    channelName: string,
+    message: unknown,
+    clientToSendTo?: number,
+  ): void {
     this.queuePacket(
       new Packet(
         this,
         channelName,
         message,
       ),
+      clientToSendTo,
     );
   }
 
@@ -242,11 +234,12 @@ export class EventEmitter {
    * be sent to the client(s).
    *
    * @param packet - See Packet.
+   * @param clientToSendTo - If set, only send the packet to that client
    */
-  private queuePacket(packet: Packet): void {
+  private queuePacket(packet: Packet, clientToSendTo?: number): void {
     if (!this.channels[packet.to]) {
       throw new Error(`Channel "${packet.to}" not found.`);
     }
-    this.sender.add(packet, this.channels[packet.to]);
+    this.sender.add(packet, this.channels[packet.to], clientToSendTo);
   }
 }

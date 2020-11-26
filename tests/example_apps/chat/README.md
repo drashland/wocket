@@ -5,8 +5,8 @@ This is an interactive application where you send messages through a web applica
 1. Clone the repo and go into the `/example_apps/chat` directory.
 
     ```
-    $ git clone https://github.com/drashland/sockets.git
-    $ cd sockets/example_apps/chat
+    $ git clone https://github.com/drashland/wocket.git
+    $ cd wocket/example_apps/chat
     ```
 
 2. Start the server.

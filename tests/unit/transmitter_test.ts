@@ -1,10 +1,12 @@
 import { Rhum } from "../deps.ts";
-import { Transmitter } from "../../src/transmitter.ts";
-import { Server } from "../../src/server.ts";
-import { Packet } from "../../src/packet.ts";
-import { Client } from "../../src/client.ts";
+import {
+  Client,
+  EventEmitter,
+  Packet,
+  Server,
+  Transmitter,
+} from "../../mod.ts";
 import { WebSocket } from "../../deps.ts";
-import { EventEmitter } from "../../src/event_emitter.ts";
 
 const ClientSocket = () => {
   return {
