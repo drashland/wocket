@@ -64,7 +64,7 @@ export class Server extends EventEmitter {
   /**
    * Close the server.
    */
-  public close(): void {
+  public async close(): Promise<void> {
     // If there are messages still being sent, then make sure all of them are
     // sent before closing.
     while (true) {
