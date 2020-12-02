@@ -169,6 +169,12 @@ export class Server extends EventEmitter {
 
                 // Handle disconnects
               } else if (isWebSocketCloseEvent(message)) {
+                await this.transmitter.handlePacket(
+                  new Packet(
+                    client,
+                    "disconnect",
+                  ),
+                );
                 super.removeClient(client.id);
               }
             }
