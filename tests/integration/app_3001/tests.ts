@@ -1,131 +1,38 @@
-import { Packet, Server } from "../../../mod.ts";
-import { Drash, Rhum } from "../../deps.ts";
-
-////////////////////////////////////////////////////////////////////////////////
-// SERVER SETUP ////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-
-class Resource extends Drash.Http.Resource {
-  static paths = ["/"];
-  protected messages: any = {};
-  public async POST() {
-    const data = this.request.getBodyParam("data");
-    if (data) {
-      const socketClient = new WebSocket(
-        `wss://${socketServer.hostname}:${socketServer.port}`,
-      );
-      await socketClient.send(JSON.stringify(data));
-      socketClient.close();
-    }
-    return this.response;
-  }
-}
-
-const webServer = new Drash.Http.Server({
-  resources: [
-    Resource,
-  ],
-});
-
-const socketServer = new Server({ reconnect: false });
-
-webServer.run({
-  hostname: "localhost",
-  port: 3002,
-});
-
-console.log(`Web server started on ${webServer.hostname}:${webServer.port}`);
-
-socketServer.runTLS({
-  hostname: "localhost",
-  port: 3001,
-  certFile: "./tests/integration/app_3001/server.crt",
-  keyFile: "./tests/integration/app_3001/server.key",
-});
-
-console.log(
-  `socketServer listening: http://${socketServer.hostname}:${socketServer.port}`,
-);
+import { Server } from "../../../mod.ts";
+import { deferred, Rhum } from "../../deps.ts";
 
 ////////////////////////////////////////////////////////////////////////////////
 // TESTS ///////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-console.log(
-  "\nIntegration tests: testing different channels can be opened and work.\n",
-);
-
-let storage: any = {
-  "chan1": {
-    messages: [],
-  },
-  "chan2": {
-    messages: [],
-  },
-};
-
-Rhum.testPlan("app_3000", () => {
-  socketServer.on("chan1", (packet: Packet) => {
-    storage["chan1"].messages.push(packet.message);
-  });
-
-  Rhum.testSuite("channel 1", () => {
-    Rhum.testCase("chan1 should exist", () => {
-      Rhum.asserts.assertEquals("chan1", socketServer.getChannel("chan1").name);
-    });
-    Rhum.testCase("chan1 should have a message", async () => {
-      await sendMessage(JSON.stringify({
-        data: {
-          send_packet: {
-            to: "chan1",
-            message: "chan message 1-1",
-          },
-        },
-      }));
-      Rhum.asserts.assertEquals(
-        storage["chan1"].messages,
-        ["chan message 1-1"],
-      );
-    });
-    Rhum.testCase("chan2 should have a message", async () => {
-      socketServer.on("chan2", (packet: Packet) => {
-        storage["chan2"].messages.push(packet.message);
+Rhum.testPlan("app_3001", () => {
+  Rhum.testSuite("Connecting using SSL", () => {
+    Rhum.testCase("Should be able to connect", async () => {
+      const server = new Server({ reconnect: false });
+      await server.runTLS({
+        hostname: "localhost",
+        port: 3001,
+        certFile: "./tests/integration/app_3001/server.crt",
+        keyFile: "./tests/integration/app_3001/server.key",
       });
-      await sendMessage(JSON.stringify({
-        data: {
-          send_packet: {
-            to: "chan2",
-            message: "chan message 2-1",
-          },
-        },
-      }));
-      Rhum.asserts.assertEquals(
-        storage["chan2"].messages,
-        ["chan message 2-1"],
+      const client = new WebSocket(
+        `wss://${server.hostname}:${server.port}`,
       );
+      const promise = deferred();
+      client.onopen = function () {
+        client.close();
+      };
+      client.onerror = function (err) {
+        console.error(err);
+        throw new Error("Fix meeeee, i dont work :(");
+      };
+      client.onclose = function () {
+        promise.resolve();
+      };
+      await promise;
+      await server.close();
     });
   });
 });
 
 Rhum.run();
-
-Deno.test({
-  name: "Stop the server",
-  fn() {
-    webServer.close();
-    socketServer.close();
-  },
-  sanitizeResources: false,
-  sanitizeOps: false,
-});
-
-async function sendMessage(message: string) {
-  const response = await fetch("http://localhost:3002", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: message,
-  });
-  await response.text();
-}
