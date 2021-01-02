@@ -96,7 +96,7 @@ export class Server extends EventEmitter {
    *
    * @returns A Promise of DenoServer.
    */
-  public async run(options: HTTPOptions): Promise<DenoServer> {
+  public run(options: HTTPOptions): DenoServer {
     if (options.hostname) {
       this.hostname = options.hostname;
     }
@@ -121,7 +121,7 @@ export class Server extends EventEmitter {
    *
    * @returns A Promise of the DenoServer.
    */
-  public async runTLS(options: HTTPSOptions): Promise<DenoServer> {
+  public runTLS(options: HTTPSOptions): DenoServer {
     if (options.hostname) {
       this.hostname = options.hostname;
     }
@@ -294,7 +294,7 @@ export class Server extends EventEmitter {
       //     }
       //
       if (json.connect_to) {
-        json.connect_to.forEach(async (channelName: string) => {
+        json.connect_to.forEach((channelName: string) => {
           try {
             super.addClientToChannel(channelName, client.id);
             client.socket.send(`Connected to ${channelName}.`);
@@ -314,7 +314,7 @@ export class Server extends EventEmitter {
       //     }
       //
       if (json.disconnect_from) {
-        json.disconnect_from.forEach(async (channelName: string) => {
+        json.disconnect_from.forEach((channelName: string) => {
           try {
             super.removeClientFromChannel(channelName, client.id);
             client.socket.send(`Disconnected from ${channelName}.`);

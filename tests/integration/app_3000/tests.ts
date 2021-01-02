@@ -45,7 +45,7 @@ Rhum.testPlan("app_3000", () => {
           connect_to: ["chan1"],
         }));
       };
-      client.onmessage = function (message: any) {
+      client.onmessage = function (message) {
         Rhum.asserts.assertEquals(message.data, "Connected to chan1.");
         client.close();
       };
@@ -79,7 +79,7 @@ Rhum.testPlan("app_3000", () => {
           }));
         };
         let messageCount = 0;
-        client.onmessage = function (message: any) {
+        client.onmessage = function (message) {
           messageCount++;
           if (messageCount === 2) {
             Rhum.asserts.assertEquals(JSON.parse(message.data), {
@@ -144,22 +144,22 @@ Rhum.testPlan("app_3000", () => {
         await untilClientTwoIsReady;
         await untilClientThreeIsReady;
         // Create message handlers
-        const clientOneMessages: any[] = [];
-        const clientTwoMessages: any[] = [];
-        const clientThreeMessages: any[] = [];
-        clientOne.onmessage = function (message: any) {
+        const clientOneMessages: MessageEvent[] = [];
+        const clientTwoMessages: MessageEvent[] = [];
+        const clientThreeMessages: MessageEvent[] = [];
+        clientOne.onmessage = function (message) {
           clientOneMessages.push(message);
           if (clientOneMessages.length === 2) {
             clientOne.close();
           }
         };
-        clientTwo.onmessage = function (message: any) {
+        clientTwo.onmessage = function (message) {
           clientTwoMessages.push(message);
           if (clientTwoMessages.length === 2) {
             clientTwo.close();
           }
         };
-        clientThree.onmessage = function (message: any) {
+        clientThree.onmessage = function (message) {
           clientThreeMessages.push(message);
           if (clientThreeMessages.length === 2) {
             clientThree.close();
@@ -284,7 +284,7 @@ Rhum.testPlan("app_3000", () => {
           }));
         };
         let messageCount = 0;
-        client.onmessage = function (message: any) {
+        client.onmessage = function (message) {
           messageCount++;
           if (messageCount === 1) {
             Rhum.asserts.assertEquals(
@@ -323,7 +323,7 @@ Rhum.testPlan("app_3000", () => {
           connect_to: ["chan1"],
         }));
       };
-      client.onmessage = function (message: any) {
+      client.onmessage = function (message) {
         if (message.data == "Connected to chan1.") {
           client.send(
             JSON.stringify({ send_packet: { to: "chan1", message: "close" } }),

@@ -76,7 +76,7 @@ Rhum.testPlan("unit/event_emitter_test.ts", () => {
         );
         io.on("chat", () => {});
         io.addClientToChannel("chat", client1.id);
-        let err = {
+        const err = {
           thrown: false,
           msg: "",
         };
@@ -185,7 +185,7 @@ Rhum.testPlan("unit/event_emitter_test.ts", () => {
     Rhum.testCase("Throws ann error when that channel already exists", () => {
       const io = new EventEmitter();
       io.on("My channel", () => {});
-      let err = {
+      const err = {
         thrown: false,
         msg: "",
       };
