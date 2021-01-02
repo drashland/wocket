@@ -65,6 +65,13 @@ export class Server extends EventEmitter {
    * Close the server.
    */
   public async close(): Promise<void> {
+    // Allow any messages in the pipeline  to be properly handled before closing. Obviously a hack, but removing this block will sometimes cause some test cases to fail - still unsure why
+    const p = new Promise((resolve) => {
+      setTimeout(() => {
+        resolve("");
+      }, 500);
+    });
+    await p;
     // If there are messages still being sent, then make sure all of them are
     // sent before closing.
     while (true) {
