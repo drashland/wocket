@@ -69,7 +69,7 @@ export class Server extends EventEmitter {
     const p = new Promise((resolve) => {
       setTimeout(() => {
         resolve("");
-      }, 500);
+      }, 1); // No real reason for it to be 1, other than this fixes the issue, and isn't a long ass time to wait - i did (edward) have it at 500, then eric suggested what happens at 1ms, so we changed it to that and funnily enough, it still fixes thee issue, which is why it is 1ms
     });
     await p;
     // If there are messages still being sent, then make sure all of them are
