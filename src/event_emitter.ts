@@ -136,8 +136,8 @@ export class EventEmitter {
    * @returns An array with all of the channel names.
    */
   public getChannels(): string[] {
-    let channels = [];
-    for (let channelName in this.channels) {
+    const channels = [];
+    for (const channelName in this.channels) {
       // Ignore the following channels
       if (RESERVED_EVENT_NAMES.indexOf(channelName) !== -1) {
         continue;
@@ -153,7 +153,7 @@ export class EventEmitter {
    * @param name - The name of the channel.
    * @param cb - Callback to be invoked when a message is sent to the channel.
    */
-  public on(name: string, cb: Function): void {
+  public on(name: string, cb: (packet: Packet) => void): void {
     if (this.channels[name]) {
       throw new Error(`Channel "${name}" already exists!`);
     }

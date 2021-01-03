@@ -62,7 +62,7 @@ export class Sender {
       this.ready = false;
       const queueItem = this.packet_queue.shift();
       if (queueItem) {
-        for await (let listener of queueItem.channel.listeners) {
+        for await (const listener of queueItem.channel.listeners) {
           const [clientId, socketConn] = listener;
           if (clientId === queueItem.packet.from.id) { // Don't send it to the initiator
             continue;

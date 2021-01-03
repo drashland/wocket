@@ -1,4 +1,5 @@
 import { WebSocket } from "../deps.ts";
+import { Packet } from "./packet.ts";
 
 /**
  * Channel represents channels, also known as "rooms". This class describes open
@@ -13,7 +14,7 @@ export class Channel {
    *
    * `handleChannel1` is now registered as a callback.
    */
-  public callbacks: Function[] = [];
+  public callbacks: Array<((packet: Packet) => void)> = [];
 
   /**
    * The name of the channel to create

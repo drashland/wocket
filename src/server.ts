@@ -65,6 +65,13 @@ export class Server extends EventEmitter {
    * Close the server.
    */
   public async close(): Promise<void> {
+    // Allow any messages in the pipeline  to be properly handled before closing. Obviously a hack, but removing this block will sometimes cause some test cases to fail - still unsure why
+    const p = new Promise((resolve) => {
+      setTimeout(() => {
+        resolve("");
+      }, 1); // No real reason for it to be 1, other than this fixes the issue, and isn't a long ass time to wait - i did (edward) have it at 500, then eric suggested what happens at 1ms, so we changed it to that and funnily enough, it still fixes thee issue, which is why it is 1ms
+    });
+    await p;
     // If there are messages still being sent, then make sure all of them are
     // sent before closing.
     while (true) {
@@ -89,7 +96,7 @@ export class Server extends EventEmitter {
    *
    * @returns A Promise of DenoServer.
    */
-  public async run(options: HTTPOptions): Promise<DenoServer> {
+  public run(options: HTTPOptions): DenoServer {
     if (options.hostname) {
       this.hostname = options.hostname;
     }
@@ -114,7 +121,7 @@ export class Server extends EventEmitter {
    *
    * @returns A Promise of the DenoServer.
    */
-  public async runTLS(options: HTTPSOptions): Promise<DenoServer> {
+  public runTLS(options: HTTPSOptions): DenoServer {
     if (options.hostname) {
       this.hostname = options.hostname;
     }
@@ -287,7 +294,7 @@ export class Server extends EventEmitter {
       //     }
       //
       if (json.connect_to) {
-        json.connect_to.forEach(async (channelName: string) => {
+        json.connect_to.forEach((channelName: string) => {
           try {
             super.addClientToChannel(channelName, client.id);
             client.socket.send(`Connected to ${channelName}.`);
@@ -307,7 +314,7 @@ export class Server extends EventEmitter {
       //     }
       //
       if (json.disconnect_from) {
-        json.disconnect_from.forEach(async (channelName: string) => {
+        json.disconnect_from.forEach((channelName: string) => {
           try {
             super.removeClientFromChannel(channelName, client.id);
             client.socket.send(`Disconnected from ${channelName}.`);

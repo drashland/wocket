@@ -86,7 +86,7 @@ export class Transmitter {
 
     // Invoke all callbacks (aka the handlers for this packet)
     if (this.server.channels[packet.to]) {
-      for await (let cb of this.server.channels[packet.to].callbacks) {
+      for await (const cb of this.server.channels[packet.to].callbacks) {
         cb(packet);
       }
       return;
@@ -107,7 +107,7 @@ export class Transmitter {
       case "disconnect":
         if (this.server.channels[eventName]) {
           this.server.channels[eventName].callbacks.forEach(
-            (cb: Function) => {
+            (cb) => {
               cb(packet);
             },
           );
@@ -189,7 +189,7 @@ export class Transmitter {
    * timeoutPing().
    */
   private startHeartbeat(clientId: number): number {
-    let id = setInterval(() => this.ping(clientId), this.ping_interval);
+    const id = setInterval(() => this.ping(clientId), this.ping_interval);
     return id;
   }
 
