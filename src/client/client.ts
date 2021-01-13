@@ -1,8 +1,17 @@
+import {deferred} from "../../tests/deps.ts";
+
 interface Configs {
   hostname: string,
-  port: string,
+  port: number,
   reconnect: boolean,
   protocol: string,
+}
+
+interface Options {
+  hostname?: string,
+  port?: number,
+  reconnect?: boolean,
+  protocol?: string
 }
 
 /**
@@ -45,7 +54,7 @@ export default class WocketClient {
   /**
    * What channels we are listening to
    */
-  public listening_to: unknown
+  public listening_to: Record<string, (data: Record<string, unknown>) => void>
 
   /**
    * Queue to hold the messages, to eventually fire off
@@ -66,10 +75,10 @@ export default class WocketClient {
    * @description
    *     Construct an object of this class.
    */
-  constructor(options) {
+  constructor(options: Options) {
     this.configs = {
       hostname: options.hostname || "localhost",
-      port: options.port || "3000",
+      port: options.port || 3000,
       reconnect: options.reconnect || true,
       protocol: options.protocol || "ws",
     };
@@ -78,8 +87,10 @@ export default class WocketClient {
     this.listening_to = {};
     this.message_queue = [];
     this.ready = true;
+  }
 
-    this._connectToSocketServer();
+  public async connect() {
+    await this._connectToSocketServer()
   }
 
   // FILE MARKER - METHODS FOR PUBLIC USE //////////////////////////////////////////////////////////
@@ -94,11 +105,11 @@ export default class WocketClient {
    * @param {Function} callback
    *     The callback to execute on receipt of a message from the channel or event.
    */
-  public on(channelOrEvent: string, callback) {
+  public on(channelOrEvent: string, callback: (data: Record<string, unknown>) => void) {
     if (this._isClientReady()) {
-      if (!this.listening_to[channelOrEvent]) {
-        this.listening_to[channelOrEvent] = null;
-      }
+      // if (!this.listening_to![channelOrEvent]) {
+      //   this.listening_to[channelOrEvent] = null;
+      // }
       this.listening_to[channelOrEvent] = callback;
       const message = JSON.stringify({ listening_to: channelOrEvent });
       const encoded = new TextEncoder().encode(message);
@@ -119,12 +130,28 @@ export default class WocketClient {
    *     The message to send to the channel or event.
    */
   public to(channelOrEvent: string, message: {[key: string]: unknown} | Event): void {
-    if (channelOrEvent) {
-      const messageString = JSON.stringify({ [channelOrEvent]: message });
-      const encodedMessage = new TextEncoder().encode(messageString);
-      this.message_queue.push(encodedMessage);
-      this._sendMessagesToSocketServer();
+    const messageString = JSON.stringify({ [channelOrEvent]: message });
+    const encodedMessage = new TextEncoder().encode(messageString);
+    this.message_queue.push(encodedMessage);
+    this._sendMessagesToSocketServer();
+  }
+
+  public connectTo(channelNames: string[]) {
+    const messageString = JSON.stringify({
+      connect_to: channelNames
+    })
+    const encodedMessage = new TextEncoder().encode(messageString)
+    this.message_queue.push(encodedMessage)
+    this._sendMessagesToSocketServer()
+  }
+
+  public async close() {
+    const p = deferred()
+    this.connection!.onclose = function () {
+      p.resolve()
     }
+    this.connection!.close()
+    await p
   }
 
   // FILE MARKER - METHODS FOR INTERNAL USE ////////////////////////////////////////////////////////
@@ -133,7 +160,7 @@ export default class WocketClient {
    * Check if connection is ready for events.
    */
   private _isClientReady(): boolean {
-    return this.connection.readyState === 1;
+    return this.connection!.readyState === 1;
   }
 
   private _reconnectSuccessful(previousId: number): void {
@@ -149,17 +176,21 @@ export default class WocketClient {
   /**
    * Connect to the socket server at the hostname and port specified in the configs.
    */
-  private _connectToSocketServer(reconnect?: boolean) {
+  private async _connectToSocketServer(reconnect?: boolean) {
     //const previousId = reconnect ? this.connection.id : null;
-
     this.connection = new WebSocket(
         `${this.configs.protocol}://${this.configs.hostname}:${this.configs.port}`,
     );
+    const p = deferred()
+    this.connection.onopen = function () {
+      p.resolve()
+    }
+    await p
 
     //if (previousId) {
     //  this._reconnectSuccessful(previousId);
     //}
-    this._listenToSocketClientEvents();
+    //this._listenToSocketClientEvents();
   }
 
   /**
@@ -167,14 +198,14 @@ export default class WocketClient {
    *     Listen to events attached to the client.
    */
   _listenToSocketClientEvents() {
-    this.connection.addEventListener("message", (event) => {
+    this.connection!.addEventListener("message", (event) => {
       this._handleEncodedMessage(event.data);
     });
-    this.connection.addEventListener("error", (event) => {
+    this.connection!.addEventListener("error", (event) => {
       // send error message to server
       this.to("error", event);
     });
-    this.connection.addEventListener("close", () => {
+    this.connection!.addEventListener("close", () => {
       this._connectToSocketServer(true);
     });
   }
@@ -183,15 +214,15 @@ export default class WocketClient {
    * @description
    *     All messages received by the socket server will be handled by this method.
    *
-   * @param {Body}
+   * @param message
    *     The encoded message. See https://developer.mozilla.org/en-US/docs/Web/API/Body for more
    *     information about the Body mixin.
    */
-  private _handleEncodedMessage(message) {
+  private _handleEncodedMessage(message: string | Body) {
     if (typeof message === "string" && "ping") {
       this._pongServer();
     } else if (typeof message === "object") {
-      message.arrayBuffer().then((buffer) => {
+      message.arrayBuffer().then((buffer: ArrayBuffer) => {
         const decodedMessage = this.decoder.decode(buffer);
         const parsedMessage = JSON.parse(decodedMessage);
         Object.keys(parsedMessage).forEach((channelOrEvent) => {
@@ -213,9 +244,9 @@ export default class WocketClient {
       let message = null;
       while (this.message_queue.length) {
         message = new Uint8Array(this.message_queue[0].length);
-        message.set(this.message_queue.pop());
+        message.set(this.message_queue.pop() as Uint8Array);
       }
-      this.connection.send(message);
+      this.connection!.send(message as Uint8Array);
       this.ready = true;
       this._sendMessagesToSocketServer();
     }
@@ -226,6 +257,6 @@ export default class WocketClient {
    *     Send pong message to server.
    */
   private _pongServer(): void {
-    this.connection.send("pong");
+    this.connection!.send("pong");
   }
 }

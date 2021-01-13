@@ -35,7 +35,9 @@ template: |
 
   * Import this latest release by using the following in your project(s):
     ```typescript
-    import { Server } from "https://deno.land/x/wocket@v$RESOLVED_VERSION/mod.ts";
+    import { Server } from "https://deno.land/x/wocket@v$RESOLVED_VERSION/mod.ts"; // Deno, server side
+    import WocketClient from "https://cdn.jsdelivr.net/gh/drashland/wocket-client@$RESOLVED_VERSION/client.js"; // Browser, client side
+    import WocketClient from "https://deno.land/x/wocket@v$RESOLVEDD_VERSION/client.ts"; // Deno, server side if using a client on the server
     ```
 
   __Updates__
