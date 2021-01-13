@@ -1,4 +1,4 @@
-import { Rhum } from "../deps.ts";
+import { Rhum } from "../../deps.ts";
 
 const ClientSocket = () => {
   return {

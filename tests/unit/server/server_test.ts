@@ -1,5 +1,5 @@
-import { Server } from "../../mod.ts";
-import { Rhum } from "../deps.ts";
+import { Server } from "../../../mod.ts";
+import { Rhum } from "../../deps.ts";
 
 Rhum.testPlan("unit/server_test.ts", () => {
   Rhum.testSuite("constructor()", () => {

@@ -1,5 +1,5 @@
-import { Rhum } from "../deps.ts";
-import { Channel } from "../../mod.ts";
+import { Rhum } from "../../deps.ts";
+import { Channel } from "../../../mod.ts";
 
 Rhum.testPlan("unit/channel_test.ts", () => {
   Rhum.testSuite("constructor()", () => {

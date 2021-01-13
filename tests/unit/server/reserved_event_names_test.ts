@@ -1,5 +1,5 @@
-import { RESERVED_EVENT_NAMES } from "../../mod.ts";
-import { Rhum } from "../deps.ts";
+import { RESERVED_EVENT_NAMES } from "../../../mod.ts";
+import { Rhum } from "../../deps.ts";
 
 Rhum.testPlan("unit/reserved_event_names_test.ts", () => {
   Rhum.testSuite("values", () => {

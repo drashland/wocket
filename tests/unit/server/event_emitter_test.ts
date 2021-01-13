@@ -1,5 +1,5 @@
-import { EventEmitter } from "../../mod.ts";
-import { Rhum, WebSocket } from "../deps.ts";
+import { EventEmitter } from "../../../mod.ts";
+import { Rhum, WebSocket } from "../../deps.ts";
 
 const ClientSocket = () => {
   return {
