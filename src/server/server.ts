@@ -7,7 +7,7 @@ import {
   serve,
   serveTLS,
   WebSocket,
-} from "../deps.ts";
+} from "../../deps.ts";
 import { Client } from "./client.ts";
 import { EventEmitter } from "./event_emitter.ts";
 import { ITransmitterOptions } from "./interfaces.ts";
