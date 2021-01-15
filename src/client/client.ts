@@ -92,6 +92,7 @@ export class WocketClient {
 
   public to(channel: string, data: Record<string, unknown>): void {
     const message = {
+      // deno-lint-ignore camelcase
       send_packet: {
         to: channel,
         message: data,
