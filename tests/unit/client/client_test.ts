@@ -24,120 +24,59 @@ const configs = {
 // await server.close()
 
 Rhum.testPlan("tests/unit/client/client_test.ts", () => {
-  // Rhum.testSuite("constructor()", () => {
-  //   Rhum.testCase("Sets the configs correctly w/options", async () => {
-  //     const client = new WocketClient({
-  //       hostname: "beeop boop",
-  //       port: 1234,
-  //       reconnect: false,
-  //       protocol: "wss"
-  //     })
-  //     Rhum.asserts.assertEquals(client.configs, {
-  //       hostname: "beeop boop",
-  //       port: 1234,
-  //       reconnect: false,
-  //       protocol: "wss"
-  //     })
-  //   });
-  //   Rhum.testCase("Sets the configs  correctly w/o options", () => {
-  //     const client = new WocketClient({})
-  //     Rhum.asserts.assertEquals(client.configs, {
-  //       hostname: "localhost",
-  //       port: 3000,
-  //       reconnect: true,
-  //       protocol: "ws"
-  //     })
-  //   })
-  // });
-  // Rhum.testSuite("connect()", () => {
-  //   Rhum.testCase("Should connect to the server", async () => {
-  //     const server = new Server()
-  //     await server.run(configs)
-  //     const client = new WocketClient(configs)
-  //     await client.connect()
-  //     Rhum.asserts.assertEquals(client.connection!.readyState, 1)
-  //     await client.close()
-  //     await server.close()
-  //   })
-  // })
-  // Rhum.testSuite("to()", async () => {
-  //   Rhum.testCase("Should send a message to the channel on the server", async () => {
-  //     const server = new Server()
-  //     await server.run(configs)
-  //     const client = new WocketClient(configs)
-  //     await client.connect()
-  //     const p = deferred()
-  //     server.on("chat", (packet) => {
-  //       p.resolve(packet.message)
-  //     })
-  //     client.connectTo(["chat"])
-  //     client.to("chat", {
-  //       name: "Washington"
-  //     })
-  //     const message = await p
-  //     console.log('closing cllientt in test')
-  //     await client.close()
-  //     await server.close()
-  //     Rhum.asserts.assertEquals(message, {
-  //       name: "Washington"
-  //     })
-  //   })
-  // })
-  // Rhum.testSuite("connectTo()", () => {
-  //   Rhum.testCase("Should connect to the specified channels to allow sending messages", async () => {
-  //     const server = new Server()
-  //     await server.run(configs)
-  //     const client = new WocketClient(configs)
-  //     await client.connect()
-  //     const p1 = deferred()
-  //     server.on("chat", (packet) => {
-  //       p1.resolve(packet.message)
-  //     })
-  //     const p2 = deferred()
-  //     server.on("users", (packet) => {
-  //       p2.resolve(packet.message)
-  //     })
-  //     client.connectTo(["chat", "users"])
-  //     client.to("chat", {
-  //       name: "Washington"
-  //     })
-  //     client.to("users", {
-  //       notify: "Good day sir"
-  //     })
-  //     const message1 = await p1
-  //     const message2 = await p2
-  //     await client.close()
-  //     await server.close()
-  //     Rhum.asserts.assertEquals(message1, {
-  //       name: "Washington"
-  //     })
-  //     Rhum.asserts.assertEquals(message2, {
-  //       notify: "Good day sir"
-  //     })
-  //   })
-  // })
-  // Rhum.testSuite("close()", () => {
-  //   Rhum.testCase("Should close the server", async () => {
-  //     const server = new Server()
-  //     await server.run(configs)
-  //     const client = new WocketClient(configs)
-  //     await client.connect()
-  //     Rhum.asserts.assertEquals(client.connection!.readyState, 1)
-  //     await client.close()
-  //     Rhum.asserts.assertEquals(client.connection!.readyState, 3)
-  //     await server.close()
-  //   })
-  // })
   Rhum.testSuite("connect()", () => {
+    Rhum.testCase("It should throw an error when no channels are passed in", async () => {
+      const server = new Server()
+      await server.run(configs)
+      const c = new WocketClient()
+      let errored = false
+      let msg = ""
+      try {
+        await c.connect({
+          hostname: "localhost",
+          port: 1447,
+          protocol: "ws"
+        }, [])
+      } catch (err) {
+        errored = true
+        msg = err.message
+      }
+      await c.close()
+      await server.close()
+      Rhum.asserts.assertEquals(errored, true)
+      Rhum.asserts.assertEquals(msg, "You must specify channels to connect to.")
+    })
+    Rhum.testCase("It should throw an error when passed in channel(s) do not exist", async () => {
+      const server = new Server()
+      await server.run(configs)
+      const c = new WocketClient()
+      let errored = false
+      let msg = ""
+      try {
+        await c.connect({
+          hostname: "localhost",
+          port: 1447,
+          protocol: "ws"
+        }, ["idontexist"])
+      } catch (err) {
+        errored = true
+        msg = err.message
+      }
+      await c.close()
+      await server.close()
+      Rhum.asserts.assertEquals(errored, true)
+      Rhum.asserts.assertEquals(msg, "Channel \"idontexist\" does not exist. You must open this on your server.")
+    })
     Rhum.testCase("Should connect to the server", async () => {
       const server = new Server()
       await server.run(configs)
+      server.on("chat", (packet) => {})
       const c = new WocketClient()
       await c.connect({
         hostname: "localhost",
         port: 1447,
         protocol: "ws"
-      }, [])
+      }, ["chat"])
       Rhum.asserts.assertEquals(c.websocket!.readyState, 1)
       await c.close()
       await server.close()
@@ -145,11 +84,12 @@ Rhum.testPlan("tests/unit/client/client_test.ts", () => {
     Rhum.testCase("It should set the hostname to 'localhost' by default", async () => {
       const server = new Server()
       await server.run(configs)
+      server.on("chat", (packet) => {})
       const c = new WocketClient()
       await c.connect({
         port: 1447,
         protocol: "ws"
-      }, [])
+      }, ["chat"])
       Rhum.asserts.assertEquals(c.websocket!.readyState, 1)
       await c.close()
       await server.close()
@@ -157,11 +97,12 @@ Rhum.testPlan("tests/unit/client/client_test.ts", () => {
     Rhum.testCase("It should set the protocol to  'ws' by default", async () => {
       const server = new Server()
       await server.run(configs)
+      server.on("chat", (packet) => {})
       const c = new WocketClient()
       await c.connect({
         hostname: "localhost",
         port: 1447,
-      }, [])
+      }, ["chat"])
       Rhum.asserts.assertEquals(c.websocket!.readyState, 1)
       await c.close()
       await server.close()
@@ -198,7 +139,44 @@ Rhum.testPlan("tests/unit/client/client_test.ts", () => {
   })
   Rhum.testSuite("to()", () => {
     Rhum.testCase("It should send a message to the socket server when connected to the channel", async () => {
-
+      const server = new Server()
+      await server.run(configs)
+      const p = deferred()
+      server.on("chat", (packet) => {
+        p.resolve(packet.message)
+      })
+      const c = new WocketClient()
+      await c.connect({
+        hostname: "localhost",
+        port: 1447,
+        protocol: "ws"
+      }, ["chat"])
+      c.to("chat", {
+        d: "diggery doo"
+      })
+      const message = await p
+      Rhum.asserts.assertEquals(message, {
+        d: "diggery doo"
+      })
+      await c.close()
+      await server.close()
+    })
+  })
+  Rhum.testSuite("close()", () => {
+    Rhum.testCase("Should close the connection to the server", async () => {
+      const server = new Server()
+      await server.run(configs)
+      server.on("chat", (packet) => {})
+      const c = new WocketClient()
+      await c.connect({
+        hostname: "localhost",
+        port: 1447,
+        protocol: "ws"
+      }, ["chat"])
+      Rhum.asserts.assertEquals(c.websocket!.readyState, 1)
+      await c.close()
+      Rhum.asserts.assertEquals(c.websocket!.readyState, 3)
+      await server.close()
     })
   })
 });

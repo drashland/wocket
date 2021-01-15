@@ -50,20 +50,30 @@ export class WocketClient {
     await connected
 
     // Connect to channels
+    if (!channels.length) {
+      throw new Error("You must specify channels to connect to.")
+    }
     const channelsSetup = deferred()
     let channelsConnectedTo = 0
+    let error: string | null = null
     this.websocket.onmessage = function (event) {
       if (typeof event.data === "string" && event.data.includes("Connected to")) {
         channelsConnectedTo++
-        if (channels.length ===  channelsConnectedTo) {
+        if (channels.length === channelsConnectedTo) {
           channelsSetup.resolve()
         }
+      } else if (event.data.includes("Channel") && event.data.includes("does not exist.")) {
+        error = `${event.data} You must open this on your server.`
+        channelsSetup.resolve() // resolving as we are done here, we will throw an error
       }
     }
     this.websocket.send(JSON.stringify({
       connect_to: channels
     }))
     await channelsSetup
+    if (error) {
+      throw new Error(error)
+    }
 
     // initialise message listener
     this.websocket.onmessage = (event) => {
