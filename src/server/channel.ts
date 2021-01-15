@@ -1,4 +1,4 @@
-import { WebSocket } from "../deps.ts";
+import { WebSocket } from "../../deps.ts";
 import { Packet } from "./packet.ts";
 
 /**

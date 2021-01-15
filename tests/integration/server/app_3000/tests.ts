@@ -1,5 +1,5 @@
-import { Packet, Server } from "../../../mod.ts";
-import { deferred, Rhum, WebSocket } from "../../deps.ts";
+import { Packet, Server } from "../../../../mod.ts";
+import { deferred, Rhum, WebSocket } from "../../../deps.ts";
 
 ////////////////////////////////////////////////////////////////////////////////
 // WEB SOCKET SERVER SETUP /////////////////////////////////////////////////////

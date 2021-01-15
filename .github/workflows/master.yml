@@ -21,14 +21,18 @@ jobs:
       - name: Install Deno
         uses: denolib/setup-deno@master
 
-      - name: Unit
+      - name: Server Unit Tests
         run: |
-          deno test --allow-all tests/unit/tests.ts
+          deno test --allow-all tests/unit/server/tests.ts
 
-      - name: Integration
+      - name: Server Integration Tests
         run: |
-          deno test --allow-all tests/integration/app_3000/tests.ts
-          #deno test --allow-all tests/integration/app_3001/tests.ts # throws rust errors
+          deno test --allow-all tests/integration/server/app_3000/tests.ts
+          #deno test --allow-all tests/integration/server/app_3001/tests.ts # throws rust errors
+
+      - name: Client Unit Tests
+        run: |
+          deno test -A tests/unit/client
 
   linter:
     # Only one OS is required since fmt is cross platform
@@ -44,5 +48,5 @@ jobs:
         run: deno fmt --check
 
       - name: Linter
-        run: deno lint --unstable --ignore=tests/example_apps
+        run: deno lint --unstable --ignore=tests/example_apps,src/client/client.js
 

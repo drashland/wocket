@@ -1,4 +1,4 @@
-import { WebSocket } from "../deps.ts";
+import { WebSocket } from "../../deps.ts";
 
 /**
  * The Client class represents a single end-user client.  It contains
