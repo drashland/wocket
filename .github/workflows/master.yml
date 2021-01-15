@@ -34,10 +34,6 @@ jobs:
         run: |
           deno test -A tests/unit/client
 
-      - name: Client Integration Tests
-        run: |
-          deno test -A tests/integration/client
-
   linter:
     # Only one OS is required since fmt is cross platform
     runs-on: ubuntu-latest
