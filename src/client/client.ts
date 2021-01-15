@@ -1,19 +1,5 @@
 import { deferred } from "../../tests/deps.ts";
 
-interface Configs {
-  hostname: string;
-  port: number;
-  reconnect: boolean;
-  protocol: string;
-}
-//
-// interface Options {
-//   hostname?: string,
-//   port?: number,
-//   reconnect?: boolean,
-//   protocol?: string
-// }
-
 interface Options {
   hostname?: string;
   port?: number;
