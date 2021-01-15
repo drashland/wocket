@@ -48,5 +48,5 @@ jobs:
         run: deno fmt --check
 
       - name: Linter
-        run: deno lint --unstable --ignore=tests/example_apps
+        run: deno lint --unstable --ignore=tests/example_apps,src/client/client.js
 
