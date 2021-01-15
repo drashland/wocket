@@ -1,10 +1,10 @@
-import {deferred} from "../../tests/deps.ts";
+import { deferred } from "../../tests/deps.ts";
 
 interface Configs {
-  hostname: string,
-  port: number,
-  reconnect: boolean,
-  protocol: string,
+  hostname: string;
+  port: number;
+  reconnect: boolean;
+  protocol: string;
 }
 //
 // interface Options {
@@ -15,100 +15,106 @@ interface Configs {
 // }
 
 interface Options {
-  hostname?: string,
-  port?: number,
-  protocol?: "ws" | "wss",
-  path?: string
+  hostname?: string;
+  port?: number;
+  protocol?: "ws" | "wss";
+  path?: string;
 }
 
 export class WocketClient {
+  public websocket: WebSocket | null = null;
 
-  public websocket:  WebSocket | null= null
-
-  public listeners: Record<string, (data: Record<string, unknown>) => void> = {}
+  public listeners: Record<string, (data: Record<string, unknown>) => void> =
+    {};
 
   constructor() {
-
   }
 
   public async connect(opts: Options, channels: string[]): Promise<void> {
-    if (!opts.hostname) opts.hostname = "localhost"
-    if (!opts.port) opts.port = 3000
-    if (!opts.protocol) opts.protocol = "ws"
-    if (!opts.path) opts.path = ""
+    if (!opts.hostname) opts.hostname = "localhost";
+    if (!opts.port) opts.port = 3000;
+    if (!opts.protocol) opts.protocol = "ws";
+    if (!opts.path) opts.path = "";
 
     // Connect
-    const connected = deferred()
-    const url = `${opts.protocol}://${opts.hostname}:${opts.port}${opts.path}`
-    this.websocket = new WebSocket(url)
+    const connected = deferred();
+    const url = `${opts.protocol}://${opts.hostname}:${opts.port}${opts.path}`;
+    this.websocket = new WebSocket(url);
     this.websocket.onopen = function () {
-      connected.resolve()
-    }
+      connected.resolve();
+    };
     this.websocket.onerror = function () {
-      throw new Error("Error.. todo")
-    }
-    await connected
+      throw new Error("Error.. todo");
+    };
+    await connected;
 
     // Connect to channels
     if (!channels.length) {
-      throw new Error("You must specify channels to connect to.")
+      throw new Error("You must specify channels to connect to.");
     }
-    const channelsSetup = deferred()
-    let channelsConnectedTo = 0
-    let error: string | null = null
+    const channelsSetup = deferred();
+    let channelsConnectedTo = 0;
+    let error: string | null = null;
     this.websocket.onmessage = function (event) {
-      if (typeof event.data === "string" && event.data.includes("Connected to")) {
-        channelsConnectedTo++
+      if (
+        typeof event.data === "string" && event.data.includes("Connected to")
+      ) {
+        channelsConnectedTo++;
         if (channels.length === channelsConnectedTo) {
-          channelsSetup.resolve()
+          channelsSetup.resolve();
         }
-      } else if (event.data.includes("Channel") && event.data.includes("does not exist.")) {
-        error = `${event.data} You must open this on your server.`
-        channelsSetup.resolve() // resolving as we are done here, we will throw an error
+      } else if (
+        event.data.includes("Channel") && event.data.includes("does not exist.")
+      ) {
+        error = `${event.data} You must open this on your server.`;
+        channelsSetup.resolve(); // resolving as we are done here, we will throw an error
       }
-    }
+    };
     this.websocket.send(JSON.stringify({
-      connect_to: channels
-    }))
-    await channelsSetup
+      connect_to: channels,
+    }));
+    await channelsSetup;
     if (error) {
-      throw new Error(error)
+      throw new Error(error);
     }
 
     // initialise message listener
     this.websocket.onmessage = (event) => {
-      const json = JSON.parse(event.data)
-      const channel = json.to
-      const from = json.from
-      const message = json.message
+      const json = JSON.parse(event.data);
+      const channel = json.to;
+      const from = json.from;
+      const message = json.message;
       if (this.listeners[channel]) {
-        this.listeners[channel](message)
+        this.listeners[channel](message);
       }
-    }
+    };
   }
 
-  public to (channel: string, data: Record<string, unknown>): void {
+  public to(channel: string, data: Record<string, unknown>): void {
     const message = {
       send_packet: {
         to: channel,
-        message: data
-      }
-    }
-    const msgStr = JSON.stringify(message)
-    this.websocket!.send(msgStr)
+        message: data,
+      },
+    };
+    const msgStr = JSON.stringify(message);
+    this.websocket!.send(msgStr);
   }
 
-  public on (channel: string, cb: (data: Record<string, unknown>) => void): void {
-    this.listeners[channel] = cb
+  public on(
+    channel: string,
+    cb: (data: Record<string, unknown>) => void,
+  ): void {
+    this.listeners[channel] = cb;
   }
 
-  public async close ()  {
-    const p = deferred()
+  public async close() {
+    const p = deferred();
     this.websocket!.onclose = function () {
-      p.resolve()
-    }
-    this.websocket!.close()
-    await p
+      p.resolve();
+    };
+    this.websocket!.close();
+    await p;
   }
 }
 
