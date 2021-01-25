@@ -22,13 +22,16 @@
 
 ---
 
-**_Although Wocket has working code, it is still very much under development and unstable. APIs will change without notice. Sorry for any inconvenience!_**
+**_Although Wocket has working code, it is still very much under development and
+unstable. APIs will change without notice. Sorry for any inconvenience!_**
 
 ### Getting Started
 
-Get started [here](https://drash.land/wocket/#/#quickstart) to build a basic WebSocket server using Wocket.
+Get started [here](https://drash.land/wocket/#/#quickstart) to build a basic
+WebSocket server using Wocket.
 
-Alternatively, you can navigate through the [full documentation](https://drash.land/wocket) and check out the tutorials.
+Alternatively, you can navigate through the
+[full documentation](https://drash.land/wocket) and check out the tutorials.
 
 ### Features
 
@@ -37,4 +40,6 @@ Alternatively, you can navigate through the [full documentation](https://drash.l
 
 ---
 
-Want to contribute? Follow the Contributing Guidelines [here](https://github.com/drashland/.github/blob/master/CONTRIBUTING.md). All code is released under the [MIT License](./LICENSE).
+Want to contribute? Follow the Contributing Guidelines
+[here](https://github.com/drashland/.github/blob/master/CONTRIBUTING.md). All
+code is released under the [MIT License](./LICENSE).
