@@ -36,7 +36,7 @@ Alternatively, you can navigate through the
 ### Features
 
 - JSON encoding
-- Zero dependencies
+- Zero 3rd party dependencies
 
 ---
 
