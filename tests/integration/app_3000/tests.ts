@@ -289,7 +289,7 @@ Rhum.testPlan("app_3000", () => {
           if (messageCount === 1) {
             Rhum.asserts.assertEquals(
               message.data,
-              'Channel \"chan2\" does not exist.',
+              'Channel "chan2" does not exist.',
             );
           } else {
             Rhum.asserts.assertEquals(
