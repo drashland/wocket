@@ -4,5 +4,4 @@ import "./reserved_event_names_test.ts";
 import "./channel_test.ts";
 import "./client_test.ts";
 import "./packet_test.ts";
-import "./sender_test.ts";
 import "./transmitter_test.ts";
