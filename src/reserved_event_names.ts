@@ -1,8 +1,10 @@
 export const RESERVED_EVENT_NAMES = [
   "connect",
   "disconnect",
-  "error",
+  "id",
   "listening_to",
   "pong",
+  "ping",
   "reconnect",
+  "test",
 ];

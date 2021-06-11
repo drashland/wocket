@@ -1,4 +1,6 @@
 import { Client } from "./client.ts";
+import { Channel } from "./channel.ts";
+import { Server } from "./server.ts";
 import { EventEmitter } from "./event_emitter.ts";
 
 // TODO(sara) Add description
@@ -6,7 +8,7 @@ export class Packet {
   /**
    * A property to hold the sender.
    */
-  from: Client | EventEmitter;
+  sender: Channel | Client;
 
   /**
    * A property to hold the message this packet contains.
@@ -14,9 +16,9 @@ export class Packet {
   message?: unknown;
 
   /**
-   * A property to hold the address this packet is going to.
+   * A property to hold the receiver of this packet.
    */
-  to: string;
+  receiver: Channel | Client;
 
   //////////////////////////////////////////////////////////////////////////////
   // FILE MARKER - CONSTRUCTOR /////////////////////////////////////////////////
@@ -26,14 +28,22 @@ export class Packet {
    * Construct an object of this class.
    */
   constructor(
-    from: Client | EventEmitter,
-    to: string,
+    sender: Channel | Client,
+    receiver: Channel | Client,
     message?: unknown,
   ) {
-    this.from = from;
-    this.to = to;
+    this.sender = sender;
+    this.receiver = receiver;
     if (message) {
       this.message = message;
     }
   }
+
+  // public toEntity(): string {
+  //   return JSON.stringify({
+  //     sender: this.getSender(),
+  //     receiver: this.getReceiver(),
+  //     message: this.message,
+  //   });
+  // }
 }

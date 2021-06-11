@@ -1,6 +1,6 @@
-import { Sender } from "./sender.ts";
-import { Channel } from "./channel.ts";
+// import { Transmitter } from "./transmitter.ts";
 import { Client } from "./client.ts";
+import { Channel } from "./channel.ts";
 import { WebSocket } from "../deps.ts";
 import { Packet } from "./packet.ts";
 import { RESERVED_EVENT_NAMES } from "./reserved_event_names.ts";
@@ -12,26 +12,16 @@ import { RESERVED_EVENT_NAMES } from "./reserved_event_names.ts";
  */
 export class EventEmitter {
   /**
-   * Used to identify this class (when having sent messages) as the Server.
+   * A queue of packets.
    */
-  public id = "Server";
+  protected packet_queue: Packet[] = [];
 
   /**
-   * A list of key value pairs describing all created channels, where the key is
-   * the channel name, and the value represents the channel object.
+   * Tells `Sender` when it is ready to work through the packet queue. For
+   * instance, whilst sending a packet, `ready` is `false` and once the packet
+   * is sent, the class is ready to send another packet.
    */
-  public channels: { [key: string]: Channel } = {};
-
-  /**
-   * A list of key value pairs describing all clients connected, where the key
-   * is the client id, and the value represents the client object.
-   */
-  public clients: { [key: number]: Client } = {};
-
-  /**
-   * Instance of the Sender class
-   */
-  public sender: Sender;
+  protected ready = true;
 
   //////////////////////////////////////////////////////////////////////////////
   // FILE MARKER - CONSTRUCTOR /////////////////////////////////////////////////
@@ -41,7 +31,7 @@ export class EventEmitter {
    * Construct an object of this class.
    */
   constructor() {
-    this.sender = new Sender();
+    // this.transmitter = new Transmitter();
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -49,158 +39,19 @@ export class EventEmitter {
   //////////////////////////////////////////////////////////////////////////////
 
   /**
-   * Adds a new client.
-   *
-   * @param clientId - Client's socket connection id.
-   * @param clientSocket - The client as a WebSocket instance.
-   *
-   * @returns A Client instance for use in the socket-client connection
-   * lifecycle.
+   * Broadcasts a message to all receivers of a channel.
    */
-  public createClient(clientId: number, clientSocket: WebSocket): Client {
-    const client = new Client(clientId, clientSocket);
-    this.clients[clientId] = client;
-    return client;
+  public broadcast(packet: Packet): void {
+    this.to(packet);
   }
 
   /**
-   * Adds a new client to a channel. Once the client is added, the client will
-   * be able to receive messages sent to the channel.
+   * Does this sender have packets that still need to be sent?
    *
-   * @param channelName - The name of the channel.
-   * @param clientId - Client's socket connection id.
+   * @returns True if yes, false if not.
    */
-  public addClientToChannel(channelName: string, clientId: number): void {
-    if (!this.channels[channelName]) {
-      throw new Error(`Channel "${channelName}" does not exist.`);
-    }
-
-    if (!this.channels[channelName].listeners.has(clientId)) {
-      this.channels[channelName].listeners.set(
-        clientId,
-        this.clients[clientId].socket,
-      );
-      this.clients[clientId].listening_to.push(channelName);
-      return;
-    }
-
-    throw new Error(`Already listening to ${channelName}.`);
-  }
-
-  /**
-   * Broadcasts a message to all receivers of a channel. pkgOrMessage does not
-   * contain "from" key.
-   *
-   * @param channelName - The name of the channel.
-   * @param message - The message to broadcast.
-   */
-  public broadcast(channelName: string, message: unknown): void {
-    this.to(channelName, message);
-  }
-
-  /**
-   * Close a channel.
-   *
-   * @param channelName - The name of the channel.
-   */
-  public closeChannel(channelName: string): void {
-    for (const client of Object.values(this.clients)) {
-      client.socket.send(`${channelName} closed.`);
-    }
-    delete this.channels[channelName];
-  }
-
-  /**
-   * Get all clients.
-   *
-   * @returns All clients.
-   */
-  public getClients(): { [key: string]: Client } {
-    return this.clients;
-  }
-
-  /**
-   * Get a channel by the channel name
-   *
-   * @param channelName - The name of the channel to retrieve
-   *
-   * @returns The specified channel.
-   */
-  public getChannel(channelName: string): Channel {
-    return this.channels[channelName];
-  }
-
-  /**
-   * Get all of the channels.
-   *
-   * @returns An array with all of the channel names.
-   */
-  public getChannels(): string[] {
-    const channels = [];
-    for (const channelName in this.channels) {
-      // Ignore the following channels
-      if (RESERVED_EVENT_NAMES.indexOf(channelName) !== -1) {
-        continue;
-      }
-      channels.push(channelName);
-    }
-    return channels;
-  }
-
-  /**
-   * Create and open a channel, and create a listener for events on that channel
-   *
-   * @param name - The name of the channel.
-   * @param cb - Callback to be invoked when a message is sent to the channel.
-   */
-  public on(name: string, cb: (packet: Packet) => void): void {
-    if (this.channels[name]) {
-      throw new Error(`Channel "${name}" already exists!`);
-    }
-    this.channels[name] = new Channel(name);
-    this.channels[name].callbacks.push(cb);
-  }
-
-  /**
-   * Removes an existing client from server and any channels that the client
-   * subscribed to.
-   *
-   * @param clientId - The ID of the client's socket connection.
-   */
-  public removeClient(clientId: number): void {
-    if (!this.clients[clientId]) return;
-    if (this.clients[clientId].listening_to) {
-      this.clients[clientId].listening_to.forEach((to: string) => {
-        if (this.channels[to]) {
-          this.channels[to].listeners.delete(clientId);
-        }
-      });
-    }
-
-    delete this.clients[clientId];
-  }
-
-  /**
-   * Removes a client from a channel.
-   *
-   * @param channelName - The name of the channel.
-   * @param clientId - Client's socket connection id.
-   */
-  public removeClientFromChannel(channelName: string, clientId: number): void {
-    if (!this.channels[channelName]) {
-      throw new Error(`Channel "${channelName}" not found.`);
-    }
-
-    if (this.channels[channelName].listeners.has(clientId)) {
-      this.channels[channelName].listeners.delete(clientId);
-      const index = this.clients[clientId].listening_to.indexOf(channelName);
-      if (index > -1) {
-        this.clients[clientId].listening_to.splice(index, 1);
-        return;
-      }
-    }
-
-    throw new Error(`Not connected to ${channelName}.`);
+  public hasPackets(): boolean {
+    return this.packet_queue.length > 0;
   }
 
   /**
@@ -210,36 +61,64 @@ export class EventEmitter {
    * @param message - The message to send.
    * @param clientToSendTo - Optional. If you wish to send the event to a specific client, specify the client id
    */
-  public to(
-    channelName: string,
-    message: unknown,
-    clientToSendTo?: number,
-  ): void {
-    this.queuePacket(
-      new Packet(
-        this,
-        channelName,
-        message,
-      ),
-      clientToSendTo,
-    );
+  public to(packet: Packet): void {
+    // Queue the packet
+    this.packet_queue.push(packet);
+
+    // Fkn send it!
+    // this.transmitter.send();
   }
 
   //////////////////////////////////////////////////////////////////////////////
-  // FILE MARKER - METHODS - PRIVATE ///////////////////////////////////////////
+  // FILE MARKER - METHODS - PROTECTED /////////////////////////////////////////
   //////////////////////////////////////////////////////////////////////////////
 
   /**
-   * Add a packet to the queue so that the message contained in the packet can
-   * be sent to the client(s).
-   *
-   * @param packet - See Packet.
-   * @param clientToSendTo - If set, only send the packet to that client
+   * Encodes messages and sends event to all clients listening to the channel or
+   * event except for the sender.
    */
-  private queuePacket(packet: Packet, clientToSendTo?: number): void {
-    if (!this.channels[packet.to]) {
-      throw new Error(`Channel "${packet.to}" not found.`);
+  protected async send(): Promise<void> {
+    if (this.ready && this.hasPackets()) {
+      this.ready = false;
+      try {
+        const packet = this.packet_queue.shift()!;
+
+        if (packet.receiver instanceof Channel) {
+          return this.sendToChannel(packet);
+        }
+
+        if (packet.receiver instanceof Client) {
+          // return this.sendToClient(packet);
+        }
+
+      } catch (_error) {
+        // Do nothing bruv. The most likey cause for an error is calling the
+        // .shift() on the packet queue. If no messages exist in the packet
+        // queue, then whatever. We do not care.
+      }
+      this.ready = true;
+      this.send();
     }
-    this.sender.add(packet, this.channels[packet.to], clientToSendTo);
+  }
+
+  protected async sendToChannel(packet: Packet): Promise<void> {
+    for await (const packet of this.packet_queue) {
+      // Don't send to sender
+      // Don't send it to clients other than the receiver
+      // try {
+      //   // Serialize the message
+      //   const message = JSON.stringify({
+      //     sender: queueItem.packet.sender instanceof EventEmitter
+      //       ? "Server"
+      //       : queueItem.packet.sender.id.toString(),
+      //     receiver: queueItem.packet.receiver,
+      //     message: queueItem.packet.message,
+      //   });
+      //   // Send the message
+      //   await socketConn.send(message);
+      // } catch (err) {
+      //   console.log(`Unable to send message to Client #${clientId}.`);
+      // }
+    }
   }
 }

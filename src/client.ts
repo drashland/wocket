@@ -1,4 +1,5 @@
 import { WebSocket } from "../deps.ts";
+import { Channel } from "./channel.ts";
 
 /**
  * The Client class represents a single end-user client.  It contains
@@ -21,7 +22,7 @@ export class Client {
   /**
    * A list of channels the client is listening to.
    */
-  public listening_to: string[] = [];
+  public channels: Map<string, Channel> = new Map();
 
   /**
    * How we know that the client connection is ready for a message.
@@ -29,7 +30,7 @@ export class Client {
   public pong_received = false;
 
   /**
-   * The web socket connection for the client.
+   * This client's WebSocket instance.
    */
   public socket: WebSocket;
 
@@ -46,5 +47,19 @@ export class Client {
   constructor(id: number, socket: WebSocket) {
     this.id = id;
     this.socket = socket;
+  }
+
+  //////////////////////////////////////////////////////////////////////////////
+  // FILE MARKER - PUBLIC //////////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////////////
+
+  public listenToChannel(channel: Channel): void {
+    this.channels.set(channel.name, channel);
+  }
+
+  public disconnectFromAllChannels(): void {
+    this.channels.forEach((channel: Channel) => {
+      channel.disconnectClient(this);
+    });
   }
 }

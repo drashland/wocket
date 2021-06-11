@@ -7,7 +7,6 @@ Rhum.testPlan("unit/reserved_event_names_test.ts", () => {
       Rhum.asserts.assertEquals(RESERVED_EVENT_NAMES, [
         "connect",
         "disconnect",
-        "error",
         "listening_to",
         "pong",
         "reconnect",
