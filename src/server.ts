@@ -1,14 +1,14 @@
 import {
-  BufWriter,
-  BufReader,
   acceptWebSocket,
+  BufReader,
+  BufWriter,
   DenoServer,
   HTTPOptions,
   HTTPSOptions,
   isWebSocketCloseEvent,
   serve,
-  serveTLS,
   ServerRequest,
+  serveTLS,
   WebSocket,
   WebSocketEvent,
 } from "../deps.ts";
@@ -18,6 +18,7 @@ import { EventEmitter } from "./event_emitter.ts";
 import { ITransmitterOptions } from "./interfaces.ts";
 import { Packet } from "./packet.ts";
 import { Callback } from "./types.ts";
+import { IIncomingMessage } from "./interfaces.ts";
 // import { Transmitter } from "./transmitter.ts";
 import { RESERVED_EVENT_NAMES } from "./reserved_event_names.ts";
 
@@ -65,12 +66,6 @@ export class Server extends EventEmitter {
    */
   public port = 1557;
 
-  /**
-   * A property to hold the transmitter. The transmitter is in charge of
-   * transmitting data throughout the server-client lifecycle.
-   */
-  // public transmitter: Transmitter;
-
   //////////////////////////////////////////////////////////////////////////////
   // FILE MARKER - CONSTRUCTOR /////////////////////////////////////////////////
   //////////////////////////////////////////////////////////////////////////////
@@ -80,9 +75,8 @@ export class Server extends EventEmitter {
    *
    * @param transmitterOptions - See ITransmitterOptions.
    */
-  constructor(transmitterOptions?: ITransmitterOptions) {
-    super();
-    // this.transmitter = new Transmitter(this, transmitterOptions);
+  constructor() {
+    super("wocket_server");
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -92,34 +86,13 @@ export class Server extends EventEmitter {
   /**
    * Close the server.
    */
-  public async close(): Promise<void> {
-    // Allow any messages in the pipeline to be properly handled before closing.
-    // Obviously this is a hack, but removing this block will sometimes cause
-    // some test cases to fail - still unsure why.
-    const p = new Promise((resolve) => {
-      // No real reason for it to be 1 other than this fixes the issue as stated
-      // above; and isn't a long ass time to wait - I (Edward) did have it at
-      // 500, then Eric suggested what happens at 1ms, so we changed it to that
-      // and funnily enough, it still fixes thee issue, which is why it is 1ms.
-      setTimeout(() => {
-        resolve("");
-      }, 1);
-    });
-
-    await p;
-
-    // If there are messages still being sent, then make sure all of them are
-    // sent before closing.
-    while (true) {
-      if (!this.hasPackets()) {
-        if (this.deno_server) {
-          try {
-            this.deno_server.close();
-          } catch (error) {
-            break;
-          }
-        }
+  public close(): void {
+    try {
+      if (this.deno_server) {
+        this.deno_server.close();
       }
+    } catch (_error) {
+      // Do. nuh. thing.
     }
   }
 
@@ -211,9 +184,16 @@ export class Server extends EventEmitter {
 
   /**
    * Handle connection requests to this server.
+   *
+   * @param request - The request coming into the server. For example, if a user
+   * were to open their browser's console and type ...
+   *
+   *    const connection = new WebSocket("ws://127.0.0.1:1777");
+   *
+   * ... then this method would ultimately handle that connection request.
    */
   protected async handleConnectionRequest(
-    request: DenoWebSocketRequest
+    request: DenoWebSocketRequest,
   ): Promise<void> {
     const { conn, headers, r: bufReader, w: bufWriter } = request;
 
@@ -229,7 +209,7 @@ export class Server extends EventEmitter {
     this.clients.set(client.id, client);
 
     // Connect the client to this server
-    this.handleEventAsReservedEvent(client, "connect");
+    this.handleReservedEvent(client, "connect");
   }
 
   /**
@@ -243,7 +223,11 @@ export class Server extends EventEmitter {
 
     client.disconnectFromAllChannels();
 
-    client.socket.close(1000);
+    // Check if the client is already closed. If this is not checked, then the
+    // server will crash.
+    if (!client.socket.isClosed) {
+      client.socket.close(1000);
+    }
 
     this.clients.delete(client.id);
   }
@@ -254,11 +238,21 @@ export class Server extends EventEmitter {
    * @param clientSocket
    */
   protected async listenForClientEvents(client: Client): Promise<void> {
-    for await (const event of client.socket) {
+    for await (const webSocketEvent of client.socket) {
       try {
-        this.handleEvent(client, event);
+        this.handleWebSocketEvent(client, webSocketEvent);
       } catch (error) {
-        client.socket.send(error.message);
+        // Something must have happened to the client's connection on the
+        // client's side
+        if (client.socket.isClosed) {
+          this.handleReservedEvent(client, "disconnect");
+          continue;
+        }
+
+        try {
+          client.socket.send(error.stack ?? error.message);
+        } catch (error) {
+        }
       }
     }
   }
@@ -281,7 +275,7 @@ export class Server extends EventEmitter {
     }
 
     try {
-      JSON.parse(event);
+      JSON.parse(event as string);
     } catch (_error) {
       return false;
     }
@@ -292,73 +286,73 @@ export class Server extends EventEmitter {
   /**
    * @param packet - See Packet.
    */
-  protected handleEvent(client: Client, event: WebSocketEvent): void {
+  protected handleWebSocketEvent(client: Client, event: WebSocketEvent): void {
     if (this.isReservedEvent(event)) {
-      return this.handleEventAsReservedEvent(client, event as string);
+      return this.handleReservedEvent(
+        client,
+        (event as string).trim(),
+      );
     }
 
     if (this.isJsonEvent(event)) {
-      return this.handleEventAsJson(client, event as string);
+      return this.handleMessage(
+        client,
+        JSON.parse(event as string) as IIncomingMessage,
+      );
     }
 
     // if (this.isUnit8ArrayEvent(event)) {
-    //   return this.handleEventAsUnit8Array(client, event);
+    //   return this.handleMessageAsUnit8Array(client, event);
     // }
 
-    client.socket.send("Could not handle event as Unit8Array, JSON, or RESERVED_EVENT.");
+    throw new Error(
+      "Could not handle event as Unit8Array, JSON, or RESERVED_EVENT.",
+    );
   }
 
-  protected handleEventAsJson(client: Client, jsonString: string): void {
-    const json = JSON.parse(jsonString);
+  protected handleMessage(client: Client, message: IIncomingMessage): void {
+    this.validateMessageFields(message);
 
-    if (!json.action) {
-      throw new Error(`Event does not contain "action" field.`);
+    message.to.forEach((receiver: string | number) => {
+      try {
+        const receiverObj = this.getReceiverOfPacket(receiver);
+        const result = receiverObj.handleMessage(client, message);
+        if (!result) {
+          // TODO: Send to dead letter queue
+          throw new Error("Failed to send message.");
+        }
+      } catch (error) {
+        return client.socket.send(error.stack);
+      }
+    });
+  }
+
+  protected validateMessageFields(message: IIncomingMessage): void {
+    if (!message.to) {
+      throw new Error(`Message is missing the "to" field.`);
     }
 
-    switch (json.action) {
-      // If the following event was received:
-      //
-      // {
-      //   "action": "send_packet",
-      //   "to": ["array of channels or client IDs"],
-      //   "data": <some type -- could be anything>
-      // }
-      //
-      case "send_packet":
-        if (!json.to) {
-          throw new Error(`Event does not contain "to" field.`);
-        }
+    if (!Array.isArray(message.to)) {
+      throw new Error(`Message "to" field must be an array.`);
+    }
 
-        if (!json.data && json.data != "") {
-          throw new Error(`Event does not contain "data" field.`);
-        }
-
-        const packets: Packet[] = [];
-
-        json.to.forEach((to: string | number) => {
-          packets.push(new Packet(
-            client,
-            this.getReceiverOfPacket(to as string),
-            json.data
-          ));
-        });
-
-        console.log(packets);
-        break;
-
-      default:
-        client.socket.send(`Could not handle event as JSON. Event "action" unknown.`);
-        break;
+    if (
+      !message.body &&
+      (!message.body && (message.body as string).trim() != "")
+    ) {
+      if ((message.body as string).trim() == "") {
+        throw new Error(`Message is missing the "body" field.`);
+      }
     }
   }
 
-  protected getReceiverOfPacket(receiver: string): Channel | Client {
-    const id = +receiver; // Convert to an number
+  protected getReceiverOfPacket(receiver: string | number): Channel | Client {
+    const id = +receiver;
 
-    // If the recevier is not a number, then we know it's a channel because all
-    // channels are strings and all clients are numbers
+    // Not a number? That means the receiver is a channel because all channels
+    // are strings and all clients are numbers.
     if (isNaN(id)) {
-      return this.getChannel(receiver);
+      return this.getChannel(receiver as string);
     }
 
     return this.getClient(id);
@@ -367,27 +361,40 @@ export class Server extends EventEmitter {
   /**
    * @param packet - See Packet.
    */
-  protected handleEventAsReservedEvent(client: Client, eventName: string): void {
-    switch (eventName) {
-
+  protected handleReservedEvent(
+    client: Client,
+    message: string,
+  ): void {
+    switch (message) {
       // Occurs when this server tries to connect a client
 
       case "connect":
-        this.getChannel("connect").executeCallbacks();
+        this.getChannel("connect")
+          .executeCallbacks(
+            new CustomEvent("wocket_reserved", {
+              detail:
+                `You have been connected to the server as Client ${client.id}.`,
+            }),
+          );
         this.listenForClientEvents(client);
         break;
 
       // Occurs when this server tries to disconnect a client
 
       case "disconnect":
-        this.getChannel("disconnect").executeCallbacks();
+        this.getChannel("disconnect")
+          .executeCallbacks(
+            new CustomEvent("wocket_reserved", {
+              detail: "You have been disconneted from the server.",
+            }),
+          );
         this.disconnectClient(client.id);
         break;
 
       // Occurs when the client sends "id" as the message
 
       case "id":
-        client.socket.send(`Client ID: ${client.id}`);
+        client.socket.send(`${client.id}`);
         break;
 
       // Occurs when the client sends "ping" as the message
@@ -475,7 +482,8 @@ export class Server extends EventEmitter {
     try {
       channel = this.getChannel(channelName);
     } catch (error) {
-      // If we ended up here, then that means the channel doesn't exist
+      // If we ended up here, then that means the channel doesn't exist, so we
+      // create it
       channel = new Channel(channelName);
       this.channels.set(channelName, channel);
     }

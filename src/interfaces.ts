@@ -18,3 +18,8 @@ export interface ITransmitterOptions {
    */
   reconnect?: boolean;
 }
+
+export interface IIncomingMessage {
+  to: Array<string | number>;
+  body: unknown;
+}

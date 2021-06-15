@@ -10,11 +10,11 @@ export class Transmitter {
   //////////////////////////////////////////////////////////////////////////////
 
   /**
-   * Decodes and validates incoming messages.
+   * Queues the packets to be sent in order.
    *
    * @param packet - See Packet.
    */
-  public async sendPacket(packet: Packet): Promise<void> {
+  public async sendPackets(packets: Packet[]): Promise<void> {
   }
 
   /**

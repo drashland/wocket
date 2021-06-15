@@ -2,12 +2,14 @@ import { WebSocket } from "../deps.ts";
 import { Packet } from "./packet.ts";
 import { Client } from "./client.ts";
 import { Callback } from "./types.ts";
+import { EventEmitter } from "./event_emitter.ts";
+import { IIncomingMessage } from "./interfaces.ts";
 
 /**
  * Channel represents channels, also known as "rooms". This class describes open
  * channels, and is used to place clients into
  */
-export class Channel {
+export class Channel extends EventEmitter {
   /**
    * The callbacks for listening
    *
@@ -17,13 +19,6 @@ export class Channel {
    * `handleChannel1` is now registered as a callback.
    */
   public callbacks: Callback[] = [];
-
-  /**
-   * The name of the channel to create
-   *
-   *     new Channel("channel 1");
-   */
-  public name: string;
 
   /**
    * Acts as the list of clients connected to the channel.  A listener would
@@ -46,7 +41,11 @@ export class Channel {
    * @param name - The name of the channel.
    */
   constructor(name: string) {
-    this.name = name;
+    super(`wocket_channel_${name}`);
+    this.addEventListener(this.name, (event: Event) => {
+      console.log(event);
+      // this.emit(event);
+    });
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -67,10 +66,10 @@ export class Channel {
     this.clients.delete(client.id);
   }
 
-  public executeCallbacks(): void {
+  public executeCallbacks(event: CustomEvent): void {
     this.callbacks.forEach(
       async (cb: Callback) => {
-        return cb();
+        await cb(event);
       },
     );
   }
@@ -87,5 +86,26 @@ export class Channel {
 
   public hasClient(client: Client): boolean {
     return this.clients.get(client.id) ? true : false;
+  }
+
+  public emit(event: Event): void {
+    if (event instanceof CustomEvent) {
+      const packet = event.detail;
+      this.clients.forEach((client: Client) => {
+        client.socket.send(packet.toJsonString());
+      });
+    }
+  }
+
+  public handleMessage(client: Client, message: IIncomingMessage): boolean {
+    const event = new CustomEvent(this.name, {
+      detail: new Packet(
+        client,
+        this,
+        message.body,
+      ),
+    });
+
+    return this.dispatchEvent(event);
   }
 }
