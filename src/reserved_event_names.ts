@@ -1,6 +1,6 @@
 export const RESERVED_EVENT_NAMES = [
-  "connect",
-  "disconnect",
+  "client_connect",
+  "client_disconnect",
   "id",
   "listening_to",
   "pong",

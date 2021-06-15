@@ -5,11 +5,7 @@ export {
   serveTLS,
 } from "https://deno.land/std@0.97.0/http/server.ts";
 
-
-export {
-  BufReader,
-  BufWriter,
-} from "https://deno.land/std@0.97.0/io/bufio.ts";
+export { BufReader, BufWriter } from "https://deno.land/std@0.97.0/io/bufio.ts";
 
 export type {
   HTTPOptions,
@@ -23,5 +19,5 @@ export {
 
 export type {
   WebSocket,
-  WebSocketEvent
+  WebSocketEvent,
 } from "https://deno.land/std@0.97.0/ws/mod.ts";
