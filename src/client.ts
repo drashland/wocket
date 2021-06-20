@@ -1,12 +1,6 @@
 import { WebSocket } from "../deps.ts";
 import { Channel } from "./channel.ts";
 import { EventEmitter } from "./event_emitter.ts";
-import { Packet } from "./packet.ts";
-import { IIncomingMessage } from "./interfaces.ts";
-
-interface IEventEmitter {
-  handleMessage: (client: Client, message: IIncomingMessage) => boolean;
-}
 
 /**
  * The Client class represents a single end-user client.  It contains

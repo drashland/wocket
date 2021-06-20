@@ -15,11 +15,7 @@ import {
 import { Channel } from "./channel.ts";
 import { Client } from "./client.ts";
 import { EventEmitter } from "./event_emitter.ts";
-import { ITransmitterOptions } from "./interfaces.ts";
-import { Packet } from "./packet.ts";
 import { Callback } from "./types.ts";
-import { IIncomingMessage } from "./interfaces.ts";
-// import { Transmitter } from "./transmitter.ts";
 import { RESERVED_EVENT_NAMES } from "./reserved_event_names.ts";
 
 interface DenoWebSocketRequest extends ServerRequest {
@@ -72,8 +68,6 @@ export class Server extends EventEmitter {
 
   /**
    * Construct an object of this class.
-   *
-   * @param transmitterOptions - See ITransmitterOptions.
    */
   constructor() {
     super("wocket_server");

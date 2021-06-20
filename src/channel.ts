@@ -1,9 +1,6 @@
 import { WebSocket } from "../deps.ts";
-import { Packet } from "./packet.ts";
 import { Client } from "./client.ts";
-import { Callback } from "./types.ts";
 import { EventEmitter } from "./event_emitter.ts";
-import { IIncomingMessage } from "./interfaces.ts";
 
 /**
  * Channel represents channels, also known as "rooms". This class describes open
@@ -43,18 +40,12 @@ export class Channel extends EventEmitter {
   constructor(name: string) {
     super(`wocket_channel_${name}`);
     this.addEventListener(this.name, (event: Event) => {
-      console.log(event);
-      // this.emit(event);
     });
   }
 
   //////////////////////////////////////////////////////////////////////////////
   // FILE MARKER - PUBLIC //////////////////////////////////////////////////////
   //////////////////////////////////////////////////////////////////////////////
-
-  public addCallback(cb: Callback): void {
-    this.callbacks.push(cb);
-  }
 
   public disconnectClient(client: Client): void {
     const clientInThisChannel = this.clients.get(client.id);
@@ -88,14 +79,6 @@ export class Channel extends EventEmitter {
     return this.clients.get(client.id) ? true : false;
   }
 
-  public emit(event: Event): void {
-    if (event instanceof CustomEvent) {
-      const packet = event.detail;
-      this.clients.forEach((client: Client) => {
-        client.socket.send(packet.toJsonString());
-      });
-    }
-  }
 
   public handleMessage(client: Client, message: IIncomingMessage): boolean {
     const event = new CustomEvent(this.name, {

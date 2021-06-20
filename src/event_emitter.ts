@@ -1,8 +1,6 @@
 // import { Transmitter } from "./transmitter.ts";
-import { Packet } from "./packet.ts";
 import { Server } from "./server.ts";
 import { RESERVED_EVENT_NAMES } from "./reserved_event_names.ts";
-import { IIncomingMessage } from "./interfaces.ts";
 
 /**
  * The EventEmitter class is responsible for the logic of sending and receiving
@@ -14,11 +12,6 @@ export class EventEmitter extends EventTarget {
    * The name of this channel.
    */
   public name: string;
-
-  /**
-   * A queue of packets.
-   */
-  protected packet_queue: Packet[] = [];
 
   //////////////////////////////////////////////////////////////////////////////
   // FILE MARKER - CONSTRUCTOR /////////////////////////////////////////////////
