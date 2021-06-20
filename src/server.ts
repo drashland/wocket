@@ -15,8 +15,9 @@ import {
 import { Channel } from "./channel.ts";
 import { Client } from "./client.ts";
 import { EventEmitter } from "./event_emitter.ts";
-import { Callback } from "./types.ts";
+import { IIncomingEvent } from "./interfaces.ts";
 import { RESERVED_EVENT_NAMES } from "./reserved_event_names.ts";
+import { OnChannelCallback } from "./types.ts";
 
 interface DenoWebSocketRequest extends ServerRequest {
   conn: Deno.Conn;
@@ -278,7 +279,7 @@ export class Server extends EventEmitter {
   }
 
   /**
-   * @param packet - See Packet.
+   * @param message - See Message.
    */
   protected handleWebSocketEvent(client: Client, event: WebSocketEvent): void {
     if (this.isReservedEvent(event)) {
@@ -291,7 +292,7 @@ export class Server extends EventEmitter {
     if (this.isJsonEvent(event)) {
       return this.handleMessage(
         client,
-        JSON.parse(event as string) as IIncomingMessage,
+        JSON.parse(event as string),
       );
     }
 
@@ -304,43 +305,38 @@ export class Server extends EventEmitter {
     );
   }
 
-  protected handleMessage(client: Client, message: IIncomingMessage): void {
-    this.validateMessageFields(message);
+  protected handleMessage(client: Client, message: IIncomingEvent): void {
 
-    message.to.forEach((receiver: string | number) => {
-      try {
-        const receiverObj = this.getReceiverOfPacket(receiver);
-        const result = receiverObj.handleMessage(client, message);
-        if (!result) {
-          // TODO: Send to dead letter queue
-          throw new Error("Failed to send message.");
-        }
-      } catch (error) {
-        return client.socket.send(error.stack);
-      }
-    });
+    switch (message.action) {
+      case "connect_to_channels":
+        (message.payload as string[]).forEach((channel: string) => {
+          this.getChannel(channel).connectClient(client);
+          client.socket.send(`Connected to "${channel}" channel.`);
+        });
+        break;
+
+      case "send_packet":
+        const payload = message.payload as {to: string[]; message: unknown};
+        payload.to.forEach((channel: string) => {
+          this.getChannel(channel).handleMessage(client, payload.message);
+        });
+        break;
+    }
+    // message.to.forEach((receiver: string | number) => {
+    //   try {
+    //     const receiverObj = this.getReceiverOfMessage(receiver);
+    //     const result = receiverObj.handleMessage(client, message);
+    //     if (!result) {
+    //       // TODO: Send to dead letter queue
+    //       throw new Error("Failed to send message.");
+    //     }
+    //   } catch (error) {
+    //     return client.socket.send(error.stack);
+    //   }
+    // });
   }
 
-  protected validateMessageFields(message: IIncomingMessage): void {
-    if (!message.to) {
-      throw new Error(`Message is missing the "to" field.`);
-    }
-
-    if (!Array.isArray(message.to)) {
-      throw new Error(`Message "to" field must be an array.`);
-    }
-
-    if (
-      !message.body &&
-      (!message.body && (message.body as string).trim() != "")
-    ) {
-      if ((message.body as string).trim() == "") {
-        throw new Error(`Message is missing the "body" field.`);
-      }
-    }
-  }
-
-  protected getReceiverOfPacket(receiver: string | number): Channel | Client {
+  protected getReceiverOfMessage(receiver: string | number): Channel | Client {
     const id = +receiver;
 
     // Not a number? That means the receiver is a channel because all channels
@@ -353,22 +349,25 @@ export class Server extends EventEmitter {
   }
 
   /**
-   * @param packet - See Packet.
    */
   protected handleReservedEvent(
     client: Client,
-    message: string,
+    eventName: string,
+    message?: string,
   ): void {
-    switch (message) {
+    switch (eventName) {
       // Occurs when this server tries to connect a client
 
       case "connect":
         this.getChannel("connect")
           .executeCallbacks(
             new CustomEvent("wocket_reserved", {
-              detail:
-                `You have been connected to the server as Client ${client.id}.`,
-            }),
+              detail: {
+                sender: client,
+                receiver: this.getChannel("connect"),
+                message: `Connected to the server as Client ${client.id}.`
+              }
+            })
           );
         this.listenForClientEvents(client);
         break;
@@ -379,8 +378,12 @@ export class Server extends EventEmitter {
         this.getChannel("disconnect")
           .executeCallbacks(
             new CustomEvent("wocket_reserved", {
-              detail: "You have been disconneted from the server.",
-            }),
+              detail: {
+                sender: client,
+                receiver: this.getChannel("disconnect"),
+                messagE: "Disconneted from the server.",
+              }
+            })
           );
         this.disconnectClient(client.id);
         break;
@@ -455,7 +458,7 @@ export class Server extends EventEmitter {
   public getChannels(): string[] {
     const channels = [];
     for (const channelName in this.channels) {
-      // Ignore the following channels
+      // Ignore the reserved channels
       if (RESERVED_EVENT_NAMES.indexOf(channelName) !== -1) {
         continue;
       }
@@ -469,8 +472,17 @@ export class Server extends EventEmitter {
    *
    * @param name - The name of the channel.
    * @param cb - See Callback.
+   *
+   * @example
+   *
+   *     on<{username: string}>("ping", (event) => {
+   *       const username = event.message.username // ok
+   *     })
    */
-  public on(channelName: string, cb: Callback): void {
+  public on<T>(
+    channelName: string,
+    cb: OnChannelCallback<T>
+  ): void {
     let channel: Channel;
 
     try {
@@ -482,6 +494,6 @@ export class Server extends EventEmitter {
       this.channels.set(channelName, channel);
     }
 
-    channel.addCallback(cb);
+    channel.callbacks.push(cb);
   }
 }

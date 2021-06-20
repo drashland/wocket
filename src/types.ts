@@ -1,1 +1,1 @@
-export type Callback = ((event: CustomEvent) => void);
+export type OnChannelCallback<T> = ((event: CustomEvent<T>|CustomEvent) => void);

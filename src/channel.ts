@@ -15,7 +15,7 @@ export class Channel extends EventEmitter {
    *
    * `handleChannel1` is now registered as a callback.
    */
-  public callbacks: Callback[] = [];
+  public callbacks: ((event: CustomEvent) => void)[] = [];
 
   /**
    * Acts as the list of clients connected to the channel.  A listener would
@@ -39,7 +39,10 @@ export class Channel extends EventEmitter {
    */
   constructor(name: string) {
     super(`wocket_channel_${name}`);
-    this.addEventListener(this.name, (event: Event) => {
+    this.addEventListener(this.name, (e: Event) => {
+      this.callbacks.forEach((callback: (ce: CustomEvent) => void) => {
+        callback(e as CustomEvent);
+      })
     });
   }
 
@@ -59,7 +62,7 @@ export class Channel extends EventEmitter {
 
   public executeCallbacks(event: CustomEvent): void {
     this.callbacks.forEach(
-      async (cb: Callback) => {
+      async (cb: (event: CustomEvent) => void) => {
         await cb(event);
       },
     );
@@ -79,14 +82,9 @@ export class Channel extends EventEmitter {
     return this.clients.get(client.id) ? true : false;
   }
 
-
-  public handleMessage(client: Client, message: IIncomingMessage): boolean {
+  public handleMessage(client: Client, message: unknown): boolean {
     const event = new CustomEvent(this.name, {
-      detail: new Packet(
-        client,
-        this,
-        message.body,
-      ),
+      detail: message
     });
 
     return this.dispatchEvent(event);

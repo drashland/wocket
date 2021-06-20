@@ -1,6 +1,7 @@
 import { WebSocket } from "../deps.ts";
 import { Channel } from "./channel.ts";
 import { EventEmitter } from "./event_emitter.ts";
+import { IIncomingEvent } from "./interfaces.ts";
 
 /**
  * The Client class represents a single end-user client.  It contains
@@ -57,13 +58,13 @@ export class Client extends EventEmitter {
     });
   }
 
-  public handleMessage(client: Client, message: IIncomingMessage): boolean {
+  public handleMessage(client: Client, message: IIncomingEvent): boolean {
     const event = new CustomEvent(this.name, {
-      detail: new Packet(
-        client,
-        this,
-        message.body,
-      ),
+      detail: {
+        sender: client,
+        receiver: this,
+        message: message,
+      }
     });
 
     return this.dispatchEvent(event);
