@@ -308,10 +308,22 @@ export class Server extends EventEmitter {
   protected handleMessage(client: Client, message: IIncomingEvent): void {
 
     switch (message.action) {
+      // Occurs when a message like the following is received by the client:
+      //
+      //     {
+      //       "action": "connect_to_channels",
+      //       "payload": ["channel_1", "channel_2"]
+      //     }
+      //
       case "connect_to_channels":
         (message.payload as string[]).forEach((channel: string) => {
           this.getChannel(channel).connectClient(client);
-          client.socket.send(`Connected to "${channel}" channel.`);
+          client.socket.send(
+            `You have been Connected to the "${channel}" channel.`
+          );
+        });
+        break;
+
         });
         break;
 
