@@ -347,18 +347,6 @@ export class Server extends EventEmitter {
         });
         break;
     }
-    // message.to.forEach((receiver: string | number) => {
-    //   try {
-    //     const receiverObj = this.getReceiverOfMessage(receiver);
-    //     const result = receiverObj.handleMessage(client, message);
-    //     if (!result) {
-    //       // TODO: Send to dead letter queue
-    //       throw new Error("Failed to send message.");
-    //     }
-    //   } catch (error) {
-    //     return client.socket.send(error.stack);
-    //   }
-    // });
   }
 
   protected getReceiverOfMessage(receiver: string | number): Channel | Client {
