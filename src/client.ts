@@ -39,8 +39,8 @@ export class Client extends EventEmitter {
     super(`wocket_client_${id}`);
     this.id = id;
     this.socket = socket;
-    this.addEventListener(this.name, (event: Event) => {
-      console.log(event);
+    this.addEventListener(this.name, (e: Event) => {
+      this.socket.send(JSON.stringify((e as CustomEvent).detail));
     });
   }
 
@@ -58,13 +58,13 @@ export class Client extends EventEmitter {
     });
   }
 
-  public handleMessage(client: Client, message: IIncomingEvent): boolean {
+  public handleMessage(sender: Client, message: unknown): boolean {
+    // Make sure we send the sender's ID in the message
+    const hydratedMessage = message as { sender: number };
+    hydratedMessage.sender = sender.id;
+
     const event = new CustomEvent(this.name, {
-      detail: {
-        sender: client,
-        receiver: this,
-        message: message,
-      }
+      detail: hydratedMessage
     });
 
     return this.dispatchEvent(event);

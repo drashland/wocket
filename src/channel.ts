@@ -41,7 +41,7 @@ export class Channel extends EventEmitter {
     super(`wocket_channel_${name}`);
     this.addEventListener(this.name, (e: Event) => {
       this.callbacks.forEach((callback: (ce: CustomEvent) => void) => {
-        callback(e as CustomEvent);
+        callback((e as CustomEvent).detail);
       })
     });
   }
@@ -54,7 +54,9 @@ export class Channel extends EventEmitter {
     const clientInThisChannel = this.clients.get(client.id);
 
     if (!clientInThisChannel) {
-      throw new Error("Cannot disconnect non-existent client from channel.");
+      throw new Error(
+        "You cannot be disconnected from a channel you are not conneted to."
+      );
     }
 
     this.clients.delete(client.id);
@@ -82,9 +84,13 @@ export class Channel extends EventEmitter {
     return this.clients.get(client.id) ? true : false;
   }
 
-  public handleMessage(client: Client, message: unknown): boolean {
+  public handleMessage(sender: Client, message: unknown): boolean {
+    // Make sure we send the sender's ID in the message
+    const hydratedMessage = message as { sender: number };
+    hydratedMessage.sender = sender.id;
+
     const event = new CustomEvent(this.name, {
-      detail: message
+      detail: hydratedMessage
     });
 
     return this.dispatchEvent(event);
