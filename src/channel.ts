@@ -84,7 +84,7 @@ export class Channel extends EventEmitter {
     return this.clients.get(client.id) ? true : false;
   }
 
-  public handleMessage(sender: Client, message: unknown): boolean {
+  public handleEvent(sender: Client, message: unknown): boolean {
     // Make sure we send the sender's ID in the message
     const hydratedMessage = message as { sender: number };
     hydratedMessage.sender = sender.id;

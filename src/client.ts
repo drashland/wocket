@@ -9,7 +9,8 @@ import { IIncomingEvent } from "./interfaces.ts";
  */
 export class Client extends EventEmitter {
   /**
-   * The clients id, which is the id of the socket connection sent across.
+   * The clients ID, which is the ID of its socket connection when it connected
+   * to the server. For example:
    *
    *     const clientId = conn.rid;
    */
@@ -58,7 +59,7 @@ export class Client extends EventEmitter {
     });
   }
 
-  public handleMessage(sender: Client, message: unknown): boolean {
+  public handleEvent(sender: Client, message: unknown): boolean {
     // Make sure we send the sender's ID in the message
     const hydratedMessage = message as { sender: number };
     hydratedMessage.sender = sender.id;
