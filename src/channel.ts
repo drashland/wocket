@@ -56,6 +56,7 @@ export class Channel extends EventEmitter {
 
   public connectClient(client: Client): void {
     this.clients.set(client.id, client);
+    client.channels.set(this.name, this);
   }
 
   /**

@@ -4,8 +4,9 @@ import { EventEmitter } from "./event_emitter.ts";
 import { IIncomingEvent } from "./interfaces.ts";
 
 /**
- * The Client class represents a single end-user client.  It contains
- * information about their id, their web socket connection, and many more.
+ * This class represents a single end-user client. It contains information about
+ * their connection ID (when they first connected to the server), their web
+ * socket connection, and more.
  */
 export class Client extends EventEmitter {
   /**
@@ -33,13 +34,20 @@ export class Client extends EventEmitter {
   /**
    * Construct an object of this class.
    *
-   * @param id - The client's ID.
-   * @param socket - The socket this client belongs to.
+   * @param id - The client's connection ID (given by the server when the client
+   * connects to the server).
+   * @param socket - The socket connection (given by the server when the client
+   * connets to the server). Use this to send messages back to the client. For
+   * example:
+   *
+   *     this.socket.send("something");
    */
   constructor(id: number, socket: WebSocket) {
     super(`wocket_client_${id}`);
     this.id = id;
     this.socket = socket;
+    // Create the event listener so that events sent to this client are handled
+    // appropriately
     this.addEventListener(this.name, (e: Event) => {
       this.socket.send(JSON.stringify((e as CustomEvent).detail));
     });
@@ -49,16 +57,27 @@ export class Client extends EventEmitter {
   // FILE MARKER - PUBLIC //////////////////////////////////////////////////////
   //////////////////////////////////////////////////////////////////////////////
 
-  public listenToChannel(channel: Channel): void {
-    this.channels.set(channel.name, channel);
-  }
-
+  /**
+   * Disconnect from all channels. This is mainly used when the client
+   * disconnects from the server.
+   */
   public disconnectFromAllChannels(): void {
     this.channels.forEach((channel: Channel) => {
       channel.disconnectClient(this);
     });
   }
 
+  /**
+   * Handle an event passed to this client.
+   *
+   * @param sender - See Client.
+   * @param message - The message that is inside the event. Users can send
+   * events to channels that contain complex messages of any type. We do not
+   * know what they will pass in; therefore, the message is unknown.
+   *
+   * @returns True if the event was dispatched to this channels event listener,
+   * false if not.
+   */
   public handleEvent(sender: Client, message: unknown): boolean {
     // Make sure we send the sender's ID in the message
     const hydratedMessage = message as { sender: number };
