@@ -324,6 +324,19 @@ export class Server extends EventEmitter {
         });
         break;
 
+      // Occurs when a message like the following is received by the client:
+      //
+      //     {
+      //       "action": "disconnect_from_channels",
+      //       "payload": ["channel_1", "channel_2"]
+      //     }
+      //
+      case "disconnect_from_channels":
+        (message.payload as string[]).forEach((channel: string) => {
+          this.getChannel(channel).disconnectClient(client);
+          client.socket.send(
+            `You have been disconnected from the "${channel}" channel.`
+          );
         });
         break;
 
