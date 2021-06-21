@@ -340,10 +340,29 @@ export class Server extends EventEmitter {
         });
         break;
 
-      case "send_packet":
+      // Occurs when a message like the following is received by the client:
+      //
+      //     {
+      //       "action": "send_message",
+      //       "payload": <some unknown type -- can be anything>
+      //     }
+      //
+      case "send_message":
         const payload = message.payload as {to: string[]; message: unknown};
-        payload.to.forEach((channel: string) => {
-          this.getChannel(channel).handleMessage(client, payload.message);
+        payload.to.forEach((receiver: string | number) => {
+          const receiverObj = this.getReceiverOfMessage(receiver);
+          const result = receiverObj.handleMessage(client, payload.message);
+          if (!result) {
+            if (receiverObj instanceof Client) {
+              client.socket.send(
+                `Failed to send message to Client ${receiverObj.id}.`
+              );
+            } else if (receiverObj instanceof Channel) {
+              client.socket.send(
+                `Failed to send message to "${receiverObj.name}" channel.`
+              );
+            }
+          }
         });
         break;
     }
