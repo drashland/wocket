@@ -92,6 +92,16 @@ export class Server extends EventEmitter {
   }
 
   /**
+   * Close the specified channel.
+   *
+   * @param channelName - The name of the channel.
+   */
+  public closeChannel(channelName: string): void {
+    this.getChannel(channelName).close();
+    this.channels.delete(channelName);
+  }
+
+  /**
    * Remove a connected client from this server and any channels that the client
    * is listening to.
    *
