@@ -30,7 +30,7 @@ const decoder = new TextDecoder();
 
 /**
  * This class is responsible for creating a users socket server, maintaining the
- * connections between sockets, and handling messages to and from sockets.
+ * connections between sockets, and handling packets to and from sockets.
  */
 export class Server extends EventEmitter {
   /**
@@ -329,19 +329,19 @@ export class Server extends EventEmitter {
         this.disconnectClient(client.id);
         break;
 
-      // Occurs when the client sends "id" as the message
+      // Occurs when the client sends "id" as the packet
 
       case "id":
         client.socket.send(`${client.id}`);
         break;
 
-      // Occurs when the client sends "ping" as the message
+      // Occurs when the client sends "ping" as the packet
 
       case "ping":
         client.socket.send("pong");
         break;
 
-      // Occurs when the client sends "pong" as the message
+      // Occurs when the client sends "pong" as the packet
 
       case "pong":
         client.socket.send("ping");
@@ -354,7 +354,7 @@ export class Server extends EventEmitter {
         // add a flag to this client.
         break;
 
-      // Occurs when the client sends "test" as the message
+      // Occurs when the client sends "test" as the packet
 
       case "test":
         client.socket.send(`Server started on ${this.hostname}:${this.port}.`);
@@ -485,15 +485,15 @@ export class Server extends EventEmitter {
       // Occurs when an event like the following is received from the client:
       //
       //     {
-      //       "action": "send_message",
+      //       "action": "send_packet",
       //       "payload": <some unknown type -- can be anything>
       //     }
       //
-      case "send_message":
-        const payload = event.payload as { to: string[]; message: unknown };
+      case "send_packet":
+        const payload = event.payload as { to: string[]; packet: unknown };
         payload.to.forEach((receiver: string | number) => {
           const receiverObj = this.getReceiverOfEvent(receiver);
-          const result = receiverObj.handleEvent(client, payload.message);
+          const result = receiverObj.handlePacket(client, payload.packet);
           if (!result) {
             if (receiverObj instanceof Client) {
               client.socket.send(

@@ -3,9 +3,8 @@ import { Server } from "./server.ts";
 import { RESERVED_EVENT_NAMES } from "./reserved_event_names.ts";
 
 /**
- * The EventEmitter class is responsible for the logic of sending and receiving
- * messages. To do this, it aggregates information on clients, such as tracking
- * how many clients are connected and what channels are open.
+ * The EventEmitter class is responsible for listening to and dispatching
+ * events.
  */
 export abstract class EventEmitter extends EventTarget {
   /**
@@ -40,11 +39,37 @@ export abstract class EventEmitter extends EventTarget {
   //////////////////////////////////////////////////////////////////////////////
 
   /**
-   * Broadcasts a message to all who are connected to this EventEmitter.
+   * Broadcasts an event to all who are connected to this EventEmitter.
    */
   public broadcast(event: Event): void {
     this.dispatchEvent(event);
   }
+
+  /**
+   * Handle a packet passed to this client. Ultimately, this packet is wrapped
+   * an in a CustomEvent object and dispatched (via `this.dispatchEvent()`) to
+   * `this.eventHandler()`.
+   *
+   * @param sender - An instance of this class.
+   * @param packet - The packet to send in the CustomEvent object. Clients can
+   * send complex packets of any type. We do not know what they will pass in;
+   * therefore, the packet is an `unknown` type.
+   *
+   * @returns True if the event was dispatched to this class' event listener,
+   * false if not.
+   */
+  public handlePacket(sender: Client, packet: unknown): boolean {
+    // Make sure we send the sender's ID in the packet
+    const hydratedPacket = packet as { sender: number };
+    hydratedPacket.sender = sender.id;
+
+    const event = new CustomEvent(this.name, {
+      detail: hydratedPacket,
+    });
+
+    return this.dispatchEvent(event);
+  }
+
 
   //////////////////////////////////////////////////////////////////////////////
   // FILE MARKER - METHODS - PROTECTED /////////////////////////////////////////

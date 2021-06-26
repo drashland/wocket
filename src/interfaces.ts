@@ -6,7 +6,7 @@
  *     The action that the server should take. For example:
  *
  *         {
- *           "action": "send_message",
+ *           "action": "send_packet",
  *           "payload": "something"
  *         }
  *
@@ -15,10 +15,10 @@
  *     The payload to send alongside the action. The payload to send is
  *     determined by the action field. For example:
  *
- *         To send a message, the client must send the following:
+ *         To send a packet, the client must send the following:
  *
  *         {
- *           "action": "send_message",
+ *           "action": "send_packet",
  *           "payload": {
  *             "username": "Ed",
  *             "id": 4,

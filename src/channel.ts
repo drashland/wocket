@@ -91,29 +91,6 @@ export class Channel extends EventEmitter {
     return this.clients.get(client.id) ? true : false;
   }
 
-  /**
-   * Handle an event passed to this channel.
-   *
-   * @param sender - See Client.
-   * @param message - The message that is inside the event. Users can send
-   * events to channels that contain complex messages of any type. We do not
-   * know what they will pass in; therefore, the message is unknown.
-   *
-   * @returns True if the event was dispatched to this channels event listener,
-   * false if not.
-   */
-  public handleEvent(sender: Client, message: unknown): boolean {
-    // Make sure we send the sender's ID in the message
-    const hydratedMessage = message as { sender: number };
-    hydratedMessage.sender = sender.id;
-
-    const event = new CustomEvent(this.name, {
-      detail: hydratedMessage,
-    });
-
-    return this.dispatchEvent(event);
-  }
-
   //////////////////////////////////////////////////////////////////////////////
   // FILE MARKER - PROTECTED ///////////////////////////////////////////////////
   //////////////////////////////////////////////////////////////////////////////
