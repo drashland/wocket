@@ -87,7 +87,8 @@ export class Server extends EventEmitter {
         this.deno_server.close();
       }
     } catch (_error) {
-      // Do. nuh. thing. The server is probably closed if this errors out.
+      // Do. nuh. thing. The server is probably closed if this try-catch block
+      // errors out.
     }
   }
 
@@ -129,7 +130,7 @@ export class Server extends EventEmitter {
   public getClients(): number[] {
     const clients = [];
     for (const id in this.clients) {
-      clients.push(id);
+      clients.push(+id);
     }
     return clients;
   }
@@ -177,11 +178,11 @@ export class Server extends EventEmitter {
    *     3. Store the callback in the list of callbacks that the channel has.
    *
    * @param name - The name of the channel.
-   * @param cb - A callback to execute when the channel receives events.
+   * @param cb - See OnChannelCallback in the `types.ts` file.
    */
   public on<T>(
     channelName: string,
-    cb: OnChannelCallback<T>
+    cb: OnChannelCallback<T>,
   ): void {
     let channel: Channel;
 
@@ -249,6 +250,13 @@ export class Server extends EventEmitter {
   }
 
   /**
+   * See EventEmitter.eventHandler().
+   */
+  protected eventHandler(event: Event): void {
+    return;
+  }
+
+  /**
    * Handle connection requests to this server.
    *
    * @param request - The request coming into the server. For example, if a user
@@ -298,14 +306,15 @@ export class Server extends EventEmitter {
               detail: {
                 sender: client,
                 receiver: this.getChannel("connect"),
-                message: `Connected to the server as Client ${client.id}.`
-              }
-            })
+                message: `Connected to the server as Client ${client.id}.`,
+              },
+            }),
           );
         this.listenForClientEvents(client);
         break;
 
       // Occurs when this server tries to disconnect a client
+
       case "disconnect":
         this.getChannel("disconnect")
           .executeCallbacks(
@@ -314,34 +323,39 @@ export class Server extends EventEmitter {
                 sender: client,
                 receiver: this.getChannel("disconnect"),
                 messagE: "Disconneted from the server.",
-              }
-            })
+              },
+            }),
           );
         this.disconnectClient(client.id);
         break;
 
       // Occurs when the client sends "id" as the message
+
       case "id":
         client.socket.send(`${client.id}`);
         break;
 
       // Occurs when the client sends "ping" as the message
+
       case "ping":
         client.socket.send("pong");
         break;
 
       // Occurs when the client sends "pong" as the message
+
       case "pong":
         client.socket.send("ping");
         break;
 
       // Occurs when the server tries to reconnect a client
+
       case "reconnect":
         // TODO(crookse) Do something on an reconnect event. Could be useful to
         // add a flag to this client.
         break;
 
       // Occurs when the client sends "test" as the message
+
       case "test":
         client.socket.send(`Server started on ${this.hostname}:${this.port}.`);
         break;
@@ -424,7 +438,7 @@ export class Server extends EventEmitter {
     // }
 
     throw new Error(
-      "Could not handle event as Unit8Array, JSON, or RESERVED_EVENT.",
+      "Could not handle event as Unit8Array, JSON, or Wocket reserved event.",
     );
   }
 
@@ -447,7 +461,7 @@ export class Server extends EventEmitter {
         (event.payload as string[]).forEach((channel: string) => {
           this.getChannel(channel).connectClient(client);
           client.socket.send(
-            `You have been connected to the "${channel}" channel.`
+            `You have been connected to the "${channel}" channel.`,
           );
         });
         break;
@@ -463,7 +477,7 @@ export class Server extends EventEmitter {
         (event.payload as string[]).forEach((channel: string) => {
           this.getChannel(channel).disconnectClient(client);
           client.socket.send(
-            `You have been disconnected from the "${channel}" channel.`
+            `You have been disconnected from the "${channel}" channel.`,
           );
         });
         break;
@@ -476,18 +490,18 @@ export class Server extends EventEmitter {
       //     }
       //
       case "send_message":
-        const payload = event.payload as {to: string[]; message: unknown};
+        const payload = event.payload as { to: string[]; message: unknown };
         payload.to.forEach((receiver: string | number) => {
-          const receiverObj = this.getReceiverOfMessage(receiver);
+          const receiverObj = this.getReceiverOfEvent(receiver);
           const result = receiverObj.handleEvent(client, payload.message);
           if (!result) {
             if (receiverObj instanceof Client) {
               client.socket.send(
-                `Failed to send event to Client ${receiverObj.id}.`
+                `Failed to send event to Client ${receiverObj.id}.`,
               );
             } else if (receiverObj instanceof Channel) {
               client.socket.send(
-                `Failed to send event to "${receiverObj.name}" channel.`
+                `Failed to send event to "${receiverObj.name}" channel.`,
               );
             }
           }
@@ -519,7 +533,7 @@ export class Server extends EventEmitter {
    *
    * @returns A Channel or a Client based on the specified argument.
    */
-  protected getReceiverOfMessage(receiver: string | number): Channel | Client {
+  protected getReceiverOfEvent(receiver: string | number): Channel | Client {
     const id = +receiver;
 
     // Not a number? That means the receiver is a channel because all channels
@@ -542,7 +556,7 @@ export class Server extends EventEmitter {
         this.handleWebSocketEvent(client, webSocketEvent);
       } catch (error) {
         // Something must have happened to the client's connection on the
-        // client's side
+        // client's side if block executes
         if (client.socket.isClosed) {
           this.handleReservedEvent(client, "disconnect");
           continue;
@@ -550,7 +564,10 @@ export class Server extends EventEmitter {
 
         try {
           client.socket.send(error.stack ?? error.message);
-        } catch (error) {
+        } catch (_error) {
+          client.socket.send(
+            "An unknown error occurred while trying to handle the event."
+          );
         }
       }
     }

@@ -32,13 +32,6 @@ export class Channel extends EventEmitter {
    */
   constructor(name: string) {
     super(`wocket_channel_${name}`);
-    // Create the event listener so that events sent to this channel are handled
-    // appropriately
-    this.addEventListener(this.name, (e: Event) => {
-      this.callbacks.forEach((callback: (ce: CustomEvent) => void) => {
-        callback((e as CustomEvent).detail);
-      })
-    });
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -54,6 +47,11 @@ export class Channel extends EventEmitter {
     });
   }
 
+  /**
+   * Connect a clilent to this channel.
+   *
+   * @param client - See Client.
+   */
   public connectClient(client: Client): void {
     this.clients.set(client.id, client);
     client.channels.set(this.name, this);
@@ -64,16 +62,8 @@ export class Channel extends EventEmitter {
    *
    * @param client - See Client.
    */
-  public disconnectClient(client: Client): void {
-    const clientInThisChannel = this.clients.get(client.id);
-
-    if (!clientInThisChannel) {
-      throw new Error(
-        "You cannot be disconnected from a channel you are not conneted to."
-      );
-    }
-
-    this.clients.delete(client.id);
+  public disconnectClient(client: Client): boolean {
+    return this.clients.delete(client.id);
   }
 
   /**
@@ -118,9 +108,22 @@ export class Channel extends EventEmitter {
     hydratedMessage.sender = sender.id;
 
     const event = new CustomEvent(this.name, {
-      detail: hydratedMessage
+      detail: hydratedMessage,
     });
 
     return this.dispatchEvent(event);
+  }
+
+  //////////////////////////////////////////////////////////////////////////////
+  // FILE MARKER - PROTECTED ///////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////////////
+
+  /**
+   * See EventEmitter.eventHandler().
+   */
+  protected eventHandler(event: Event): void {
+    this.callbacks.forEach((callback: (customEvent: CustomEvent) => void) => {
+      callback((event as CustomEvent).detail);
+    });
   }
 }

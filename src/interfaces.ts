@@ -1,5 +1,5 @@
 /**
- * All incoming events should have the following schema.
+ * All incoming events should match this interface.
  *
  * action
  *
@@ -13,9 +13,9 @@
  * payload
  *
  *     The payload to send alongside the action. The payload to send is
- *     determined by the action field.
+ *     determined by the action field. For example:
  *
- *         Sending a message:
+ *         To send a message, the client must send the following:
  *
  *         {
  *           "action": "send_message",
@@ -26,7 +26,7 @@
  *           }
  *         }
  *
- *         Connecting to channels:
+ *         To connect to channels, the client must send the following:
  *
  *         {
  *           "action": "connect_to_channels",
@@ -36,7 +36,7 @@
  *           ]
  *         }
  *
- *         Disconnecting from channels:
+ *         To disconnect from channels, the client must send the following:
  *
  *         {
  *           "action": "disconnect_from_channels",

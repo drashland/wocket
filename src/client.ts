@@ -10,15 +10,15 @@ import { IIncomingEvent } from "./interfaces.ts";
  */
 export class Client extends EventEmitter {
   /**
-   * The clients ID, which is the ID of its socket connection when it connected
-   * to the server. For example:
+   * This client's ID, which is the ID of its socket connection when it
+   * connected to the server. For example:
    *
    *     const clientId = conn.rid;
    */
   public id: number;
 
   /**
-   * A list of channels the client is listening to.
+   * A list of channels this client is connected to.
    */
   public channels: Map<string, Channel> = new Map();
 
@@ -46,11 +46,6 @@ export class Client extends EventEmitter {
     super(`wocket_client_${id}`);
     this.id = id;
     this.socket = socket;
-    // Create the event listener so that events sent to this client are handled
-    // appropriately
-    this.addEventListener(this.name, (e: Event) => {
-      this.socket.send(JSON.stringify((e as CustomEvent).detail));
-    });
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -58,8 +53,7 @@ export class Client extends EventEmitter {
   //////////////////////////////////////////////////////////////////////////////
 
   /**
-   * Disconnect from all channels. This is mainly used when the client
-   * disconnects from the server.
+   * Disconnect from all channels.
    */
   public disconnectFromAllChannels(): void {
     this.channels.forEach((channel: Channel) => {
@@ -70,7 +64,7 @@ export class Client extends EventEmitter {
   /**
    * Handle an event passed to this client.
    *
-   * @param sender - See Client.
+   * @param sender - An instance of this class.
    * @param message - The message that is inside the event. Users can send
    * events to channels that contain complex messages of any type. We do not
    * know what they will pass in; therefore, the message is unknown.
@@ -84,9 +78,20 @@ export class Client extends EventEmitter {
     hydratedMessage.sender = sender.id;
 
     const event = new CustomEvent(this.name, {
-      detail: hydratedMessage
+      detail: hydratedMessage,
     });
 
     return this.dispatchEvent(event);
+  }
+
+  //////////////////////////////////////////////////////////////////////////////
+  // FILE MARKER - PROTECTED ///////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////////////
+
+  /**
+   * See EventEmitter.eventHandler().
+   */
+  protected eventHandler(event: Event): void {
+    this.socket.send(JSON.stringify((event as CustomEvent).detail));
   }
 }
