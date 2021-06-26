@@ -1,5 +1,4 @@
-import { Client } from "./client.ts";
-import { Server } from "./server.ts";
+import { Channel, Client, Server } from "../mod.ts";
 import { RESERVED_EVENT_NAMES } from "./reserved_event_names.ts";
 
 /**
@@ -58,10 +57,13 @@ export abstract class EventEmitter extends EventTarget {
    * @returns The packet if the event was dispatched to this class' event
    * listener, false if not.
    */
-  public handlePacket(sender: Client, packet: unknown): boolean|unknown {
+  public handlePacket(
+    sender: Channel | Client | Server,
+    packet: unknown
+  ): boolean|unknown {
     // Make sure we send the sender's ID in the packet
-    const hydratedPacket = packet as { sender: number };
-    hydratedPacket.sender = sender.id;
+    const hydratedPacket = packet as { sender: number | string };
+    hydratedPacket.sender = sender.name;
 
     const event = new CustomEvent(this.name, {
       detail: hydratedPacket,
