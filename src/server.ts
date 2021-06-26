@@ -459,9 +459,11 @@ export class Server extends EventEmitter {
       //
       case "connect_to_channels":
         (event.payload as string[]).forEach((channel: string) => {
-          this.getChannel(channel).connectClient(client);
+          const channelObj = this.getChannel(channel);
+          channelObj.connectClient(client);
+          client.connectToChannel(channelObj);
           client.socket.send(
-            `You have been connected to the "${channel}" channel.`,
+            `You have been connected to the "${channelObj.name}" channel.`,
           );
         });
         break;

@@ -31,7 +31,7 @@ export class Channel extends EventEmitter {
    * @param name - The name of this channel.
    */
   constructor(name: string) {
-    super(`wocket_channel_${name}`);
+    super(`wocket_channel:${name}`);
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -54,7 +54,6 @@ export class Channel extends EventEmitter {
    */
   public connectClient(client: Client): void {
     this.clients.set(client.id, client);
-    client.channels.set(this.name, this);
   }
 
   /**

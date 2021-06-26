@@ -42,7 +42,7 @@ export class Client extends EventEmitter {
    *     this.socket.send("something");
    */
   constructor(id: number, socket: WebSocket) {
-    super(`wocket_client_${id}`);
+    super(`wocket_client:${id}`);
     this.id = id;
     this.socket = socket;
   }
@@ -52,11 +52,22 @@ export class Client extends EventEmitter {
   //////////////////////////////////////////////////////////////////////////////
 
   /**
+   * Connect to the specified channel.
+   *
+   * @param channel - See Channel.
+   */
+  public connectToChannel(channel: Channel): void {
+    this.channels.set(channel.name, channel);
+  }
+
+
+  /**
    * Disconnect from all channels.
    */
   public disconnectFromAllChannels(): void {
     this.channels.forEach((channel: Channel) => {
       channel.disconnectClient(this);
+      this.channels.delete(channel.name);
     });
   }
 

@@ -1,4 +1,4 @@
-// import { Transmitter } from "./transmitter.ts";
+import { Client } from "./client.ts";
 import { Server } from "./server.ts";
 import { RESERVED_EVENT_NAMES } from "./reserved_event_names.ts";
 
@@ -50,15 +50,15 @@ export abstract class EventEmitter extends EventTarget {
    * an in a CustomEvent object and dispatched (via `this.dispatchEvent()`) to
    * `this.eventHandler()`.
    *
-   * @param sender - An instance of this class.
+   * @param sender - See Client.
    * @param packet - The packet to send in the CustomEvent object. Clients can
    * send complex packets of any type. We do not know what they will pass in;
    * therefore, the packet is an `unknown` type.
    *
-   * @returns True if the event was dispatched to this class' event listener,
-   * false if not.
+   * @returns The packet if the event was dispatched to this class' event
+   * listener, false if not.
    */
-  public handlePacket(sender: Client, packet: unknown): boolean {
+  public handlePacket(sender: Client, packet: unknown): boolean|unknown {
     // Make sure we send the sender's ID in the packet
     const hydratedPacket = packet as { sender: number };
     hydratedPacket.sender = sender.id;
@@ -67,7 +67,13 @@ export abstract class EventEmitter extends EventTarget {
       detail: hydratedPacket,
     });
 
-    return this.dispatchEvent(event);
+    const result = this.dispatchEvent(event);
+
+    if (result) {
+      return packet;
+    }
+
+    return false;
   }
 
 
