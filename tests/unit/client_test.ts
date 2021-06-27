@@ -1,9 +1,9 @@
-import { Rhum, testObjects } from "../deps.ts";
+import { Rhum, TestHelpers } from "../deps.ts";
 import { Client, Channel } from "../../mod.ts";
 
 Rhum.testPlan("unit/client_test.ts", () => {
   Rhum.testSuite("constructor()", () => {
-    const client = new Client(1, testObjects.fakeClientSocket());
+    const client = new Client(1, TestHelpers.fakeClientSocket());
     Rhum.testCase("Sets the id property", () => {
       Rhum.asserts.assertEquals(client.id, 1);
     });
@@ -18,7 +18,7 @@ Rhum.testPlan("unit/client_test.ts", () => {
 
   Rhum.testSuite("connectToChannel()", () => {
     Rhum.testCase("adds the channel to the client's channels property", () => {
-      const client = new Client(1, testObjects.fakeClientSocket());
+      const client = new Client(1, TestHelpers.fakeClientSocket());
       const channel1 = new Channel("test_channel_1");
       client.connectToChannel(channel1);
 
@@ -39,7 +39,7 @@ Rhum.testPlan("unit/client_test.ts", () => {
 
   Rhum.testSuite("disconnectFromAllChannels()", () => {
     Rhum.testCase("disconnects client from all channels", () => {
-      const client = new Client(1, testObjects.fakeClientSocket());
+      const client = new Client(1, TestHelpers.fakeClientSocket());
 
       // Connect the client to the following channels
       const channel1 = new Channel("test_channel_1")
@@ -64,8 +64,8 @@ Rhum.testPlan("unit/client_test.ts", () => {
 
   Rhum.testSuite("handlePacket()", () => {
     Rhum.testCase("dispatches the packet in an event", () => {
-      const receiver = new Client(1, testObjects.fakeClientSocket());
-      const sender = new Client(2, testObjects.fakeClientSocket());
+      const receiver = new Client(1, TestHelpers.fakeClientSocket());
+      const sender = new Client(2, TestHelpers.fakeClientSocket());
       const result = receiver.handlePacket(sender, {
         message: "hella"
       });

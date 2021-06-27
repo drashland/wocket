@@ -1,4 +1,4 @@
-import { Rhum, testObjects } from "../deps.ts";
+import { Rhum, TestHelpers } from "../deps.ts";
 import { Channel } from "../../mod.ts";
 
 Rhum.testPlan("unit/channel_test.ts", () => {
