@@ -1,17 +1,9 @@
-import { Rhum } from "../deps.ts";
+import { Rhum, testObjects } from "../deps.ts";
 import { Client, Channel } from "../../mod.ts";
-import { WebSocket } from "../../deps.ts";
-
-const ClientSocket = () => {
-  return {
-    send: () => true,
-    close: () => true,
-  };
-};
 
 Rhum.testPlan("unit/client_test.ts", () => {
   Rhum.testSuite("constructor()", () => {
-    const client = new Client(1, ClientSocket() as unknown as WebSocket);
+    const client = new Client(1, testObjects.fakeClientSocket());
     Rhum.testCase("Sets the id property", () => {
       Rhum.asserts.assertEquals(client.id, 1);
     });
@@ -19,11 +11,14 @@ Rhum.testPlan("unit/client_test.ts", () => {
       Rhum.asserts.assertEquals(client.socket.send("test"), true)
       Rhum.asserts.assertEquals(client.socket.close(1337), true)
     });
+    Rhum.testCase("Contains 0 channels when created", () => {
+      Rhum.asserts.assertEquals(client.channels.size, 0)
+    });
   });
 
   Rhum.testSuite("connectToChannel()", () => {
     Rhum.testCase("adds the channel to the client's channels property", () => {
-      const client = new Client(1, ClientSocket() as unknown as WebSocket);
+      const client = new Client(1, testObjects.fakeClientSocket());
       const channel1 = new Channel("test_channel_1");
       client.connectToChannel(channel1);
 
@@ -44,7 +39,7 @@ Rhum.testPlan("unit/client_test.ts", () => {
 
   Rhum.testSuite("disconnectFromAllChannels()", () => {
     Rhum.testCase("disconnects client from all channels", () => {
-      const client = new Client(1, ClientSocket() as unknown as WebSocket);
+      const client = new Client(1, testObjects.fakeClientSocket());
 
       // Connect the client to the following channels
       const channel1 = new Channel("test_channel_1")
@@ -69,8 +64,8 @@ Rhum.testPlan("unit/client_test.ts", () => {
 
   Rhum.testSuite("handlePacket()", () => {
     Rhum.testCase("dispatches the packet in an event", () => {
-      const receiver = new Client(1, ClientSocket() as unknown as WebSocket);
-      const sender = new Client(2, ClientSocket() as unknown as WebSocket);
+      const receiver = new Client(1, testObjects.fakeClientSocket());
+      const sender = new Client(2, testObjects.fakeClientSocket());
       const result = receiver.handlePacket(sender, {
         message: "hella"
       });
