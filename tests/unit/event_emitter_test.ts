@@ -353,6 +353,26 @@ Rhum.testPlan("unit/event_emitter_test.ts", () => {
   //
   //   })
   // })
+
+  // TODO(any): This test was moved from the client test file after the solid restructure. This test needs to be updated to fit the move
+  Rhum.testSuite("handlePacket()", () => {
+    Rhum.testCase("dispatches the packet in an event", () => {
+      const receiver = new Client(1, TestHelpers.fakeClientSocket());
+      const sender = new Client(2, TestHelpers.fakeClientSocket());
+      const result = receiver.handlePacket(sender, {
+        message: "hella"
+      });
+
+      // We can assert that the packet was handled if the packet contains the
+      // `sender` property. If a packet has the `sender` property, that means
+      // the client dispatched an event -- modifying the packet within the event
+      // by adding the `sender` property.
+      Rhum.asserts.assertEquals(result, {
+        message: "hella",
+        sender: "wocket_client:2"
+      });
+    });
+  });
 });
 
 Rhum.run();
