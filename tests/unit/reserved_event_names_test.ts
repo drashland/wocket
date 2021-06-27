@@ -5,11 +5,14 @@ Rhum.testPlan("unit/reserved_event_names_test.ts", () => {
   Rhum.testSuite("values", () => {
     Rhum.testCase("Should have the correct values", () => {
       Rhum.asserts.assertEquals(RESERVED_EVENT_NAMES, [
-        "connect",
-        "disconnect",
+        "client_connect",
+        "client_disconnect",
+        "id",
         "listening_to",
         "pong",
+        "ping",
         "reconnect",
+        "test",
       ]);
     });
   });
