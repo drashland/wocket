@@ -37,6 +37,16 @@ Rhum.testPlan("unit/server_test.ts", () => {
       server.close()
     })
   })
+
+  Rhum.testSuite("closeChannel()", () => {
+    Rhum.testCase("Should close and delete a channel by name", async () => {
+      const server = new Server()
+      server.channels.set("my channel", "ooo")
+      server.closeChannel("my channel")
+      const channel = server.channels.get("my channel")
+      Rhum.asserts.assertEquals(channel, null)
+    })
+  })
 });
 
 Rhum.run();
