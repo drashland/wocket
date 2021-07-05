@@ -23,7 +23,7 @@ jobs:
 
       - name: Unit
         run: |
-          deno test --allow-all tests/unit/tests.ts
+          deno test --allow-all tests/unit
 
       - name: Integration
         run: |

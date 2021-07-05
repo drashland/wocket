@@ -1,20 +1,52 @@
-export interface ITransmitterOptions {
-  /**
-   * A property to determine number of ms to wait for a pong event before
-   * closing a client connection.
-   */
-  // deno-lint-ignore camelcase
-  ping_interval?: number;
-
-  /**
-   * A property to determine number of ms before sending a ping event to a
-   * connected client.
-   */
-  // deno-lint-ignore camelcase
-  ping_timeout?: number;
-
-  /**
-   * A property to set reconnect flag. If false, server will not ping client.
-   */
-  reconnect?: boolean;
+/**
+ * All incoming events should match this interface.
+ *
+ * action
+ *
+ *     The action that the server should take. For example:
+ *
+ *         {
+ *           "action": "send_packet",
+ *           "payload": "something"
+ *         }
+ *
+ * payload
+ *
+ *     The payload to send alongside the action. The payload to send is
+ *     determined by the action field. For example:
+ *
+ *         To send a packet, the client must send the following:
+ *
+ *         {
+ *           "action": "send_packet",
+ *           "payload": {
+ *             "username": "Ed",
+ *             "id": 4,
+ *             "message": "Hella guuud."
+ *           }
+ *         }
+ *
+ *         To connect to channels, the client must send the following:
+ *
+ *         {
+ *           "action": "connect_to_channels",
+ *           "payload": [
+ *             "channel_1",
+ *             "channel_2",
+ *           ]
+ *         }
+ *
+ *         To disconnect from channels, the client must send the following:
+ *
+ *         {
+ *           "action": "disconnect_from_channels",
+ *           "payload": [
+ *             "channel_1",
+ *             "channel_2",
+ *           ]
+ *         }
+ */
+export interface IIncomingEvent {
+  action: string;
+  payload: unknown;
 }
