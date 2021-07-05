@@ -212,7 +212,6 @@ export class Server extends EventEmitter {
    *
    * @returns A Promise of the DenoServer.
    */
-<<<<<<< HEAD
   public runWss(options: HTTPSOptions): DenoServer {
     this.handleServerOptions(options);
 
@@ -223,71 +222,6 @@ export class Server extends EventEmitter {
     this.listenForConnections();
 
     return this.deno_server;
-=======
-  protected async acceptWebSockets() {
-    for await (const req of this.deno_server!) {
-      const {
-        conn,
-        headers,
-        r: bufReader,
-        w: bufWriter,
-      } = req;
-
-      acceptWebSocket({
-        bufReader,
-        bufWriter,
-        conn,
-        headers,
-      })
-        .then(async (socket: WebSocket): Promise<void> => {
-          const clientId = conn.rid;
-          const client = super.createClient(clientId, socket);
-          try {
-            await this.transmitter.handlePacket(
-              new Packet(
-                client,
-                "connect",
-              ),
-            );
-            for await (const message of socket) {
-              // Handle binary
-              if (message instanceof Uint8Array) {
-                this.handleMessageAsBinary(client, message);
-
-                // Handle strings
-              } else if (typeof message === "string") {
-                await this.handleMessageAsString(client, message);
-
-                // Handle disconnects
-              } else if (isWebSocketCloseEvent(message)) {
-                await this.transmitter.handlePacket(
-                  new Packet(
-                    client,
-                    "disconnect",
-                  ),
-                );
-                super.removeClient(client.id);
-              }
-            }
-          } catch (_e) {
-            if (!socket.isClosed) {
-              await socket.close(1000).catch(console.error);
-              super.removeClient(client.id);
-              await this.transmitter.handlePacket(
-                new Packet(
-                  client,
-                  "disconnect",
-                ),
-              );
-            }
-          }
-        })
-        .catch(async (err: Error): Promise<void> => {
-          console.error(`failed to accept websocket: ${err}`);
-          await req.respond({ status: 400 });
-        });
-    }
->>>>>>> b0e1c9002b03ceffa72f32f06e92120936453671
   }
 
   //////////////////////////////////////////////////////////////////////////////
