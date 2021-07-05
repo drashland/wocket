@@ -1,6 +1,7 @@
 import { Drash } from "../../deps.ts";
 import { socketServer } from "../../app.ts";
 import { messages } from "../messages.ts";
+import { Packet } from "../../../../../mod.ts";
 
 export default class ChatResource extends Drash.Http.Resource {
   static paths = [
@@ -50,7 +51,7 @@ export default class ChatResource extends Drash.Http.Resource {
           messages: [],
         };
         socketServer
-          .on(channelName, (incomingMessage: any) => {
+          .on(channelName, (incomingMessage: Packet) => {
             const { message } = incomingMessage;
             messages[channelName].messages.push({ ...message });
             socketServer.to(channelName, incomingMessage);

@@ -83,7 +83,7 @@ export class Sender {
             });
             // Send the message
             await socketConn.send(message);
-          } catch (err) {
+          } catch (_err) {
             console.log(`Unable to send message to Client #${clientId}.`);
           }
         }

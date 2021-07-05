@@ -269,7 +269,7 @@ Rhum.testPlan("unit/event_emitter_test.ts", () => {
       "Should do nothing if the client does not exist",
       async () => {
         const io = new EventEmitter();
-        const client1 = io.createClient(
+        io.createClient(
           1,
           ClientSocket() as unknown as WebSocket,
         );
