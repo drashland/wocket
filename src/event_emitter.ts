@@ -59,8 +59,8 @@ export abstract class EventEmitter extends EventTarget {
    */
   public handlePacket(
     sender: Channel | Client | Server,
-    packet: unknown
-  ): boolean|unknown {
+    packet: unknown,
+  ): boolean | unknown {
     // Make sure we send the sender's ID in the packet
     const hydratedPacket = packet as { sender: number | string };
     hydratedPacket.sender = sender.name;
@@ -77,7 +77,6 @@ export abstract class EventEmitter extends EventTarget {
 
     return false;
   }
-
 
   //////////////////////////////////////////////////////////////////////////////
   // FILE MARKER - METHODS - PROTECTED /////////////////////////////////////////

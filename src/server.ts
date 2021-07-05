@@ -98,7 +98,11 @@ export class Server extends EventEmitter {
    * @param channelName - The name of the channel.
    */
   public closeChannel(channelName: string): void {
-    this.getChannel(channelName).close();
+    const channel = this.channels.get(channelName);
+    if (channel === undefined) {
+      return;
+    }
+    channel.close();
     this.channels.delete(channelName);
   }
 
@@ -109,7 +113,10 @@ export class Server extends EventEmitter {
    * @param id - See Client#id.
    */
   public disconnectClient(id: number): void {
-    const client = this.getClient(id);
+    const client = this.clients.get(id);
+    if (client === undefined) {
+      return;
+    }
 
     client.disconnectFromAllChannels();
 
@@ -129,27 +136,10 @@ export class Server extends EventEmitter {
    */
   public getClients(): number[] {
     const clients = [];
-    for (const id in this.clients) {
+    for (const id of this.clients.keys()) {
       clients.push(+id);
     }
     return clients;
-  }
-
-  /**
-   * Get a channel in this server.
-   *
-   * @param channelName - The name of the channel to retrieve
-   *
-   * @returns A channel.
-   */
-  public getChannel(channelName: string): Channel {
-    const channel = this.channels.get(channelName);
-
-    if (!channel) {
-      throw new Error(`Channel "${channelName}" does not exist.`);
-    }
-
-    return channel;
   }
 
   /**
@@ -159,7 +149,7 @@ export class Server extends EventEmitter {
    */
   public getChannels(): string[] {
     const channels = [];
-    for (const channelName in this.channels) {
+    for (const channelName of this.channels.keys()) {
       // Ignore the reserved channels
       if (RESERVED_EVENT_NAMES.indexOf(channelName) !== -1) {
         continue;
@@ -184,11 +174,8 @@ export class Server extends EventEmitter {
     channelName: string,
     cb: OnChannelCallback<T>,
   ): void {
-    let channel: Channel;
-
-    try {
-      channel = this.getChannel(channelName);
-    } catch (error) {
+    let channel = this.channels.get(channelName);
+    if (!channel) {
       // If we ended up here, then that means the channel doesn't exist, so we
       // create it
       channel = new Channel(channelName);
@@ -300,12 +287,13 @@ export class Server extends EventEmitter {
       // Occurs when this server tries to connect a client
 
       case "connect":
-        this.getChannel("connect")
+        const connChannel = this.channels.get("connect") as Channel;
+        connChannel
           .executeCallbacks(
             new CustomEvent("wocket_reserved", {
               detail: {
                 sender: client,
-                receiver: this.getChannel("connect"),
+                receiver: connChannel,
                 message: `Connected to the server as Client ${client.id}.`,
               },
             }),
@@ -316,12 +304,13 @@ export class Server extends EventEmitter {
       // Occurs when this server tries to disconnect a client
 
       case "disconnect":
-        this.getChannel("disconnect")
+        const channel = this.channels.get("disconnect") as Channel;
+        channel
           .executeCallbacks(
             new CustomEvent("wocket_reserved", {
               detail: {
                 sender: client,
-                receiver: this.getChannel("disconnect"),
+                receiver: this.channels.get("disconnect"),
                 messagE: "Disconneted from the server.",
               },
             }),
@@ -398,28 +387,11 @@ export class Server extends EventEmitter {
   }
 
   /**
-   * Is this event a reserved event?
-   *
-   * @returns True if yes, false if not.
-   */
-  protected isEventReserved(event: WebSocketEvent): boolean {
-    if (typeof event !== "string") {
-      return false;
-    }
-
-    if (!RESERVED_EVENT_NAMES.includes(event.trim())) {
-      return false;
-    }
-
-    return true;
-  }
-
-  /**
    * @param client - See Client.
    * @param event - See WebSocketEvent in https://deno.land/std/ws/mod.ts.
    */
   protected handleWebSocketEvent(client: Client, event: WebSocketEvent): void {
-    if (this.isEventReserved(event)) {
+    if (typeof event === "string" && RESERVED_EVENT_NAMES.includes(event)) {
       return this.handleReservedEvent(
         client,
         (event as string).trim(),
@@ -459,7 +431,10 @@ export class Server extends EventEmitter {
       //
       case "connect_to_channels":
         (event.payload as string[]).forEach((channel: string) => {
-          const channelObj = this.getChannel(channel);
+          const channelObj = this.channels.get(channel);
+          if (channelObj === undefined) {
+            return;
+          }
           channelObj.connectClient(client);
           client.connectToChannel(channelObj);
           client.socket.send(
@@ -475,9 +450,14 @@ export class Server extends EventEmitter {
       //       "payload": ["channel_1", "channel_2"]
       //     }
       //
+
       case "disconnect_from_channels":
         (event.payload as string[]).forEach((channel: string) => {
-          this.getChannel(channel).disconnectClient(client);
+          const c = this.channels.get(channel);
+          if (c === undefined) {
+            return;
+          }
+          c.disconnectClient(client);
           client.socket.send(
             `You have been disconnected from the "${channel}" channel.`,
           );
@@ -491,10 +471,14 @@ export class Server extends EventEmitter {
       //       "payload": <some unknown type -- can be anything>
       //     }
       //
+
       case "send_packet":
         const payload = event.payload as { to: string[]; packet: unknown };
         payload.to.forEach((receiver: string | number) => {
           const receiverObj = this.getReceiverOfEvent(receiver);
+          if (receiverObj === undefined) {
+            return;
+          }
           const result = receiverObj.handlePacket(client, payload.packet);
           if (!result) {
             if (receiverObj instanceof Client) {
@@ -513,21 +497,6 @@ export class Server extends EventEmitter {
   }
 
   /**
-   * Get a client connected to this server.
-   *
-   * @param id - See Client#id.
-   */
-  protected getClient(id: number): Client {
-    const client = this.clients.get(id);
-
-    if (!client) {
-      throw new Error(`Client with ID #${id} does not exist.`);
-    }
-
-    return client;
-  }
-
-  /**
    * Figure out what entity is the receiver of an event.
    *
    * @param receiver - Could be a number (which would mean the receiver is a
@@ -535,16 +504,18 @@ export class Server extends EventEmitter {
    *
    * @returns A Channel or a Client based on the specified argument.
    */
-  protected getReceiverOfEvent(receiver: string | number): Channel | Client {
+  protected getReceiverOfEvent(
+    receiver: string | number,
+  ): Channel | Client | undefined {
     const id = +receiver;
 
     // Not a number? That means the receiver is a channel because all channels
     // are strings and all clients are numbers.
     if (isNaN(id)) {
-      return this.getChannel(receiver as string);
+      return this.channels.get(receiver as string);
     }
 
-    return this.getClient(id);
+    return this.clients.get(id);
   }
 
   /**
@@ -568,7 +539,7 @@ export class Server extends EventEmitter {
           client.socket.send(error.stack ?? error.message);
         } catch (_error) {
           client.socket.send(
-            "An unknown error occurred while trying to handle the event."
+            "An unknown error occurred while trying to handle the event.",
           );
         }
       }

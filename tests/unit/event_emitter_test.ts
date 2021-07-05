@@ -1,23 +1,17 @@
-import { EventEmitter } from "../../mod.ts";
-import { EventEmitter } from "../../src/event_emitter";
-import { Rhum, WebSocket } from "../deps.ts";
-
-const ClientSocket = () => {
-  return {
-    send: () => true,
-    close: () => true,
-  };
-};
+import { Client, EventEmitter } from "../../mod.ts";
+import { deferred, Rhum, WebSocket } from "../deps.ts";
+import * as TestHelpers from "../test_helpers.ts";
 
 Rhum.testPlan("unit/event_emitter_test.ts", () => {
-
-  Rhum.testSuite("constructor()", () => { 
+  Rhum.testSuite("constructor()", () => {
     Rhum.testCase(
       "should have Channels, Clients, and Sender on class init",
       () => {
-        const io = new EventEmitter();
-        const expect = ["channels", "clients", "sender"];
-        Rhum.asserts.assert(expect.every((val) => io.hasOwnProperty(val)));
+        class EE extends EventEmitter {
+          eventHandler() {}
+        }
+        const io = new EE("hello there");
+        Rhum.asserts.assertEquals(io.name, "hello there");
       },
     );
   });
@@ -100,14 +94,19 @@ Rhum.testPlan("unit/event_emitter_test.ts", () => {
   // });
 
   Rhum.testSuite("broadcast()", async () => {
-    const eventEmitter = new EventEmitter()
-    const p = deferred()
-    eventEmitter.addEventListener("yeet", () => {
-      p.resolve()
-    })
-    const event = new Event("yeet")
-    eventEmitter.broadcast(event)
-    await p
+    Rhum.testCase("Should call the event", async () => {
+      class EE extends EventEmitter {
+        eventHandler() {}
+      }
+      const eventEmitter = new EE("JJ");
+      const p = deferred();
+      eventEmitter.addEventListener("yeet", () => {
+        p.resolve();
+      });
+      const event = new Event("yeet");
+      eventEmitter.broadcast(event);
+      await p;
+    });
     // If we get here, then the event was called :)
   });
 
@@ -376,10 +375,16 @@ Rhum.testPlan("unit/event_emitter_test.ts", () => {
   // TODO(any): This test was moved from the client test file after the solid restructure. This test needs to be updated to fit the move
   Rhum.testSuite("handlePacket()", () => {
     Rhum.testCase("dispatches the packet in an event", () => {
-      const receiver = new Client(1, TestHelpers.fakeClientSocket());
-      const sender = new Client(2, TestHelpers.fakeClientSocket());
+      const receiver = new Client(
+        1,
+        TestHelpers.fakeClientSocket() as unknown as WebSocket,
+      );
+      const sender = new Client(
+        2,
+        TestHelpers.fakeClientSocket() as unknown as WebSocket,
+      );
       const result = receiver.handlePacket(sender, {
-        message: "hella"
+        message: "hella",
       });
 
       // We can assert that the packet was handled if the packet contains the
@@ -388,7 +393,7 @@ Rhum.testPlan("unit/event_emitter_test.ts", () => {
       // by adding the `sender` property.
       Rhum.asserts.assertEquals(result, {
         message: "hella",
-        sender: "wocket_client:2"
+        sender: "wocket_client:2",
       });
     });
   });

@@ -60,7 +60,6 @@ export class Client extends EventEmitter {
     this.channels.set(channel.name, channel);
   }
 
-
   /**
    * Disconnect from all channels.
    */
