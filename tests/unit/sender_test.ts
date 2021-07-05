@@ -1,12 +1,5 @@
 import { Rhum } from "../deps.ts";
 
-const ClientSocket = () => {
-  return {
-    send: () => true,
-    close: () => true,
-  };
-};
-
 Rhum.testPlan("unit/sender_test.ts", () => {
   Rhum.testSuite("add()", () => {
     // Unable to test, as `packet_queue` property is private

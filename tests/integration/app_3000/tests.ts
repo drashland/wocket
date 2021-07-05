@@ -25,6 +25,7 @@ async function createWebSocketServer(
 async function waitForMessage(
   client: WebSocket,
 ): Promise<Record<string, unknown>> {
+  // deno-lint-ignore no-explicit-any
   const p = deferred<any>();
   client.onmessage = (event) => {
     const data = JSON.parse(event.data);
@@ -34,6 +35,7 @@ async function waitForMessage(
   return result;
 }
 
+// deno-lint-ignore no-explicit-any
 function sendMsg(client: WebSocket, channel: string, message: any) {
   client.send(JSON.stringify({
     send_packet: {
@@ -45,6 +47,7 @@ function sendMsg(client: WebSocket, channel: string, message: any) {
 
 async function sendMsgAndGetRes(
   client: WebSocket,
+  // deno-lint-ignore no-explicit-any
   message: any,
   channel: string,
 ) {
@@ -74,7 +77,7 @@ async function createClient(channelsToConnectTo: string[]) {
   const p2 = deferred();
   const expectedConnEvents = channelsToConnectTo.length;
   let connEvents = 0;
-  client.onmessage = (event) => {
+  client.onmessage = () => {
     connEvents++;
     if (connEvents === expectedConnEvents) {
       p2.resolve();
@@ -96,7 +99,7 @@ Rhum.testPlan("app_3000", () => {
   Rhum.testSuite("server", () => {
     Rhum.testCase("should allow clients to connect", async () => {
       const server = await createWebSocketServer();
-      server.on("chan1", (data: Packet) => {
+      server.on("chan1", (_data: Packet) => {
       });
       const promise = deferred();
       const client = new WebSocket(
@@ -320,7 +323,7 @@ Rhum.testPlan("app_3000", () => {
     Rhum.testCase("connect", async () => {
       const server = await createWebSocketServer();
       let connections = 0;
-      server.on("connect", (data: Packet) => {
+      server.on("connect", (_data: Packet) => {
         connections++;
       });
       const client = new WebSocket(`ws://${server.hostname}:${server.port}`);
@@ -339,7 +342,7 @@ Rhum.testPlan("app_3000", () => {
       const server = await createWebSocketServer();
       let disconnections = 0;
       const untilDisconnectEvent = deferred();
-      server.on("disconnect", (data: Packet) => {
+      server.on("disconnect", (_data: Packet) => {
         disconnections++;
         untilDisconnectEvent.resolve();
       });

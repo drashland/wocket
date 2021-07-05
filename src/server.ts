@@ -79,7 +79,7 @@ export class Server extends EventEmitter {
         if (this.deno_server) {
           try {
             this.deno_server.close();
-          } catch (error) {
+          } catch (_error) {
             break;
           }
         }
@@ -185,7 +185,7 @@ export class Server extends EventEmitter {
                 super.removeClient(client.id);
               }
             }
-          } catch (e) {
+          } catch (_e) {
             if (!socket.isClosed) {
               await socket.close(1000).catch(console.error);
               super.removeClient(client.id);

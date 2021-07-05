@@ -1,1 +1,1 @@
-export let messages: any = {};
+export const messages: Record<string, unknown> = {};

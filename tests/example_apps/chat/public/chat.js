@@ -33,55 +33,9 @@ const addMessageToChat = (channel, messageString) => {
 };
 
 /**
- * Change the current channel to the channel specified and load the channel's messages
- *
- * @param {String} channelName
- */
-const changeChannel = async (channelName) => {
-  console.log(`Changing channel to "${channelName}".`);
-  await fetchMessages(channelName);
-};
-
-/**
- * Create a new channel by sending a request to the web server, which will tell the socket server to
- * create a new channel.
- */
-const createChannel = async () => {
-  if (createChannelName.value.trim() == "") {
-    alert("Channel name is required!");
-    return;
-  }
-  console.log("Creating channel.");
-  const response = await fetch(
-    `http://${WEB_SERVER.hostname}:${WEB_SERVER.port}/chat`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        action: "create_channel",
-        channel_name: createChannelName.value,
-      }),
-    },
-  );
-  if (response.status === 200) {
-    console.log("Channel created.");
-    let option = document.createElement("option");
-    option.text = createChannelName.value;
-    option.value = createChannelName.value;
-    channelsDropdown.add(option);
-    listenToChannel(createChannelName.value);
-  } else {
-    alert(await response.json());
-  }
-};
-
-/**
  * Fetch all channels from the server.
  */
 const fetchChannels = async () => {
-  const url = `http://${WEB_SERVER.hostname}:${WEB_SERVER.port}/chat`;
   console.log("Fetching channels.");
   const response = await fetch(
     `http://${WEB_SERVER.hostname}:${WEB_SERVER.port}/chat`,
@@ -106,7 +60,7 @@ const fetchChannels = async () => {
         return;
       }
       // Create the option for the channel and add it to the channels dropdown
-      let option = document.createElement("option");
+      const option = document.createElement("option");
       option.text = channel;
       option.value = channel;
       if (option.value == value) {

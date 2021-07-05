@@ -1,19 +1,4 @@
 import { Rhum } from "../deps.ts";
-import {
-  Client,
-  EventEmitter,
-  Packet,
-  Server,
-  Transmitter,
-} from "../../mod.ts";
-import { WebSocket } from "../../deps.ts";
-
-const ClientSocket = () => {
-  return {
-    send: () => true,
-    close: () => true,
-  };
-};
 
 Rhum.testPlan("unit/transmitter_test.ts", () => {
   // Unable to test as properties are private
