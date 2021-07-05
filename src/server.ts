@@ -301,6 +301,7 @@ export class Server extends EventEmitter {
       // Occurs when this server tries to disconnect a client
 
       // deno-lint-ignore no-case-declarations
+
       case "disconnect":
         const channel = this.channels.get("disconnect") as Channel;
         channel
@@ -471,6 +472,7 @@ export class Server extends EventEmitter {
       //
 
       // deno-lint-ignore no-case-declarations
+
       case "send_packet":
         const payload = event.payload as { to: string[]; packet: unknown };
         payload.to.forEach((receiver: string | number) => {
