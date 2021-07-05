@@ -1,5 +1,5 @@
-import { Rhum, TestHelpers } from "../deps.ts";
-import { Channel, Client, Server } from "../../mod.ts";
+import { Rhum } from "../deps.ts";
+import { Channel, Client } from "../../mod.ts";
 import type { WebSocket } from "../deps.ts";
 
 const wsPlaceholder = 1 as unknown as WebSocket;
@@ -40,7 +40,7 @@ Rhum.testPlan("unit/channel_test.ts", () => {
   Rhum.testSuite("executeCallbacks()", () => {
     Rhum.testCase(
       "Should call every callback defined in the `callbacks` property of the `Channel` class",
-      async () => {
+      () => {
         const channel = new Channel("chat");
         let [cbVal1, cbVal2] = [1, 1];
         const callbacks = [

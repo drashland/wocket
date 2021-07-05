@@ -93,7 +93,7 @@ Rhum.testPlan("unit/event_emitter_test.ts", () => {
   //   );
   // });
 
-  Rhum.testSuite("broadcast()", async () => {
+  Rhum.testSuite("broadcast()", () => {
     Rhum.testCase("Should call the event", async () => {
       class EE extends EventEmitter {
         eventHandler() {}

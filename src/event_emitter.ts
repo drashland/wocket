@@ -1,5 +1,4 @@
 import { Channel, Client, Server } from "../mod.ts";
-import { RESERVED_EVENT_NAMES } from "./reserved_event_names.ts";
 
 /**
  * The EventEmitter class is responsible for listening to and dispatching

@@ -1,4 +1,3 @@
-import { WebSocket } from "../deps.ts";
 import { Client } from "./client.ts";
 import { EventEmitter } from "./event_emitter.ts";
 

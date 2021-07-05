@@ -25,8 +25,9 @@ Rhum.testPlan("unit/server_test.ts", () => {
       const server = new Server();
       server.deno_server = serve({ port: 8000 });
       server.close();
-      // If server is closed, this for loop should be skipped. If server was not closed, this loop will be executed and will hang indefinitely
-      for await (const _req of server.deno_server) {}
+      for await (const _req of server.deno_server) {
+        // If server is closed, this for loop should be skipped. If server was not closed, this loop will be executed and will hang indefinitely
+      }
     });
     Rhum.testCase(
       "Should not error if server is not set or not defined",
@@ -44,7 +45,7 @@ Rhum.testPlan("unit/server_test.ts", () => {
   });
 
   Rhum.testSuite("closeChannel()", () => {
-    Rhum.testCase("Should close and delete a channel by name", async () => {
+    Rhum.testCase("Should close and delete a channel by name", () => {
       const server = new Server();
       const channel = new Channel("my channel");
       server.channels.set("my channel", channel);
@@ -85,9 +86,9 @@ Rhum.testPlan("unit/server_test.ts", () => {
   });
 
   Rhum.testSuite("getClients()", () => {
-    Rhum.testCase("Returns all connected client ids", async () => {
+    Rhum.testCase("Returns all connected client ids", () => {
       const server = new Server();
-      server.clients.set(69, "hi:)" as any);
+      server.clients.set(69, "hi:)" as unknown as Client);
       const clients = server.getClients();
       Rhum.asserts.assertEquals(clients, [69]);
     });

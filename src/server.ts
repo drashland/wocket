@@ -5,11 +5,9 @@ import {
   DenoServer,
   HTTPOptions,
   HTTPSOptions,
-  isWebSocketCloseEvent,
   serve,
   ServerRequest,
   serveTLS,
-  WebSocket,
   WebSocketEvent,
 } from "../deps.ts";
 import { Channel } from "./channel.ts";
@@ -25,8 +23,6 @@ interface DenoWebSocketRequest extends ServerRequest {
   bufReader: BufReader;
   headers: Headers;
 }
-
-const decoder = new TextDecoder();
 
 /**
  * This class is responsible for creating a users socket server, maintaining the
@@ -239,7 +235,7 @@ export class Server extends EventEmitter {
   /**
    * See EventEmitter.eventHandler().
    */
-  protected eventHandler(event: Event): void {
+  protected eventHandler(_event: Event): void {
     return;
   }
 
@@ -286,6 +282,7 @@ export class Server extends EventEmitter {
     switch (eventName) {
       // Occurs when this server tries to connect a client
 
+      // deno-lint-ignore no-case-declarations
       case "connect":
         const connChannel = this.channels.get("connect") as Channel;
         connChannel
@@ -303,6 +300,7 @@ export class Server extends EventEmitter {
 
       // Occurs when this server tries to disconnect a client
 
+      // deno-lint-ignore no-case-declarations
       case "disconnect":
         const channel = this.channels.get("disconnect") as Channel;
         channel
@@ -472,6 +470,7 @@ export class Server extends EventEmitter {
       //     }
       //
 
+      // deno-lint-ignore no-case-declarations
       case "send_packet":
         const payload = event.payload as { to: string[]; packet: unknown };
         payload.to.forEach((receiver: string | number) => {
