@@ -279,6 +279,7 @@ export class Server extends EventEmitter {
     client: Client,
     eventName: string,
   ): void {
+    const disconnectChannel = this.channels.get("disconnect") as Channel;
     switch (eventName) {
       // Occurs when this server tries to connect a client
 
@@ -300,16 +301,13 @@ export class Server extends EventEmitter {
 
       // Occurs when this server tries to disconnect a client
 
-      // deno-lint-ignore no-case-declarations
-
       case "disconnect":
-        const channel = this.channels.get("disconnect") as Channel;
-        channel
+        disconnectChannel
           .executeCallbacks(
             new CustomEvent("wocket_reserved", {
               detail: {
                 sender: client,
-                receiver: this.channels.get("disconnect"),
+                receiver: disconnectChannel,
                 messagE: "Disconneted from the server.",
               },
             }),
@@ -420,6 +418,11 @@ export class Server extends EventEmitter {
    * @param event - See IIncomingEvent.
    */
   protected handleEvent(client: Client, event: IIncomingEvent): void {
+    const sendPacketPayload = event.payload as {
+      to: string[];
+      packet: unknown;
+    };
+    const connectPayload = event.payload as string[];
     switch (event.action) {
       // Occurs when an event like the following is received from the client:
       //
@@ -429,7 +432,7 @@ export class Server extends EventEmitter {
       //     }
       //
       case "connect_to_channels":
-        (event.payload as string[]).forEach((channel: string) => {
+        connectPayload.forEach((channel) => {
           const channelObj = this.channels.get(channel);
           if (channelObj === undefined) {
             return;
@@ -451,7 +454,7 @@ export class Server extends EventEmitter {
       //
 
       case "disconnect_from_channels":
-        (event.payload as string[]).forEach((channel: string) => {
+        connectPayload.forEach((channel) => {
           const c = this.channels.get(channel);
           if (c === undefined) {
             return;
@@ -471,16 +474,16 @@ export class Server extends EventEmitter {
       //     }
       //
 
-      // deno-lint-ignore no-case-declarations
-
       case "send_packet":
-        const payload = event.payload as { to: string[]; packet: unknown };
-        payload.to.forEach((receiver: string | number) => {
+        sendPacketPayload.to.forEach((receiver: string | number) => {
           const receiverObj = this.getReceiverOfEvent(receiver);
           if (receiverObj === undefined) {
             return;
           }
-          const result = receiverObj.handlePacket(client, payload.packet);
+          const result = receiverObj.handlePacket(
+            client,
+            sendPacketPayload.packet,
+          );
           if (!result) {
             if (receiverObj instanceof Client) {
               client.socket.send(
