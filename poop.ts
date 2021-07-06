@@ -42,8 +42,14 @@ server.on("channel", (event: CustomEvent<UserMessage>) => {
   })
 
   // example sending to a specific client TODO :: Pass socket id as first param?
+  server.to("chat-message", {
+    message: "this message is only for you *wink wink*"
+  }, id)
 
   // example sending to all OTHER clients TODO :: broadcast?
+  server.broadcast("chat-message", {
+    message: "You got this message but client with id of " + id + " shouldnt have"
+  }, id)
 });
 
 const client = await WebSocketClient.create("ws://127.0.0.1:5001")

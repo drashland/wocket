@@ -70,8 +70,36 @@ export class Server {
    * @param channelName 
    * @param cb 
    */
-  public to(channelName: string, message: Record<string, unknown>): void {
+  public to(channelName: string, message: Record<string, unknown>, idOfClientToSendTo?: number): void {
     for (const clientId of this.clients.keys()) {
+      // If idOfClientIdToSendTo is defined, skip until we get to them
+      if (idOfClientToSendTo && clientId !== idOfClientToSendTo) {
+        continue
+      }
+      const client = this.clients.get(clientId)
+      client!.socket.send(JSON.stringify({
+        channel: channelName,
+        message: message
+      }))
+
+      // If sending to a specific client, we may as well break out of this loop as we've sent the message now
+      if (idOfClientToSendTo) {
+        break
+      }
+    }
+  }
+
+  /**
+   *  TODO
+   * @param channelName TODO
+   * @param message 
+   * @param id - Id of client not to send to eg the initiator
+   */
+  public broadcast(channelName: string, message: Record<string, unknown>, id: number) {
+    for (const clientId of this.clients.keys()) {
+      if (id === clientId) { // dont send to that client
+        continue
+      }
       const client = this.clients.get(clientId)
       client!.socket.send(JSON.stringify({
         channel: channelName,
