@@ -1,34 +1,21 @@
 import {
   acceptWebSocket,
-  BufReader,
-  BufWriter,
   DenoServer,
   HTTPOptions,
   HTTPSOptions,
   serve,
-  ServerRequest,
   serveTLS,
-  WebSocketEvent,
+  isWebSocketCloseEvent,
 } from "../deps.ts";
 import { Channel } from "./channel.ts";
 import { Client } from "./client.ts";
-import { EventEmitter } from "./event_emitter.ts";
-import { IIncomingEvent } from "./interfaces.ts";
-import { RESERVED_EVENT_NAMES } from "./reserved_event_names.ts";
 import { OnChannelCallback } from "./types.ts";
-
-interface DenoWebSocketRequest extends ServerRequest {
-  conn: Deno.Conn;
-  bufWriter: BufWriter;
-  bufReader: BufReader;
-  headers: Headers;
-}
 
 /**
  * This class is responsible for creating a users socket server, maintaining the
  * connections between sockets, and handling packets to and from sockets.
  */
-export class Server extends EventEmitter {
+export class Server {
   /**
    * A map of all created channels. The key is the channel name and the value is
    * the channel object.
@@ -60,17 +47,6 @@ export class Server extends EventEmitter {
   public port = 1557;
 
   //////////////////////////////////////////////////////////////////////////////
-  // FILE MARKER - CONSTRUCTOR /////////////////////////////////////////////////
-  //////////////////////////////////////////////////////////////////////////////
-
-  /**
-   * Construct an object of this class.
-   */
-  constructor() {
-    super("wocket_server");
-  }
-
-  //////////////////////////////////////////////////////////////////////////////
   // FILE MARKER - METHODS - PUBLIC ////////////////////////////////////////////
   //////////////////////////////////////////////////////////////////////////////
 
@@ -89,70 +65,19 @@ export class Server extends EventEmitter {
   }
 
   /**
-   * Close the specified channel.
-   *
-   * @param channelName - The name of the channel.
+   * TODO
+   * 
+   * @param channelName 
+   * @param cb 
    */
-  public closeChannel(channelName: string): void {
-    const channel = this.channels.get(channelName);
-    if (channel === undefined) {
-      return;
+  public to(channelName: string, message: Record<string, unknown>): void {
+    for (const clientId of this.clients.keys()) {
+      const client = this.clients.get(clientId)
+      client!.socket.send(JSON.stringify({
+        channel: channelName,
+        message: message
+      }))
     }
-    channel.close();
-    this.channels.delete(channelName);
-  }
-
-  /**
-   * Remove a connected client from this server and any channels that the client
-   * is listening to.
-   *
-   * @param id - See Client#id.
-   */
-  public disconnectClient(id: number): void {
-    const client = this.clients.get(id);
-    if (client === undefined) {
-      return;
-    }
-
-    client.disconnectFromAllChannels();
-
-    // Check if the client is already closed. If this is not checked, then the
-    // server will crash.
-    if (!client.socket.isClosed) {
-      client.socket.close(1000);
-    }
-
-    this.clients.delete(client.id);
-  }
-
-  /**
-   * Get all clients connected to this server.
-   *
-   * @returns An array of client IDs.
-   */
-  public getClients(): number[] {
-    const clients = [];
-    for (const id of this.clients.keys()) {
-      clients.push(+id);
-    }
-    return clients;
-  }
-
-  /**
-   * Get all channels in this server.
-   *
-   * @returns An array of channel names.
-   */
-  public getChannels(): string[] {
-    const channels = [];
-    for (const channelName of this.channels.keys()) {
-      // Ignore the reserved channels
-      if (RESERVED_EVENT_NAMES.indexOf(channelName) !== -1) {
-        continue;
-      }
-      channels.push(channelName);
-    }
-    return channels;
   }
 
   /**
@@ -170,35 +95,77 @@ export class Server extends EventEmitter {
     channelName: string,
     cb: OnChannelCallback<T>,
   ): void {
-    let channel = this.channels.get(channelName);
-    if (!channel) {
-      // If we ended up here, then that means the channel doesn't exist, so we
-      // create it
-      channel = new Channel(channelName);
-      this.channels.set(channelName, channel);
-    }
-
-    // Ensure this channel has the callback that the user specifies
-    channel.callbacks.push(cb);
+    const channel = new Channel(channelName, cb); // even if one exists, overwrite it (maybe?)
+    this.channels.set(channelName, channel);
   }
 
   /**
    * Run this server using the WS protocol.
    *
    * @param options - See HTTPOptions.
-   *
-   * @returns A Promise of DenoServer.
    */
-  public runWs(options: HTTPOptions): DenoServer {
+  public async runWs(options: HTTPOptions): Promise<void> {
     this.handleServerOptions(options);
 
     this.deno_server = serve(options);
 
-    this.createReservedChannels();
-
-    this.listenForConnections();
-
-    return this.deno_server;
+    for await (const request of this.deno_server!) {
+      // listen for connections
+      const { conn, headers, r: bufReader, w: bufWriter } = request;
+      const socket = await acceptWebSocket({
+        bufReader,
+        bufWriter,
+        conn,
+        headers,
+      });
+      // Create the client
+      const client = new Client(conn.rid, socket)
+      this.clients.set(client.id, client)
+      // Call the connect callback if defined by the user
+      const channel = this.channels.get("connect")
+      const connectEvent = new CustomEvent("connect")
+      if (channel) channel.callback(connectEvent)
+      // Listen for messages from the client
+      try {
+        for await (const ev of socket) {
+          // If client sent a msg
+          if (typeof ev === "string") {
+            const json = JSON.parse(ev) // TODO wrap in a try catch, if error throw then send error message to client maybe? ie malformed request
+            // Get the channel they want to send the msg to
+            const channel = this.channels.get(json.channel) as Channel // TODO :: Add check for if channel wasnt found
+            // construct the event
+            const customEvent = new CustomEvent(channel.name, {
+              detail: {
+                ...json.message,
+                id: conn.rid
+              }
+            })
+            // Call the user defined handler for the channel. Essentially a `server.on("channel", ...)` will be called
+            const callback = channel.callback
+            callback(customEvent)
+          } else if (isWebSocketCloseEvent(ev)) {
+            // Remove the client
+            this.clients.delete(conn.rid)
+            // Call the disconnect handler if defined
+            const { code, reason } = ev;
+            const channel = this.channels.get("disconnect")
+            const disconnectEvent = new CustomEvent("disconnect", {
+              detail: {
+                id: conn.rid,
+                code,
+                reason
+              }
+            })
+            if (channel) channel.callback(disconnectEvent)
+          }
+        }
+      } catch (err) {
+        console.error(`failed to receive frame: ${err}`);
+        if (!socket.isClosed) {
+          await socket.close(1000).catch(console.error);
+        }
+      }
+    }
   }
 
   /**
@@ -213,9 +180,7 @@ export class Server extends EventEmitter {
 
     this.deno_server = serveTLS(options);
 
-    this.createReservedChannels();
-
-    this.listenForConnections();
+    //this.listenForConnections();
 
     return this.deno_server;
   }
@@ -223,133 +188,6 @@ export class Server extends EventEmitter {
   //////////////////////////////////////////////////////////////////////////////
   // FILE MARKER - METHODS - PROTECTED /////////////////////////////////////////
   //////////////////////////////////////////////////////////////////////////////
-
-  /**
-   * Create channels that are reserved for internal purposes.
-   */
-  protected createReservedChannels(): void {
-    this.channels.set("connect", new Channel("connect"));
-    this.channels.set("disconnect", new Channel("disconnect"));
-  }
-
-  /**
-   * See EventEmitter.eventHandler().
-   */
-  protected eventHandler(_event: Event): void {
-    return;
-  }
-
-  /**
-   * Handle connection requests to this server.
-   *
-   * @param request - The request coming into the server. For example, if a user
-   * were to open their browser's console and type ...
-   *
-   *    const connection = new WebSocket("ws://127.0.0.1:1777");
-   *
-   * ... then this method would ultimately handle that connection request.
-   */
-  protected async handleConnectionRequest(
-    request: DenoWebSocketRequest,
-  ): Promise<void> {
-    const { conn, headers, r: bufReader, w: bufWriter } = request;
-
-    const clientSocket = await acceptWebSocket({
-      bufReader,
-      bufWriter,
-      conn,
-      headers,
-    });
-
-    // Create the client
-    const client = new Client(conn.rid, clientSocket);
-    this.clients.set(client.id, client);
-
-    // Connect the client to this server
-    this.handleReservedEvent(client, "connect");
-  }
-
-  /**
-   * Handle a reserved event sent from the client.
-   *
-   * @param client - See Client.
-   * @param eventName - The name of the reserved event.
-   */
-  protected handleReservedEvent(
-    client: Client,
-    eventName: string,
-  ): void {
-    const disconnectChannel = this.channels.get("disconnect") as Channel;
-    switch (eventName) {
-      // Occurs when this server tries to connect a client
-
-      // deno-lint-ignore no-case-declarations
-      case "connect":
-        const connChannel = this.channels.get("connect") as Channel;
-        connChannel
-          .executeCallbacks(
-            new CustomEvent("wocket_reserved", {
-              detail: {
-                sender: client,
-                receiver: connChannel,
-                message: `Connected to the server as Client ${client.id}.`,
-              },
-            }),
-          );
-        this.listenForClientEvents(client);
-        break;
-
-      // Occurs when this server tries to disconnect a client
-
-      case "disconnect":
-        disconnectChannel
-          .executeCallbacks(
-            new CustomEvent("wocket_reserved", {
-              detail: {
-                sender: client,
-                receiver: disconnectChannel,
-                messagE: "Disconneted from the server.",
-              },
-            }),
-          );
-        this.disconnectClient(client.id);
-        break;
-
-      // Occurs when the client sends "id" as the packet
-
-      case "id":
-        client.socket.send(`${client.id}`);
-        break;
-
-      // Occurs when the client sends "ping" as the packet
-
-      case "ping":
-        client.socket.send("pong");
-        break;
-
-      // Occurs when the client sends "pong" as the packet
-
-      case "pong":
-        client.socket.send("ping");
-        break;
-
-      // Occurs when the server tries to reconnect a client
-
-      case "reconnect":
-        // TODO(crookse) Do something on an reconnect event. Could be useful to
-        // add a flag to this client.
-        break;
-
-      // Occurs when the client sends "test" as the packet
-
-      case "test":
-        client.socket.send(`Server started on ${this.hostname}:${this.port}.`);
-        break;
-
-      default:
-        break;
-    }
-  }
 
   /**
    * @param options - See HTTPOptions or HTTPSOptions.
@@ -364,205 +202,4 @@ export class Server extends EventEmitter {
     }
   }
 
-  /**
-   * Is this event a JSON event? That is, it is a string parsable as JSON.
-   *
-   * @returns True if yes, false if not.
-   */
-  protected isEventJson(event: WebSocketEvent): boolean {
-    if (typeof event !== "string") {
-      return false;
-    }
-
-    try {
-      JSON.parse(event as string);
-    } catch (_error) {
-      return false;
-    }
-
-    return true;
-  }
-
-  /**
-   * @param client - See Client.
-   * @param event - See WebSocketEvent in https://deno.land/std/ws/mod.ts.
-   */
-  protected handleWebSocketEvent(client: Client, event: WebSocketEvent): void {
-    if (typeof event === "string" && RESERVED_EVENT_NAMES.includes(event)) {
-      return this.handleReservedEvent(
-        client,
-        (event as string).trim(),
-      );
-    }
-
-    if (this.isEventJson(event)) {
-      return this.handleEvent(
-        client,
-        JSON.parse(event as string),
-      );
-    }
-
-    // if (this.isUnit8ArrayEvent(event)) {
-    //   return this.handleEvent(client, event);
-    // }
-
-    throw new Error(
-      "Could not handle event as Unit8Array, JSON, or Wocket reserved event.",
-    );
-  }
-
-  /**
-   * Handle an event received from a client.
-   *
-   * @param client - See Client.
-   * @param event - See IIncomingEvent.
-   */
-  protected handleEvent(client: Client, event: IIncomingEvent): void {
-    const sendPacketPayload = event.payload as {
-      to: string[];
-      packet: unknown;
-    };
-    const connectPayload = event.payload as string[];
-    switch (event.action) {
-      // Occurs when an event like the following is received from the client:
-      //
-      //     {
-      //       "action": "connect_to_channels",
-      //       "payload": ["channel_1", "channel_2"]
-      //     }
-      //
-      case "connect_to_channels":
-        connectPayload.forEach((channel) => {
-          const channelObj = this.channels.get(channel);
-          if (channelObj === undefined) {
-            return;
-          }
-          channelObj.connectClient(client);
-          client.connectToChannel(channelObj);
-          client.socket.send(
-            `You have been connected to the "${channelObj.name}" channel.`,
-          );
-        });
-        break;
-
-      // Occurs when an event like the following is received from the client:
-      //
-      //     {
-      //       "action": "disconnect_from_channels",
-      //       "payload": ["channel_1", "channel_2"]
-      //     }
-      //
-
-      case "disconnect_from_channels":
-        connectPayload.forEach((channel) => {
-          const c = this.channels.get(channel);
-          if (c === undefined) {
-            return;
-          }
-          c.disconnectClient(client);
-          client.socket.send(
-            `You have been disconnected from the "${channel}" channel.`,
-          );
-        });
-        break;
-
-      // Occurs when an event like the following is received from the client:
-      //
-      //     {
-      //       "action": "send_packet",
-      //       "payload": <some unknown type -- can be anything>
-      //     }
-      //
-
-      case "send_packet":
-        sendPacketPayload.to.forEach((receiver: string | number) => {
-          const receiverObj = this.getReceiverOfEvent(receiver);
-          if (receiverObj === undefined) {
-            return;
-          }
-          const result = receiverObj.handlePacket(
-            client,
-            sendPacketPayload.packet,
-          );
-          if (!result) {
-            if (receiverObj instanceof Client) {
-              client.socket.send(
-                `Failed to send event to Client ${receiverObj.id}.`,
-              );
-            } else if (receiverObj instanceof Channel) {
-              client.socket.send(
-                `Failed to send event to "${receiverObj.name}" channel.`,
-              );
-            }
-          }
-        });
-        break;
-    }
-  }
-
-  /**
-   * Figure out what entity is the receiver of an event.
-   *
-   * @param receiver - Could be a number (which would mean the receiver is a
-   * Client) or a string (which would mean the receiver is a Channel).
-   *
-   * @returns A Channel or a Client based on the specified argument.
-   */
-  protected getReceiverOfEvent(
-    receiver: string | number,
-  ): Channel | Client | undefined {
-    const id = +receiver;
-
-    // Not a number? That means the receiver is a channel because all channels
-    // are strings and all clients are numbers.
-    if (isNaN(id)) {
-      return this.channels.get(receiver as string);
-    }
-
-    return this.clients.get(id);
-  }
-
-  /**
-   * Listen for events sent from the client.
-   *
-   * @param client - See Client.
-   */
-  protected async listenForClientEvents(client: Client): Promise<void> {
-    for await (const webSocketEvent of client.socket) {
-      try {
-        this.handleWebSocketEvent(client, webSocketEvent);
-      } catch (error) {
-        // Something must have happened to the client's connection on the
-        // client's side if block executes
-        if (client.socket.isClosed) {
-          this.handleReservedEvent(client, "disconnect");
-          continue;
-        }
-
-        try {
-          client.socket.send(error.stack ?? error.message);
-        } catch (_error) {
-          client.socket.send(
-            "An unknown error occurred while trying to handle the event.",
-          );
-        }
-      }
-    }
-  }
-
-  /**
-   * Listen for socket connections. These sockets are clients that are trying to
-   * connect to this server.
-   */
-  protected async listenForConnections() {
-    for await (const request of this.deno_server!) {
-      try {
-        this.handleConnectionRequest(request as DenoWebSocketRequest);
-      } catch (error) {
-        console.error(
-          `Failed to handle WebSocket connection request: ${error}`,
-        );
-      }
-    }
-  }
 }
