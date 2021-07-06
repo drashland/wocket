@@ -146,7 +146,6 @@ export class Server {
             // Call the user defined handler for the channel. Essentially a `server.on("channel", ...)` will be called
             const callback = channel.callback
             callback(customEvent)
-            continue
           }
           if (isWebSocketCloseEvent(ev)) {
             // Remove the client

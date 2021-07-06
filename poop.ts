@@ -1,4 +1,5 @@
 import { Server } from "./mod.ts";
+import { WebSocketClient } from "./src/websocket_client.ts";
 
 const server: Server = new Server();
 
@@ -25,7 +26,7 @@ server.on("disconnect", (e: CustomEvent) => {
   console.log(id, code, reason)
 })
 
-// Example using generics + custom channel handler
+// Example using generics + custom channel handler and getting the data from the event
 type UserMessage = {
   username: string;
   sender: number;
@@ -45,27 +46,14 @@ server.on("channel", (event: CustomEvent<UserMessage>) => {
   // example sending to all OTHER clients TODO :: broadcast?
 });
 
-const client = new WebSocket("ws://127.0.0.1:5001")
-client.onmessage = (e) => {
-  console.log('GOT MSG on client:')
-    console.log(e.data)
-}
-client.onerror = (e) => console.log(e)
-client.onopen = () => {
-    console.log('open')
-    // send a message to the server that *coudl* be listening on a channel handler
-    client.send(JSON.stringify({
-        channel: "channel",
-        message: {
-          username: "darth vader",
-          sender: 69
-        }
-    }))
-}
-client.onmessage = (e) => {
-  // and this is how we parse the data
-  console.log('client got msg:')
-  const data = JSON.parse(e.data)
-  const { channel, message } = data as { channel: string, message: unknown}
-  console.log(channel, message)
-}
+const client = await WebSocketClient.create("ws://127.0.0.1:5001")
+client.on<{ message: string}>("chat-message", (packet) => {
+    const { message } = packet
+    console.log('client got message:')
+    console.log(message)
+})
+console.log('gonna send msg')
+client.to("channel", {
+    username: "darth vader",
+    sender: 69
+})
