@@ -12,24 +12,37 @@ console.log(
   `Server started on ws://${server.hostname}:${server.port}`,
 );
 
-server.on("connect", () => {
-  console.log('server had a client connected')
+// Example using the connect handler
+server.on("connect", (e: CustomEvent) => {
+  const { id } = e.detail
+  console.log('server had a client connected: ' + id)
 })
 
-server.on("disconnect", () => {
-  console.log('server had a client disconnect')
+// Example using the disconnect handler
+server.on("disconnect", (e: CustomEvent) => {
+  const { id, code, reason } = e.detail
+  console.log('server had a client disconnect:')
+  console.log(id, code, reason)
 })
 
+// Example using generics + custom channel handler
 type UserMessage = {
   username: string;
   sender: number;
+  id: number // client socket id
 };
-server.on("channel", (event: CustomEvent<UserMessage>) => { // TODO :: Need to pass in client id id
+server.on("channel", (event: CustomEvent<UserMessage>) => {
   console.log('got channel msg')
-  console.log(event); // Exists
+  const { username, sender, id } = event.detail
+  
+  // Example sending to all clients, specifying which channel it is for
   server.to("chat-message", {
     message: "yep, the server got your msg :)"
-  }) // support sending to clients in a channel EXCEPT the sender, and also only the sender
+  })
+
+  // example sending to a specific client TODO :: Pass socket id as first param?
+
+  // example sending to all OTHER clients TODO :: broadcast?
 });
 
 const client = new WebSocket("ws://127.0.0.1:5001")
@@ -40,6 +53,7 @@ client.onmessage = (e) => {
 client.onerror = (e) => console.log(e)
 client.onopen = () => {
     console.log('open')
+    // send a message to the server that *coudl* be listening on a channel handler
     client.send(JSON.stringify({
         channel: "channel",
         message: {
@@ -49,8 +63,9 @@ client.onopen = () => {
     }))
 }
 client.onmessage = (e) => {
+  // and this is how we parse the data
   console.log('client got msg:')
   const data = JSON.parse(e.data)
-  const { channel, message } = data
+  const { channel, message } = data as { channel: string, message: unknown}
   console.log(channel, message)
 }

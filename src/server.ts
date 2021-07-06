@@ -119,11 +119,14 @@ export class Server {
         headers,
       });
       // Create the client
-      const client = new Client(conn.rid, socket)
-      this.clients.set(client.id, client)
+      this.clients.set(conn.rid, new Client(conn.rid, socket))
       // Call the connect callback if defined by the user
       const channel = this.channels.get("connect")
-      const connectEvent = new CustomEvent("connect")
+      const connectEvent = new CustomEvent("connect", {
+        detail: {
+          id: conn.rid
+        }
+      })
       if (channel) channel.callback(connectEvent)
       // Listen for messages from the client
       try {
@@ -132,7 +135,7 @@ export class Server {
           if (typeof ev === "string") {
             const json = JSON.parse(ev) // TODO wrap in a try catch, if error throw then send error message to client maybe? ie malformed request
             // Get the channel they want to send the msg to
-            const channel = this.channels.get(json.channel) as Channel // TODO :: Add check for if channel wasnt found
+            const channel = this.channels.get(json.channel) as Channel // TODO :: Add check for if channel wasnt found, which just means a user hasn't created a listener for it
             // construct the event
             const customEvent = new CustomEvent(channel.name, {
               detail: {
@@ -143,7 +146,9 @@ export class Server {
             // Call the user defined handler for the channel. Essentially a `server.on("channel", ...)` will be called
             const callback = channel.callback
             callback(customEvent)
-          } else if (isWebSocketCloseEvent(ev)) {
+            continue
+          }
+          if (isWebSocketCloseEvent(ev)) {
             // Remove the client
             this.clients.delete(conn.rid)
             // Call the disconnect handler if defined
