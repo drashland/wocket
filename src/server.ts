@@ -132,16 +132,16 @@ export class Server {
     this.handleServerOptions(options);
 
     this.deno_server = serve(options);
-
     for await (const request of this.deno_server!) {
+      console.log('got connection')
       // listen for connections
       const { conn, headers, r: bufReader, w: bufWriter } = request;
-      const socket = await acceptWebSocket({
+      acceptWebSocket({
         bufReader,
         bufWriter,
         conn,
         headers,
-      });
+      }).then(async (socket) => {
       // Create the client
       this.clients.set(conn.rid, new Client(conn.rid, socket))
       // Call the connect callback if defined by the user
@@ -193,6 +193,7 @@ export class Server {
           await socket.close(1000).catch(console.error);
         }
       }
+    })
     }
   }
 

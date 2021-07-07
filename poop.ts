@@ -69,5 +69,3 @@ client.to("channel", {
     username: "darth vader",
     sender: 69
 })
-
-// TODO :: only one client can connect for some reason, when trynna connect a 2nd, their conn hangs
