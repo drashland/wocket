@@ -70,41 +70,32 @@ export class Server {
    * @param channelName 
    * @param cb 
    */
-  public to(channelName: string, message: Record<string, unknown>, idOfClientToSendTo?: number): void {
-    for (const clientId of this.clients.keys()) {
-      // If idOfClientIdToSendTo is defined, skip until we get to them
-      if (idOfClientToSendTo && clientId !== idOfClientToSendTo) {
-        continue
+  public to(channelName: string, message: Record<string, unknown>, constraints?: {
+    id: number,
+    only?: boolean,
+    ignore?: boolean
+  }): void {
+    // If sending to a specific client or wish to not send the message to a specific client
+    if (constraints) {
+      // If wanting to send to only that client, do that
+      if (constraints.only === true) {
+        this.send(constraints.id, channelName, message)
+        return
       }
-      const client = this.clients.get(clientId)
-      client!.socket.send(JSON.stringify({
-        channel: channelName,
-        message: message
-      }))
-
-      // If sending to a specific client, we may as well break out of this loop as we've sent the message now
-      if (idOfClientToSendTo) {
-        break
+      // otherwise if they want to not send the message to that user, do that
+      if (constraints.ignore === true) {
+        for (const clientId of this.clients.keys()) {
+          if (clientId === constraints.id) {
+            continue
+          }
+          this.send(clientId, channelName, message)
+        }
+        return
       }
     }
-  }
-
-  /**
-   *  TODO
-   * @param channelName TODO
-   * @param message 
-   * @param id - Id of client not to send to eg the initiator
-   */
-  public broadcast(channelName: string, message: Record<string, unknown>, id: number) {
+    // Otherwise send to all clients
     for (const clientId of this.clients.keys()) {
-      if (id === clientId) { // dont send to that client
-        continue
-      }
-      const client = this.clients.get(clientId)
-      client!.socket.send(JSON.stringify({
-        channel: channelName,
-        message: message
-      }))
+      this.send(clientId, channelName, message)
     }
   }
 
@@ -232,6 +223,14 @@ export class Server {
     if (options.port) {
       this.port = options.port;
     }
+  }
+
+  private send(clientId: number, channelName: string, message: Record<string, unknown>) {
+    const client = this.clients.get(clientId)
+    client!.socket.send(JSON.stringify({
+      channel: channelName,
+      message: message
+    }))
   }
 
 }

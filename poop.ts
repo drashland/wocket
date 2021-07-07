@@ -44,12 +44,18 @@ server.on("channel", (event: CustomEvent<UserMessage>) => {
   // example sending to a specific client TODO :: Pass socket id as first param?
   server.to("chat-message", {
     message: "this message is only for you *wink wink*"
-  }, id)
+  }, {
+    id,
+    only: true
+  })
 
   // example sending to all OTHER clients TODO :: broadcast?
-  server.broadcast("chat-message", {
+  server.to("chat-message", {
     message: "You got this message but client with id of " + id + " shouldnt have"
-  }, id)
+  }, {
+    id,
+    ignore: true
+  })
 });
 
 const client = await WebSocketClient.create("ws://127.0.0.1:5001")
@@ -63,3 +69,5 @@ client.to("channel", {
     username: "darth vader",
     sender: 69
 })
+
+// TODO :: only one client can connect for some reason, when trynna connect a 2nd, their conn hangs
