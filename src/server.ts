@@ -11,16 +11,6 @@ import { Channel } from "./channel.ts";
 import { Client } from "./client.ts";
 import { OnChannelCallback } from "./types.ts";
 
-type IgnoreConstraint = {
-  ignore: boolean
-}
-type OnlyConstraint = {
-  only: boolean
-}
-type Contraints = {
-  id: number
-} & (IgnoreConstraint | OnlyConstraint)
-
 /**
  * This class is responsible for creating a users socket server, maintaining the
  * connections between sockets, and handling packets to and from sockets.
@@ -75,28 +65,44 @@ export class Server {
   }
 
   /**
+   * Broadcast to other clients in a channel excluding the one passed in
+   * 
+   * @param channelName - Channel to send the message to
+   * @param message - The message to send
+   * @param id - Id of client it ignore (not send the message to)
+   * 
+   * @example
+   * ```ts
+   * interface SomeEvent { id: number }
+   * server.on("some-event", (event: CustomEvent<SomeEvent>) => {
+   *   const { id } = event.detail
+   *   server.broadcast("some-channel", {
+   *     message: "Shh everybody! " + id + " won't be getting this message!"
+   *   }, id)
+   * })
+   * ```
+   */
+  public broadcast(channelName: string, message: Record<string, unknown>, id: number) {
+    for (const clientId of this.clients.keys()) {
+      if (clientId !== id) { // ignore sending to client that has the passed in id
+        this.send(clientId, channelName, message)
+      }
+    }
+  }
+
+  /**
    * TODO
    * 
    * @param channelName 
    * @param cb 
    */
-  public to(channelName: string, message: Record<string, unknown>, constraints?: Contraints): void {
+  public to(channelName: string, message: Record<string, unknown>, onlySendTo?: number): void {
     // If sending to a specific client or wish to not send the message to a specific client
-    if (constraints) {
+    if (onlySendTo) {
       // If wanting to send to only that client, do that
-      if ("only" in constraints && constraints.only === true) {
-        this.send(constraints.id, channelName, message)
-        return
-      }
-      // otherwise if they want to not send the message to that user, do that
-      if ("ignore" in constraints && constraints.ignore === true) {
-        for (const clientId of this.clients.keys()) {
-          if (clientId !== constraints.id) {
-            this.send(clientId, channelName, message)
-          }
-        }
-        return
-      }
+      const id = onlySendTo
+      this.send(id, channelName, message)
+      return
     }
     // Otherwise send to all clients
     for (const clientId of this.clients.keys()) {
