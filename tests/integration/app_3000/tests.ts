@@ -1,5 +1,5 @@
 import { Packet, Server } from "../../../mod.ts";
-import { deferred, Rhum, WebSocket } from "../../deps.ts";
+import { deferred, Rhum } from "../../deps.ts";
 import {
   closeClients,
   connectToChannels,
@@ -18,9 +18,9 @@ async function createWebSocketServer(
     reconnect: false,
   },
 ): Promise<Server> {
-  const WSServer = new Server({ reconnect: opts.reconnect || false });
+  const WSServer = new Server();
 
-  await WSServer.run({
+  await WSServer.runWs({
     hostname: opts.hostname || "127.0.0.1",
     port: opts.port || 3000,
   });
@@ -104,19 +104,14 @@ console.log(
 Rhum.testPlan("app_3000", () => {
   Rhum.testSuite("server", () => {
     Rhum.testCase(
-      "Should be able to sue generics when using `on()`",
+      "Should be able to suse generics when using `on()`",
       async () => {
         const server = await createWebSocketServer();
         server.on<{ username: string }>("chan1", (data: Packet) => {
           const { username } = data.message;
           const _username = username; // so lint thinks we use it
         });
-        const promise = deferred();
-        server.onclose = function () {
-          promise.resolve();
-        };
         await server.close();
-        await promise;
       },
     );
     Rhum.testCase("should allow clients to connect", async () => {
@@ -187,7 +182,6 @@ Rhum.testPlan("app_3000", () => {
     Rhum.testCase(
       "Should be able to emit events to a specific client",
       async () => {
-        const server = await createWebSocketServer();
         server.on("emit to specific client", (packet: Packet) => {
           const idToSendTo = Number(packet.message);
           server.to(
@@ -346,7 +340,7 @@ Rhum.testPlan("app_3000", () => {
         const server = new Server();
         server.on("chat", () => {});
         server.on("not-chat", () => {});
-        await server.run();
+        await server.runWs({ port: 1445 });
         const url = "ws://localhost:1445";
         const client1 = new WebSocket(url);
         const client2 = new WebSocket(url);
@@ -360,7 +354,7 @@ Rhum.testPlan("app_3000", () => {
         await connectToChannels(client3, ["not-chat"]);
         const Channels = server.channels;
         const chatChannel = Channels.get("chat");
-        await chatChannel.close();
+        await chatChannel!.close();
         const client1Message = await waitForMsg(client1);
         const client2Message = await waitForMsg(client2);
         // TODO(any): How do we assert that client3 didnt receive a msg? because they arent connected to chat channel, they shouldnt get one
