@@ -41,7 +41,7 @@ server.on("channel", (event: CustomEvent<UserMessage>) => {
     message: "yep, the server got your msg :)"
   })
 
-  // example sending to a specific client TODO :: Pass socket id as first param?
+  // example sending to a specific client
   server.to("chat-message", {
     message: "this message is only for you *wink wink*"
   }, id)
