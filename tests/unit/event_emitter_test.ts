@@ -236,7 +236,7 @@ Rhum.testPlan("unit/event_emitter_test.ts", () => {
       const clientSocket = ClientSocket() as unknown as WebSocket;
       await io.removeClient(clientId);
       const connectedClients = io.getClients();
-      Rhum.asserts.assertEquals(connectedClients, []);
+      Rhum.asserts.assertEquals(connectedClients, {});
 
       const newClient = io.createClient(2, clientSocket);
       Rhum.asserts.assertEquals(
