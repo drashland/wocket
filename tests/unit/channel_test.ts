@@ -6,7 +6,7 @@ Rhum.testPlan("unit/channel_test.ts", () => {
     Rhum.testCase("Sets the name and creates empty listeners", () => {
       const channel = new Channel("my channel");
       Rhum.asserts.assertEquals(channel.name, "my channel");
-      Rhum.asserts.assertEquals(channel.listeners, {});
+      Rhum.asserts.assertEquals(channel.listeners, new Map());
       Rhum.asserts.assertEquals(channel.callbacks, []);
     });
   });
