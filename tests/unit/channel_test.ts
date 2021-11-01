@@ -6,15 +6,10 @@ const wsPlaceholder = 1 as unknown as WebSocket;
 
 Rhum.testPlan("unit/channel_test.ts", () => {
   Rhum.testSuite("constructor()", () => {
-    const channel = new Channel("my channel");
-    Rhum.testCase("Sets the name property", () => {
-      Rhum.asserts.assertEquals(channel.name, "wocket_channel:my channel");
-    });
-    Rhum.testCase("Contains 0 clients when created", () => {
-      Rhum.asserts.assertEquals(channel.clients, new Map());
-    });
-    Rhum.testCase("Contains 0 callbacks when created", () => {
-      Rhum.asserts.assertEquals(channel.callbacks, []);
+    Rhum.testCase("Sets the name and creates empty listeners", () => {
+      const channel = new Channel("my channel", () => {});
+      Rhum.asserts.assertEquals(channel.name, "my channel");
+      Rhum.asserts.assertEquals(channel.callback, () => {});
     });
   });
 

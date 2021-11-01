@@ -191,36 +191,15 @@ Rhum.testPlan("unit/event_emitter_test.ts", () => {
   //   );
   // });
 
-  // Commented out because this method doesnt seem to exist anymore, but kept for reference
-  // Rhum.testSuite("on()", () => {
-  //   Rhum.testCase("Creates a channel when it doesn't already exist", () => {
-  //     const io = new EventEmitter();
-  //     io.on("My channel", () => {});
-  //     Rhum.asserts.assertEquals(io.channels["My channel"].name, "My channel");
-  //   });
-  //   Rhum.testCase("Throws ann error when that channel already exists", () => {
-  //     const io = new EventEmitter();
-  //     io.on("My channel", () => {});
-  //     const err = {
-  //       thrown: false,
-  //       msg: "",
-  //     };
-  //     try {
-  //       io.on("My channel", () => {});
-  //     } catch (error) {
-  //       err.thrown = true;
-  //       err.msg = error.message;
-  //     }
-  //     Rhum.asserts.assertEquals(err, {
-  //       thrown: true,
-  //       msg: 'Channel "My channel" already exists!',
-  //     });
-  //   });
-  //   Rhum.testCase("should add channels for server to listen to", () => {
-  //     const io = new EventEmitter();
-  //     const expect = ["chat", "room"];
-  //     io.on("chat", () => true);
-  //     io.on("room", () => true);
+  Rhum.testSuite("removeClient()", () => {
+    Rhum.testCase("should remove client", async () => {
+      const io = new EventEmitter();
+      const clientId = 1;
+      const clientSocket = ClientSocket() as unknown as WebSocket;
+      await io.removeClient(clientId);
+      const connectedClients = io.getClients();
+      Rhum.asserts.assertEquals(connectedClients, {});
+    })
 
   //     const channels = io.getChannels();
   //     Rhum.asserts.assertEquals(expect, channels);

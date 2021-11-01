@@ -1,26 +1,17 @@
 export {
   serve,
   Server as DenoServer,
-  ServerRequest,
   serveTLS,
-} from "https://deno.land/std@0.100.0/http/server.ts";
-
-export {
-  BufReader,
-  BufWriter,
-} from "https://deno.land/std@0.100.0/io/bufio.ts";
+} from "https://deno.land/std@0.104.0/http/server.ts";
 
 export type {
   HTTPOptions,
   HTTPSOptions,
-} from "https://deno.land/std@0.100.0/http/server.ts";
+} from "https://deno.land/std@0.104.0/http/server.ts";
 
 export {
   acceptWebSocket,
   isWebSocketCloseEvent,
-} from "https://deno.land/std@0.100.0/ws/mod.ts";
+} from "https://deno.land/std@0.104.0/ws/mod.ts";
 
-export type {
-  WebSocket,
-  WebSocketEvent,
-} from "https://deno.land/std@0.100.0/ws/mod.ts";
+export type { WebSocket } from "https://deno.land/std@0.104.0/ws/mod.ts";
