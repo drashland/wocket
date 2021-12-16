@@ -1,5 +1,3 @@
-import { WebSocket } from "../deps.ts";
-
 /**
  * This class represents a single end-user client. It contains information about
  * their connection ID (when they first connected to the server), their web
@@ -37,5 +35,9 @@ export class Client {
   constructor(id: number, socket: WebSocket) {
     this.id = id;
     this.socket = socket;
+  }
+
+  public send(message: string | ArrayBufferLike | Blob | ArrayBufferView): void {
+    this.socket.send(message);
   }
 }
