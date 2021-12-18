@@ -17,7 +17,6 @@ Rhum.testPlan("unit/server_test.ts", () => {
       const p = deferred();
       client.onopen = () => p.resolve();
       await p;
-      console.log("c opened");
       const p2 = deferred();
       client.onclose = () => p2.resolve();
       client.close();

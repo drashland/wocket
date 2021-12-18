@@ -92,13 +92,6 @@ export class WebSocketClient {
    */
   public async close() {
     const p = deferred();
-    console.log(
-      this.#socket.CLOSED,
-      this.#socket.CLOSING,
-      this.#socket.OPEN,
-      this.#socket.CONNECTING,
-      this.#socket.readyState,
-    );
     this.#socket.onclose = () => p.resolve();
     this.#socket.close();
     await p;

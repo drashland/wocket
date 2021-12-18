@@ -108,18 +108,14 @@ export class Server {
     message: Record<string, unknown>,
     onlySendTo?: number,
   ): void {
-    console.log("[internal] inside to()");
     // If sending to a specific client, only do that
     if (onlySendTo !== undefined) {
-      console.log("[internal] going to ONLY send to " + onlySendTo);
       const id = onlySendTo;
       this.#send(id, channelName, message);
       return;
     }
     // Otherwise send to all clients
-    console.log("[internal] going to send to all client, see below");
     for (const clientId of this.clients.keys()) {
-      console.log("[internal] " + clientId);
       this.#send(clientId, channelName, message);
     }
   }

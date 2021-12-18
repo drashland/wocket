@@ -61,9 +61,6 @@ Deno.test("Full fledged end to end test", async () => {
     });
 
     // example sending to a specific client
-    console.log(
-      "[test] inside chat message hander, goint to send message to " + 0,
-    );
     server.to("chat-message", {
       message: "this message is only for you *wink wink*",
     }, 0);
@@ -97,16 +94,8 @@ Deno.test("Full fledged end to end test", async () => {
   });
 
   await p;
-  console.log(
-    connectCalled,
-    disconnectCalled,
-    channelCalled,
-    client1ReceivedMessages,
-    client2ReceivedMessages,
-  );
   await client.close();
   await client2.close();
-  console.log("hi :)");
   await server.close();
   assertEquals(connectCalled, [0, 1]);
   assertEquals(disconnectCalled, {

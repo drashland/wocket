@@ -14,7 +14,6 @@ Deno.test("HTTPS works", async () => {
     keyFile: "./tests/integration/server.key",
   });
   server.run();
-  console.log(server.address);
   const client = new WebSocket(
     server.address,
   );
