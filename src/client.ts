@@ -36,8 +36,4 @@ export class Client {
     this.id = id;
     this.socket = socket;
   }
-
-  public send(message: string | ArrayBufferLike | Blob | ArrayBufferView): void {
-    this.socket.send(message);
-  }
 }
