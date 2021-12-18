@@ -1,6 +1,6 @@
-import { Server } from "../../../mod.ts";
-import { assertEquals, deferred } from "../../deps.ts";
-import { WebSocketClient } from "../../../src/websocket_client.ts";
+import { Server } from "../../mod.ts";
+import { assertEquals, deferred } from "../deps.ts";
+import { WebSocketClient } from "../../src/websocket_client.ts";
 
 Deno.test("Full fledged end to end test", async () => {
   const server = new Server({

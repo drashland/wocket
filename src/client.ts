@@ -37,7 +37,9 @@ export class Client {
     this.socket = socket;
   }
 
-  public send(message: string | ArrayBufferLike | Blob | ArrayBufferView): void {
+  public send(
+    message: string | ArrayBufferLike | Blob | ArrayBufferView,
+  ): void {
     this.socket.send(message);
   }
 }
