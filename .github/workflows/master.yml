@@ -25,9 +25,9 @@ jobs:
         run: |
           deno test --allow-all tests/unit
 
-      - name: Integration
-        run: |
-          deno test --allow-all --unsafely-ignore-certificate-errors tests/integration
+      # - name: Integration
+      #   run: |
+      #     deno test --allow-all --unsafely-ignore-certificate-errors tests/integration
 
   linter:
     # Only one OS is required since fmt is cross platform
