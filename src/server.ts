@@ -208,99 +208,74 @@ export class Server {
       this.clients.set(newClientId, client);
 
       // Send the connection message if the user defined one
-      const connectEvent = new CustomEvent("connect", {
-        detail: {
-          id: client.id,
-        },
-      });
-      if (this.channels.has("connect")) {
-        this.channels.get("connect")!.callback(connectEvent);
-      }
+      this.#sendConnectMessage(client);
 
       // When the socket calls `.send()`, then do the following
-      socket.onmessage = (message: MessageEvent) => {
-        try {
-          if ("data" in message && typeof message.data === "string") {
-            const json = JSON.parse(message.data) as IJsonMessage;
-
-            // Try sending a message to a channel if that was requested by the
-            // sender
-            if ("channel" in json && this.channels.has(json.channel!)) {
-              try {
-                const channel = this.channels.get(json.channel!)!;
-
-                // Construct the event to send to the channel
-                const customEvent = new CustomEvent(channel.name, {
-                  detail: {
-                    message: json.message,
-                    sender: client,
-                  },
-                });
-
-                // Call the user-defined handler for the channel. Essentially
-                // a `server.on("channel", ...)` will be called.
-                const callback = channel.callback;
-                callback(customEvent);
-              } catch (error) {
-                // Send the error to the client who sent this message
-                client.socket.send(error.message);
-              }
-            }
-
-            // Try sending a message to a client if that was requested by the
-            // sender
-            if ("client" in json && this.clients.has(json.client_id!)) {
-              try {
-                const client = this.clients.get(json.client_id!)!;
-
-                // Construct the event to send to the channel
-                const message = {
-                  message: json.message,
-                  sender: client,
-                };
-
-                client.socket.send(JSON.stringify(message));
-              } catch (error) {
-                // Send the error to the client who sent this message
-                client.socket.send(error.message);
-              }
-            }
-          }
-        } catch (error) {
-          socket.send(error.message);
-        }
+      socket.onmessage = (ev: MessageEvent) => {
+        this.#onSocketMessage(client, ev);
       };
 
       // When the socket calls `.close()`, then do the following
       socket.onclose = (ev: CloseEvent) => {
-        // Remove the client
-        this.clients.delete(client.id);
-        // Call the disconnect handler if defined
-        const { code, reason } = ev;
-        const disconnectEvent = new CustomEvent("disconnect", {
-          detail: {
-            id: client.id,
-            code,
-            reason,
-          },
-        });
-        const disconnectHandler = this.channels.get("disconnect");
-        if (disconnectHandler) {
-          disconnectHandler.callback(disconnectEvent);
-        }
+        this.#onSocketClose(client, ev);
       };
 
       return response;
     } catch (error) {
-      console.log(error);
     }
 
     return new Response();
   }
 
+  #sendConnectMessage(client: Client): void {
+    const connectEvent = new CustomEvent("connect", {
+      detail: {
+        id: client.id,
+      },
+    });
+
+    if (this.channels.has("connect")) {
+      this.channels.get("connect")!.callback(connectEvent);
+    }
+  }
+
   #getNewClientId(): number {
     this.#num_clients += 1;
     return this.#num_clients;
+  }
+
+  #onSocketClose(client: Client, ev: CloseEvent): void {
+    // Remove the client
+    this.clients.delete(client.id);
+
+    // Call the disconnect handler if defined
+    const { code, reason } = ev;
+
+    const disconnectEvent = new CustomEvent("disconnect", {
+      detail: {
+        id: client.id,
+        code,
+        reason,
+      },
+    });
+
+    const disconnectHandler = this.channels.get("disconnect");
+
+    if (disconnectHandler) {
+      disconnectHandler.callback(disconnectEvent);
+    }
+  }
+
+  #onSocketMessage(client: Client, message: MessageEvent): void {
+    try {
+      if ("data" in message && typeof message.data === "string") {
+        const json = JSON.parse(message.data) as IJsonMessage;
+        this.#sendMessageFromClientToChannel(client, json);
+        this.#sendMessageFromClientToClient(client, json);
+      }
+    } catch (error) {
+      client.socket.send(error.message);
+    }
   }
 
   /**
@@ -313,11 +288,58 @@ export class Server {
     clientId: number,
     channelName: string,
     message: Record<string, unknown>,
-  ) {
+  ): void {
     const client = this.clients.get(clientId);
     client!.socket.send(JSON.stringify({
       channel: channelName,
       message: message,
     }));
+  }
+
+  #sendMessageFromClientToChannel(client: Client, json: IJsonMessage): void {
+    // Try sending a message to a channel if that was requested by the
+    // sender
+    if ("channel" in json && this.channels.has(json.channel!)) {
+      try {
+        const channel = this.channels.get(json.channel!)!;
+
+        // Construct the event to send to the channel
+        const customEvent = new CustomEvent(channel.name, {
+          detail: {
+            message: json.message,
+            sender: client,
+          },
+        });
+
+        // Call the user-defined handler for the channel. Essentially
+        // a `server.on("channel", ...)` will be called.
+        const callback = channel.callback;
+        callback(customEvent);
+      } catch (error) {
+        // Send the error to the client who sent this message
+        client.socket.send(error.message);
+      }
+    }
+  }
+
+  #sendMessageFromClientToClient(client: Client, json: IJsonMessage): void {
+    // Try sending a message to a client if that was requested by the
+    // sender
+    if ("client_id" in json && this.clients.has(json.client_id!)) {
+      try {
+        const client = this.clients.get(json.client_id!)!;
+
+        // Construct the event to send to the channel
+        const message = {
+          message: json.message,
+          sender: client.id,
+        };
+
+        client.socket.send(JSON.stringify(message));
+      } catch (error) {
+        // Send the error to the client who sent this message
+        client.socket.send(error.message);
+      }
+    }
   }
 }
