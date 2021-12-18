@@ -1,35 +1,19 @@
-import { WebSocket } from "../deps.ts";
-
 /**
- * The Client class represents a single end-user client.  It contains
- * information about their id, their web socket connection, and many more.
+ * This class represents a single end-user client. It contains information about
+ * their connection ID (when they first connected to the server), their web
+ * socket connection, and more.
  */
 export class Client {
   /**
-   * The `heartbeat_id` is the  same as the `id`. It is used to 'poll' the
-   * client, to check if the connection is alive.
-   */
-  public heartbeat_id: number | null = null;
-
-  /**
-   * The clients id, which is the id of the socket connection sent across.
+   * This client's ID, which is the ID of its socket connection when it
+   * connected to the server. For example:
    *
    *     const clientId = conn.rid;
    */
   public id: number;
 
   /**
-   * A list of channels the client is listening to.
-   */
-  public listening_to: string[] = [];
-
-  /**
-   * How we know that the client connection is ready for a message.
-   */
-  public pong_received = false;
-
-  /**
-   * The web socket connection for the client.
+   * This client's WebSocket instance.
    */
   public socket: WebSocket;
 
@@ -40,11 +24,22 @@ export class Client {
   /**
    * Construct an object of this class.
    *
-   * @param id - The client's ID.
-   * @param socket - The socket this client belongs to.
+   * @param id - The client's connection ID (given by the server when the client
+   * connects to the server).
+   * @param socket - The socket connection (given by the server when the client
+   * connects to the server). Use this to send events back to the client. For
+   * example:
+   *
+   *     this.socket.send("something");
    */
   constructor(id: number, socket: WebSocket) {
     this.id = id;
     this.socket = socket;
+  }
+
+  public send(
+    message: string | ArrayBufferLike | Blob | ArrayBufferView,
+  ): void {
+    this.socket.send(message);
   }
 }

@@ -23,12 +23,11 @@ jobs:
 
       - name: Unit
         run: |
-          deno test --allow-all tests/unit/tests.ts
+          deno test --allow-all tests/unit
 
-      - name: Integration
-        run: |
-          deno test --allow-all tests/integration/app_3000/tests.ts
-          #deno test --allow-all tests/integration/app_3001/tests.ts # throws rust errors
+      # - name: Integration
+      #   run: |
+      #     deno test --allow-all --unsafely-ignore-certificate-errors tests/integration
 
   linter:
     # Only one OS is required since fmt is cross platform
@@ -38,11 +37,11 @@ jobs:
       - uses: actions/checkout@v2
 
       - name: Install Deno
-        uses: denolib/setup-deno@master
+        uses: denoland/setup-deno@v1
 
       - name: Formatter
         run: deno fmt --check
 
       - name: Linter
-        run: deno lint --unstable --ignore=tests/example_apps
+        run: deno lint
 

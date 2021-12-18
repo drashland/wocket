@@ -1,38 +1,21 @@
-import { WebSocket } from "../deps.ts";
-import { Packet } from "./packet.ts";
+type Cb = (
+  | ((event: CustomEvent) => void)
+  | ((event: CustomEvent) => Promise<void>)
+);
 
 /**
- * Channel represents channels, also known as "rooms". This class describes open
- * channels, and is used to place clients into
+ * This class represents channels, also known as "rooms" to some, and is
+ * responsible for the following:
+ *
+ *     - Connecting clients
+ *     - Disconnecting clients
  */
 export class Channel {
-  /**
-   * The callbacks for listening
-   *
-   *     function handleChannel1 (...) { ... }
-   *     socketServer.on("channel 1", handleChannel1)
-   *
-   * `handleChannel1` is now registered as a callback.
-   */
-  public callbacks: Array<((packet: Packet) => void)> = [];
-
-  /**
-   * The name of the channel to create
-   *
-   *     new Channel("channel 1");
-   */
   public name: string;
-
   /**
-   * Acts as the list of clients connected to the channel.  A listener would
-   * contain the clients socket id and and the socket connection sent across
-   *
-   *     new Channel("channel 1").listeners.set(
-   *       2, // clients socket id
-   *       incomingSocketConnection
-   *     })
+   * The callback to execute when a client connects to this channel.
    */
-  public listeners: Map<number, WebSocket>;
+  public callback: Cb;
 
   //////////////////////////////////////////////////////////////////////////////
   // FILE MARKER - CONSTRUCTOR /////////////////////////////////////////////////
@@ -41,10 +24,10 @@ export class Channel {
   /**
    * Construct an object of this class.
    *
-   * @param name - The name of the channel.
+   * @param name - The name of this channel.
    */
-  constructor(name: string) {
+  constructor(name: string, cb: Cb) {
+    this.callback = cb;
     this.name = name;
-    this.listeners = new Map();
   }
 }

@@ -1,331 +1,259 @@
-import {
-  acceptWebSocket,
-  DenoServer,
-  HTTPOptions,
-  HTTPSOptions,
-  isWebSocketCloseEvent,
-  serve,
-  serveTLS,
-  WebSocket,
-} from "../deps.ts";
+import { StdServer } from "../deps.ts";
+import { Channel } from "./channel.ts";
 import { Client } from "./client.ts";
-import { EventEmitter } from "./event_emitter.ts";
-import { ITransmitterOptions } from "./interfaces.ts";
-import { Packet } from "./packet.ts";
-import { Transmitter } from "./transmitter.ts";
+import { OnChannelCallback } from "./types.ts";
+
+export interface IOptions {
+  /** The hostname to start the websocket server on */
+  hostname: string;
+  /** The port to start the websocket server on */
+  port: number;
+  /** Protocol for the server */
+  protocol: "ws" | "wss";
+  /** Path to the key file if using wss */
+  keyFile?: string;
+  /** Path to the cert file if using wss */
+  certFile?: string;
+}
+
+type TRequestHandler = (r: Request) => Promise<Response>;
 
 /**
- * The `SocketServer` class is responsible for creating a users socket server.
- * Similar to how Drash.Http.Server creates a server instance.
+ * A class to create a websocket server, handling clients connecting,
+ * and being able to handle messages from them, and send messages to them
  */
-export class Server extends EventEmitter {
-  /**
-   * A property to hold the Deno server. This property is set in this.run()
-   * like so:
-   *
-   *     this.deno_server = serve();
-   */
-  public deno_server: DenoServer | null = null;
+export class Server {
+  #options: IOptions;
 
   /**
-   * A property to hold the hostname this server listens on.
+   * A map of all created channels. The key is the channel name and the value is
+   * the channel object.
    */
-  public hostname = "localhost";
+  public channels: Map<string, Channel> = new Map();
 
   /**
-   * A property to hold the port this server listens on.
+   * A map of all clients connected to this server. The key is the client's ID
+   * and the value is the client object.
    */
-  public port = 1557;
+  public clients: Map<number, Client> = new Map();
 
   /**
-   * A property to hold the transmitter. The transmitter is in charge of
-   * transmitting data throughout the server-client lifecycle.
+   * Our server instance that is serving the app
    */
-  public transmitter: Transmitter;
-
-  //////////////////////////////////////////////////////////////////////////////
-  // FILE MARKER - CONSTRUCTOR /////////////////////////////////////////////////
-  //////////////////////////////////////////////////////////////////////////////
+  #server!: StdServer;
 
   /**
-   * Construct an object of this class.
-   *
-   * @param transmitterOptions - See ITransmitterOptions.
+   * A promise we need to await after calling close() on #server
    */
-  constructor(transmitterOptions?: ITransmitterOptions) {
-    super();
-    this.transmitter = new Transmitter(this, transmitterOptions);
+  #serverPromise!: Promise<void>;
+
+  //// CONSTRUCTOR /////////////////////////////////////////////////////////////
+
+  /**
+   * @param options
+   */
+  constructor(options: IOptions) {
+    this.#options = options;
   }
 
-  //////////////////////////////////////////////////////////////////////////////
-  // FILE MARKER - METHODS - PUBLIC ////////////////////////////////////////////
-  //////////////////////////////////////////////////////////////////////////////
+  /**
+   * Get the full address that this server is running on.
+   */
+  get address(): string {
+    return `${this.#options.protocol}://${this.#options.hostname}:${this.#options.port}`;
+  }
+
+  //// PUBLIC //////////////////////////////////////////////////////////////////
 
   /**
-   * Close the server.
+   * Broadcast to other clients in a channel excluding the one passed in
+   *
+   * @param channelName - Channel to send the message to
+   * @param message - The message to send
+   * @param id - Id of client it ignore (not send the message to)
+   *
+   * @example
+   * ```ts
+   * interface SomeEvent { id: number }
+   * server.on("some-event", (event: CustomEvent<SomeEvent>) => {
+   *   const { id } = event.detail
+   *   server.broadcast("some-channel", {
+   *     message: "Shh everybody! " + id + " won't be getting this message!"
+   *   }, id)
+   * })
+   * ```
+   */
+  public broadcast(
+    channelName: string,
+    message: Record<string, unknown>,
+    id: number,
+  ) {
+    for (const clientId of this.clients.keys()) {
+      if (clientId !== id) { // ignore sending to client that has the passed in id
+        this.#send(clientId, channelName, message);
+      }
+    }
+  }
+
+  /**
+   * Send a message to the channel, so clients listening on that channel
+   * will receive this message
+   *
+   * @param channelName - The channel to send the message to
+   * @param message - The message to send
+   * @param onlySendTo - Id of a client, if you only wish to send the message to just that client
+   */
+  public to(
+    channelName: string,
+    message: Record<string, unknown>,
+    onlySendTo?: number,
+  ): void {
+    // If sending to a specific client, only do that
+    if (onlySendTo !== undefined) {
+      const id = onlySendTo;
+      this.#send(id, channelName, message);
+      return;
+    }
+    // Otherwise send to all clients
+    for (const clientId of this.clients.keys()) {
+      this.#send(clientId, channelName, message);
+    }
+  }
+
+  /**
+   * Do the following:
+   *
+   *     1. Create a channel (if it does not already exist).
+   *     2. Add a callback to that channel. This callback will be executed when
+   *        events are sent to the channel.
+   *     3. Store the callback in the list of callbacks that the channel has.
+   *
+   * @param channelName - The name of the channel.
+   * @param cb - See OnChannelCallback in the `types.ts` file.
+   */
+  public on<T>(
+    channelName: string,
+    cb: OnChannelCallback<T>,
+  ): void {
+    const channel = new Channel(channelName, cb); // even if one exists, overwrite it
+    this.channels.set(channelName, channel);
+  }
+
+  /**
+   * Run the sever.
+   */
+  run(): void {
+    this.#server = new StdServer({
+      addr: `${this.#options.hostname}:${this.#options.port}`,
+      handler: this.#getHandler(),
+    });
+    if (this.#options.protocol === "ws") {
+      this.#serverPromise = this.#server.listenAndServe();
+    }
+    if (this.#options.protocol === "wss") {
+      this.#serverPromise = this.#server.listenAndServeTls(
+        this.#options.certFile as string,
+        this.#options.keyFile as string,
+      );
+    }
+  }
+
+  /**
+   * Close the server, stopping all resources and breaking
+   * all connections to clients
    */
   public async close(): Promise<void> {
-    // Allow any messages in the pipeline  to be properly handled before closing. Obviously a hack, but removing this block will sometimes cause some test cases to fail - still unsure why
-    const p = new Promise((resolve) => {
-      setTimeout(() => {
-        resolve("");
-      }, 1); // No real reason for it to be 1, other than this fixes the issue, and isn't a long ass time to wait - i did (edward) have it at 500, then eric suggested what happens at 1ms, so we changed it to that and funnily enough, it still fixes thee issue, which is why it is 1ms
-    });
-    await p;
-    // If there are messages still being sent, then make sure all of them are
-    // sent before closing.
-    while (true) {
-      if (!this.sender.hasPackets()) {
-        if (this.deno_server) {
-          try {
-            this.deno_server.close();
-          } catch (_error) {
-            break;
-          }
-        }
-      }
-    }
-  }
-
-  /**
-   * Handles websocket connection.  After a successful connection, the client
-   * will be added to EventEmitter.clients and the server will start listening
-   * to events.
-   *
-   * @param options - See HTTPOptions.
-   *
-   * @returns A Promise of DenoServer.
-   */
-  public run(options: HTTPOptions): DenoServer {
-    if (options.hostname) {
-      this.hostname = options.hostname;
-    }
-
-    if (options.port) {
-      this.port = options.port;
-    }
-
-    this.deno_server = serve(options);
-
-    this.acceptWebSockets();
-
-    return this.deno_server;
-  }
-
-  /**
-   * Handles websocket secure connection. After a successful connection, the
-   * client will be added to EventEmitter.clients and the server will start
-   * listening to events.
-   *
-   * @param options - See HTTPOptions.
-   *
-   * @returns A Promise of the DenoServer.
-   */
-  public runTLS(options: HTTPSOptions): DenoServer {
-    if (options.hostname) {
-      this.hostname = options.hostname;
-    }
-
-    if (options.port) {
-      this.port = options.port;
-    }
-
-    this.deno_server = serveTLS(options);
-
-    this.acceptWebSockets();
-
-    return this.deno_server;
-  }
-
-  /**
-   * Accept incoming web sockets as clients.
-   */
-  protected async acceptWebSockets() {
-    for await (const req of this.deno_server!) {
-      const {
-        conn,
-        headers,
-        r: bufReader,
-        w: bufWriter,
-      } = req;
-
-      acceptWebSocket({
-        bufReader,
-        bufWriter,
-        conn,
-        headers,
-      })
-        .then(async (socket: WebSocket): Promise<void> => {
-          const clientId = conn.rid;
-          const client = super.createClient(clientId, socket);
-          try {
-            await this.transmitter.handlePacket(
-              new Packet(
-                client,
-                "connect",
-              ),
-            );
-            for await (const message of socket) {
-              // Handle binary
-              if (message instanceof Uint8Array) {
-                this.handleMessageAsBinary(client, message);
-
-                // Handle strings
-              } else if (typeof message === "string") {
-                await this.handleMessageAsString(client, message);
-
-                // Handle disconnects
-              } else if (isWebSocketCloseEvent(message)) {
-                await this.transmitter.handlePacket(
-                  new Packet(
-                    client,
-                    "disconnect",
-                  ),
-                );
-                super.removeClient(client.id);
-              }
-            }
-          } catch (_e) {
-            if (!socket.isClosed) {
-              await socket.close(1000).catch(console.error);
-              super.removeClient(client.id);
-              await this.transmitter.handlePacket(
-                new Packet(
-                  client,
-                  "disconnect",
-                ),
-              );
-            }
-          }
-        })
-        .catch(async (err: Error): Promise<void> => {
-          console.error(`failed to accept websocket: ${err}`);
-          await req.respond({ status: 400 });
-        });
-    }
-  }
-
-  //////////////////////////////////////////////////////////////////////////////
-  // FILE MARKER - METHODS - PROTECTED /////////////////////////////////////////
-  //////////////////////////////////////////////////////////////////////////////
-
-  /**
-   * Handle a binary message sent by the socket client.
-   *
-   * @param client - The client instance.
-   * @param message - The message the client sent.
-   */
-  protected async handleMessageAsBinary(client: Client, message: Uint8Array) {
-    const decoded = JSON.parse(new TextDecoder().decode(message));
-    const packet = new Packet(client, decoded.to, decoded.message);
-    return await this.transmitter.handlePacket(packet);
-  }
-
-  /**
-   * Handle a string message sent by the socket client.
-   *
-   * @param client - The client instance.
-   * @param message - The message the client sent.
-   */
-  protected async handleMessageAsString(
-    client: Client,
-    message: string,
-  ): Promise<void> {
-    switch (message) {
-      case "id":
-        return client.socket.send(`Client ID: ${client.id}`);
-
-      case "ping":
-        return client.socket.send("pong");
-
-      case "pong":
-        return client.socket.send("ping");
-
-      case "test":
-        return client.socket.send(
-          `Server started on ${this.hostname}:${this.port}.`,
-        );
-
-      // If the message isn't any of the above, then it we expect the message
-      // to be a JSON string.
-
-      default:
-        return await this.handleMessageAsJsonString(client, message);
-    }
-  }
-
-  /**
-   * Handle a message in the format of a JSON string.
-   *
-   * @param client - The client instance.
-   * @param message - The message the client sent.
-   */
-  protected async handleMessageAsJsonString(
-    client: Client,
-    message: string,
-  ): Promise<void> {
     try {
-      const json = JSON.parse(message);
-
-      // A send_packet message should be in the following format:
-      //
-      //     {
-      //       "send_packet": {
-      //         "to": string,
-      //         "message": unknown
-      //       }
-      //     }
-      //
-      if (json.send_packet) {
-        const packet = new Packet(
-          client,
-          json.send_packet.to,
-          json.send_packet.message,
-        );
-        return await this.transmitter.handlePacket(packet);
-      }
-
-      // A connect_to message should be in the following format:
-      //
-      //     {
-      //       "connect_to": [
-      //         "array", "of", "channels"
-      //       ]
-      //     }
-      //
-      if (json.connect_to) {
-        json.connect_to.forEach((channelName: string) => {
-          try {
-            super.addClientToChannel(channelName, client.id);
-            client.socket.send(`Connected to ${channelName}.`);
-          } catch (error) {
-            client.socket.send(error.message);
-          }
-        });
-        return;
-      }
-
-      // A disconnect_from message should be in the following format:
-      //
-      //     {
-      //       "disconnect_from": [
-      //         "array", "of", "channels"
-      //       ]
-      //     }
-      //
-      if (json.disconnect_from) {
-        json.disconnect_from.forEach((channelName: string) => {
-          try {
-            super.removeClientFromChannel(channelName, client.id);
-            client.socket.send(`Disconnected from ${channelName}.`);
-          } catch (error) {
-            client.socket.send(error.message);
-          }
-        });
-        return;
-      }
-    } catch (error) {
-      client.socket.send(error.message);
+      this.#server.close();
+      await this.#serverPromise;
+    } catch (_e) {
+      // Do nothing, the server was probably already closed
     }
+  }
+
+  //// PRIVATE /////////////////////////////////////////////////////////////////
+
+  /**
+   * Get the request handler for the server.
+   *
+   * @returns The request handler.
+   */
+  #getHandler(): TRequestHandler {
+    const clients = this.clients;
+    const channels = this.channels;
+
+    // deno-lint-ignore require-await
+    return async function (r: Request): Promise<Response> {
+      const { socket, response } = Deno.upgradeWebSocket(r);
+
+      // Create the client
+      const client = new Client(clients.size, socket);
+      clients.set(clients.size, client);
+
+      // Call the connect callback if defined by the user
+      const channel = channels.get("connect");
+      const connectEvent = new CustomEvent("connect", {
+        detail: {
+          id: client.id,
+        },
+      });
+      if (channel) channel.callback(connectEvent);
+
+      // When the socket calls `.send()`, then do the following
+      socket.onmessage = (message: MessageEvent) => {
+        try {
+          if ("data" in message && typeof message.data === "string") {
+            const json = JSON.parse(message.data); // TODO wrap in a try catch, if error throw then send error message to client maybe? ie malformed request
+            // Get the channel they want to send the msg to
+            const channel = channels.get(json.channel) as Channel; // TODO :: Add check for if channel wasnt found, which just means a user hasn't created a listener for it
+            // construct the event
+            const customEvent = new CustomEvent(channel.name, {
+              detail: {
+                ...json.message,
+                id: client.id,
+              },
+            });
+            // Call the user defined handler for the channel. Essentially a `server.on("channel", ...)` will be called
+            const callback = channel.callback;
+            callback(customEvent);
+          }
+        } catch (error) {
+          socket.send(error.message);
+        }
+      };
+
+      // When the socket calls `.close()`, then do the following
+      socket.onclose = (ev: CloseEvent) => {
+        // Remove the client
+        clients.delete(client.id);
+        // Call the disconnect handler if defined
+        const { code, reason } = ev;
+        const disconnectEvent = new CustomEvent("disconnect", {
+          detail: {
+            id: client.id,
+            code,
+            reason,
+          },
+        });
+        const disconnectHandler = channels.get("disconnect");
+        if (disconnectHandler) {
+          disconnectHandler.callback(disconnectEvent);
+        }
+      };
+
+      return response;
+    };
+  }
+
+  #send(
+    clientId: number,
+    channelName: string,
+    message: Record<string, unknown>,
+  ) {
+    const client = this.clients.get(clientId);
+    client!.socket.send(JSON.stringify({
+      channel: channelName,
+      message: message,
+    }));
   }
 }
