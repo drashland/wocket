@@ -16,7 +16,11 @@ export interface IOptions {
   certFile?: string;
 }
 
-type TRequestHandler = (r: Request) => Promise<Response>;
+export interface IJsonMessage {
+  client_id?: number;
+  channel?: string;
+  message: unknown;
+}
 
 /**
  * A class to create a websocket server, handling clients connecting,
@@ -38,7 +42,13 @@ export class Server {
   public clients: Map<number, Client> = new Map();
 
   /**
-   * Our server instance that is serving the app
+   * A "counter" variable that increments when a client connects to the server.
+   * This variable becomes the newly connected client's ID.
+   */
+  #num_clients = 0;
+
+  /**
+   * Our server instance that is serving the app.
    */
   #server!: StdServer;
 
@@ -47,7 +57,9 @@ export class Server {
    */
   #serverPromise!: Promise<void>;
 
-  //// CONSTRUCTOR /////////////////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////////////
+  // FILE MARKER  - CONSTRUCTOR ////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////////////
 
   /**
    * @param options
@@ -63,7 +75,9 @@ export class Server {
     return `${this.#options.protocol}://${this.#options.hostname}:${this.#options.port}`;
   }
 
-  //// PUBLIC //////////////////////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////////////
+  // FILE MARKER  - PUBLIC METHODS /////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////////////
 
   /**
    * Broadcast to other clients in a channel excluding the one passed in
@@ -145,11 +159,15 @@ export class Server {
   run(): void {
     this.#server = new StdServer({
       addr: `${this.#options.hostname}:${this.#options.port}`,
-      handler: this.#getHandler(),
+      handler: async (r: Request) => {
+        return await this.#handleRequest(r);
+      },
     });
+
     if (this.#options.protocol === "ws") {
       this.#serverPromise = this.#server.listenAndServe();
     }
+
     if (this.#options.protocol === "wss") {
       this.#serverPromise = this.#server.listenAndServeTls(
         this.#options.certFile as string,
@@ -171,51 +189,82 @@ export class Server {
     }
   }
 
-  //// PRIVATE /////////////////////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////////////
+  // FILE MARKER  - PRIVATE METHODS ////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////////////
 
   /**
    * Get the request handler for the server.
    *
    * @returns The request handler.
    */
-  #getHandler(): TRequestHandler {
-    const clients = this.clients;
-    const channels = this.channels;
-
-    // deno-lint-ignore require-await
-    return async function (r: Request): Promise<Response> {
+  async #handleRequest(r: Request): Promise<Response> {
+    try {
       const { socket, response } = Deno.upgradeWebSocket(r);
 
       // Create the client
-      const client = new Client(clients.size, socket);
-      clients.set(clients.size, client);
+      const newClientId = this.#getNewClientId();
+      const client = new Client(newClientId, socket);
+      this.clients.set(newClientId, client);
 
-      // Call the connect callback if defined by the user
-      const channel = channels.get("connect");
+      // Send the connection message if the user defined one
       const connectEvent = new CustomEvent("connect", {
         detail: {
           id: client.id,
         },
       });
-      if (channel) channel.callback(connectEvent);
+      if (this.channels.has("connect")) {
+        this.channels.get("connect")!.callback(connectEvent);
+      }
 
       // When the socket calls `.send()`, then do the following
       socket.onmessage = (message: MessageEvent) => {
         try {
           if ("data" in message && typeof message.data === "string") {
-            const json = JSON.parse(message.data); // TODO wrap in a try catch, if error throw then send error message to client maybe? ie malformed request
-            // Get the channel they want to send the msg to
-            const channel = channels.get(json.channel) as Channel; // TODO :: Add check for if channel wasnt found, which just means a user hasn't created a listener for it
-            // construct the event
-            const customEvent = new CustomEvent(channel.name, {
-              detail: {
-                ...json.message,
-                id: client.id,
-              },
-            });
-            // Call the user defined handler for the channel. Essentially a `server.on("channel", ...)` will be called
-            const callback = channel.callback;
-            callback(customEvent);
+            const json = JSON.parse(message.data) as IJsonMessage;
+
+            // Try sending a message to a channel if that was requested by the
+            // sender
+            if ("channel" in json && this.channels.has(json.channel!)) {
+              try {
+                const channel = this.channels.get(json.channel!)!;
+
+                // Construct the event to send to the channel
+                const customEvent = new CustomEvent(channel.name, {
+                  detail: {
+                    message: json.message,
+                    sender: client,
+                  },
+                });
+
+                // Call the user-defined handler for the channel. Essentially
+                // a `server.on("channel", ...)` will be called.
+                const callback = channel.callback;
+                callback(customEvent);
+              } catch (error) {
+                // Send the error to the client who sent this message
+                client.socket.send(error.message);
+              }
+            }
+
+            // Try sending a message to a client if that was requested by the
+            // sender
+            if ("client" in json && this.clients.has(json.client_id!)) {
+              try {
+                const client = this.clients.get(json.client_id!)!;
+
+                // Construct the event to send to the channel
+                const message = {
+                  message: json.message,
+                  sender: client,
+                };
+
+                client.socket.send(JSON.stringify(message));
+              } catch (error) {
+                // Send the error to the client who sent this message
+                client.socket.send(error.message);
+              }
+            }
           }
         } catch (error) {
           socket.send(error.message);
@@ -225,7 +274,7 @@ export class Server {
       // When the socket calls `.close()`, then do the following
       socket.onclose = (ev: CloseEvent) => {
         // Remove the client
-        clients.delete(client.id);
+        this.clients.delete(client.id);
         // Call the disconnect handler if defined
         const { code, reason } = ev;
         const disconnectEvent = new CustomEvent("disconnect", {
@@ -235,16 +284,31 @@ export class Server {
             reason,
           },
         });
-        const disconnectHandler = channels.get("disconnect");
+        const disconnectHandler = this.channels.get("disconnect");
         if (disconnectHandler) {
           disconnectHandler.callback(disconnectEvent);
         }
       };
 
       return response;
-    };
+    } catch (error) {
+      console.log(error);
+    }
+
+    return new Response();
   }
 
+  #getNewClientId(): number {
+    this.#num_clients += 1;
+    return this.#num_clients;
+  }
+
+  /**
+   * Send a message to the given client.
+   *
+   * @param clientId - The ID of the client receiving the message.
+   * @param channelName
+   */
   #send(
     clientId: number,
     channelName: string,
