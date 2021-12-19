@@ -144,7 +144,8 @@ export class Server {
    */
   run(): void {
     this.#server = new StdServer({
-      addr: `${this.#options.hostname}:${this.#options.port}`,
+      hostname: this.#options.hostname,
+      port: this.#options.port,
       handler: this.#getHandler(),
     });
     if (this.#options.protocol === "ws") {
