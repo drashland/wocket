@@ -131,9 +131,14 @@ export class Server {
    * @param channelName - The name of the channel.
    * @param cb - See OnChannelCallback in the `types.ts` file.
    */
-  public on<T>(
-    channelName: string,
-    cb: OnChannelCallback<T>,
+  public on<
+    CustomProps extends Record<string, unknown>,
+    // Ignore because we need to use any to pass the channelName parameter to the generic
+    // deno-lint-ignore no-explicit-any
+    ChannelName extends string = any,
+  >(
+    channelName: ChannelName,
+    cb: OnChannelCallback<CustomProps, ChannelName>,
   ): void {
     const channel = new Channel(channelName, cb); // even if one exists, overwrite it
     this.channels.set(channelName, channel);
@@ -144,7 +149,8 @@ export class Server {
    */
   run(): void {
     this.#server = new StdServer({
-      addr: `${this.#options.hostname}:${this.#options.port}`,
+      hostname: this.#options.hostname,
+      port: this.#options.port,
       handler: this.#getHandler(),
     });
     if (this.#options.protocol === "ws") {
@@ -190,14 +196,16 @@ export class Server {
       const client = new Client(clients.size, socket);
       clients.set(clients.size, client);
 
-      // Call the connect callback if defined by the user
-      const channel = channels.get("connect");
-      const connectEvent = new CustomEvent("connect", {
-        detail: {
-          id: client.id,
-        },
-      });
-      if (channel) channel.callback(connectEvent);
+      socket.onopen = () => {
+        // Call the connect callback if defined by the user
+        const channel = channels.get("connect");
+        const connectEvent = new CustomEvent("connect", {
+          detail: {
+            id: client.id,
+          },
+        });
+        if (channel) channel.callback(connectEvent);
+      };
 
       // When the socket calls `.send()`, then do the following
       socket.onmessage = (message: MessageEvent) => {

@@ -16,7 +16,7 @@ Deno.test("Full fledged end to end test", async () => {
   const connectCalled: number[] = [];
 
   // Example using the connect handler
-  server.on<{ id: number }>("connect", (e) => {
+  server.on("connect", (e) => {
     const { id } = e.detail;
     connectCalled.push(id);
   });
@@ -25,11 +25,7 @@ Deno.test("Full fledged end to end test", async () => {
 
   // Example using the disconnect handler
   server.on("disconnect", (
-    e: CustomEvent<{
-      id: number;
-      code: number;
-      reason: string | "";
-    }>,
+    e,
   ) => {
     const { id, code, reason } = e.detail;
     disconnectCalled = {
@@ -47,7 +43,7 @@ Deno.test("Full fledged end to end test", async () => {
     sender: number;
     id: number; // client socket id
   };
-  server.on("channel", (event: CustomEvent<UserMessage>) => {
+  server.on<UserMessage>("channel", (event) => {
     const { username, sender, id } = event.detail;
     channelCalled = {
       username,
@@ -99,7 +95,7 @@ Deno.test("Full fledged end to end test", async () => {
   await server.close();
   assertEquals(connectCalled, [0, 1]);
   assertEquals(disconnectCalled, {
-    code: 1005,
+    code: 1000,
     id: 1,
     reason: "",
   });
