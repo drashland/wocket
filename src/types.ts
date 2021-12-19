@@ -1,10 +1,16 @@
-type Return<T> = T extends "connect" ? { id: number }
-  : T extends "disconnect" ? { id: number; code: number; reason: string }
-  : { id: number };
+type AlwaysProps = {
+  id: number;
+};
+
+type ReservedChannelProps<ChannelName> = ChannelName extends "disconnect"
+  ? { code: number; reason: string }
+  : Record<never, never>;
 
 /**
  * A callback to execute when a Channel object receives events.
  */
-export type OnChannelCallback<T, ChannelName extends string> = ((
-  event: CustomEvent<T & Return<ChannelName>>,
+export type OnChannelCallback<CustomProps, ChannelName extends string> = ((
+  event: CustomEvent<
+    CustomProps & ReservedChannelProps<ChannelName> & AlwaysProps
+  >,
 ) => void);

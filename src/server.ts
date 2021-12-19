@@ -131,9 +131,14 @@ export class Server {
    * @param channelName - The name of the channel.
    * @param cb - See OnChannelCallback in the `types.ts` file.
    */
-  public on<C extends string, T>(
-    channelName: C,
-    cb: OnChannelCallback<T, C>,
+  public on<
+    CustomProps extends Record<string, unknown>,
+    // Ignore because we need to use any to pass the channelName parameter to the generic
+    // deno-lint-ignore no-explicit-any
+    ChannelName extends string = any,
+  >(
+    channelName: ChannelName,
+    cb: OnChannelCallback<CustomProps, ChannelName>,
   ): void {
     const channel = new Channel(channelName, cb); // even if one exists, overwrite it
     this.channels.set(channelName, channel);
