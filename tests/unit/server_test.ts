@@ -80,7 +80,7 @@ Rhum.testPlan("unit/server_test.ts", () => {
         e.detail.code.toPrecision();
         e.detail.reason.replace("", "");
       });
-      server.on<"custom-channel", {
+      server.on<{
         name: string;
       }>("custom-channel", (e) => {
         e.detail.id;

@@ -194,16 +194,18 @@ export class Server {
 
       // Create the client
       const client = new Client(clients.size, socket);
-      clients.set(clients.size, client);
+      clients.set(clients.size, client)
 
-      // Call the connect callback if defined by the user
-      const channel = channels.get("connect");
-      const connectEvent = new CustomEvent("connect", {
-        detail: {
-          id: client.id,
-        },
-      });
-      if (channel) channel.callback(connectEvent);
+      socket.onopen = () => {
+        // Call the connect callback if defined by the user
+        const channel = channels.get("connect");
+        const connectEvent = new CustomEvent("connect", {
+          detail: {
+            id: client.id,
+          },
+        });
+        if (channel) channel.callback(connectEvent);
+      }
 
       // When the socket calls `.send()`, then do the following
       socket.onmessage = (message: MessageEvent) => {

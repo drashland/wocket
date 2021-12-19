@@ -93,7 +93,7 @@ export class WebSocketClient {
   public async close() {
     const p = deferred();
     this.#socket.onclose = () => p.resolve();
-    this.#socket.close();
+    this.#socket.close(1000);
     await p;
   }
 
