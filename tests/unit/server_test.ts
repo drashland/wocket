@@ -65,6 +65,28 @@ Rhum.testPlan("unit/server_test.ts", () => {
       cb("" as unknown as CustomEvent);
       Rhum.asserts.assertEquals(yes, true);
     });
+
+    Rhum.testCase("Type checks pass when using generics for channels", () => {
+      const server = new Server({
+        hostname: "localhost",
+        port: 1337,
+        protocol: "ws",
+      });
+      server.on("connect", (e) => {
+        e.detail.id.toPrecision();
+      });
+      server.on("disconnect", (e) => {
+        e.detail.id.toPrecision();
+        e.detail.code.toPrecision();
+        e.detail.reason.replace("", "");
+      });
+      server.on<"custom-channel", {
+        name: string;
+      }>("custom-channel", (e) => {
+        e.detail.id;
+        e.detail.name;
+      });
+    });
   });
 
   Rhum.testSuite("to()", () => {

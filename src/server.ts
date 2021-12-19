@@ -131,9 +131,9 @@ export class Server {
    * @param channelName - The name of the channel.
    * @param cb - See OnChannelCallback in the `types.ts` file.
    */
-  public on<T>(
-    channelName: string,
-    cb: OnChannelCallback<T>,
+  public on<C extends string, T>(
+    channelName: C,
+    cb: OnChannelCallback<T, C>,
   ): void {
     const channel = new Channel(channelName, cb); // even if one exists, overwrite it
     this.channels.set(channelName, channel);

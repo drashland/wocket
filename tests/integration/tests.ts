@@ -16,7 +16,7 @@ Deno.test("Full fledged end to end test", async () => {
   const connectCalled: number[] = [];
 
   // Example using the connect handler
-  server.on<{ id: number }>("connect", (e) => {
+  server.on("connect", (e) => {
     const { id } = e.detail;
     connectCalled.push(id);
   });
@@ -25,11 +25,7 @@ Deno.test("Full fledged end to end test", async () => {
 
   // Example using the disconnect handler
   server.on("disconnect", (
-    e: CustomEvent<{
-      id: number;
-      code: number;
-      reason: string | "";
-    }>,
+    e,
   ) => {
     const { id, code, reason } = e.detail;
     disconnectCalled = {
