@@ -194,7 +194,7 @@ export class Server {
 
       // Create the client
       const client = new Client(clients.size, socket);
-      clients.set(clients.size, client)
+      clients.set(clients.size, client);
 
       socket.onopen = () => {
         // Call the connect callback if defined by the user
@@ -205,7 +205,7 @@ export class Server {
           },
         });
         if (channel) channel.callback(connectEvent);
-      }
+      };
 
       // When the socket calls `.send()`, then do the following
       socket.onmessage = (message: MessageEvent) => {

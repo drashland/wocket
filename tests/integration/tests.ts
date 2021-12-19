@@ -13,7 +13,7 @@ Deno.test("Full fledged end to end test", async () => {
 
   const p = deferred();
 
-  const connectCalled: number[] = []
+  const connectCalled: number[] = [];
 
   // Example using the connect handler
   server.on("connect", (e) => {
@@ -43,7 +43,7 @@ Deno.test("Full fledged end to end test", async () => {
     sender: number;
     id: number; // client socket id
   };
-  server.on<UserMessage>("channel", event => {
+  server.on<UserMessage>("channel", (event) => {
     const { username, sender, id } = event.detail;
     channelCalled = {
       username,
