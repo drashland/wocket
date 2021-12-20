@@ -195,9 +195,7 @@ export class Server {
     return async function (r: Request): Promise<Response> {
       const url = new URL(r.url);
       const { pathname } = url;
-      console.log(r.url);
       if (options.path && options.path !== pathname) {
-        console.log("whaa");
         return new Response(
           "The client has not specified the correct path that the server is listening on.",
           {
@@ -205,9 +203,7 @@ export class Server {
           },
         );
       }
-      console.log(1);
       const { socket, response } = Deno.upgradeWebSocket(r);
-      console.log(2);
 
       // Create the client
       const client = new Client(clients.size, socket);
@@ -249,7 +245,6 @@ export class Server {
 
       // When the socket calls `.close()`, then do the following
       socket.onclose = (ev: CloseEvent) => {
-        console.log("close handler in server");
         // Remove the client
         clients.delete(client.id);
         // Call the disconnect handler if defined
