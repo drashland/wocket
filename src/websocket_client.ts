@@ -1,9 +1,12 @@
 type Callback = (message: Record<string, unknown>) => void;
 
 /**
- * A helper class to replace the native WebSocket, to make it simpler to
- * connect and disconnect from servers, and tailored towrads working specifically
- * with a Wocket server
+ * A helper class built on top of the native WebSocket, to make it easier to
+ * send messages to channels, and listen for messages on channels.
+ * 
+ * Specifically built for Drash.
+ * 
+ * Only defined an onmessage handler.
  */
 export class WebSocketClient extends WebSocket {
   #handlers: Map<string, Callback> = new Map();
