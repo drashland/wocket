@@ -1,20 +1,19 @@
-import { deferred } from "../tests/deps.ts";
-
 type Callback = (message: Record<string, unknown>) => void;
 
 /**
- * A helper class to replace the native WebSocket, to make it simpler to
- * connect and disconnect from servers, and tailored towrads working specifically
- * with a Wocket server
+ * A helper class built on top of the native WebSocket, to make it easier to
+ * send messages to channels, and listen for messages on channels.
+ *
+ * Specifically built for Drash.
+ *
+ * Only defined an onmessage handler.
  */
-export class WebSocketClient {
-  #socket: WebSocket;
-
+export class WebSocketClient extends WebSocket {
   #handlers: Map<string, Callback> = new Map();
 
-  constructor(socket: WebSocket) {
-    this.#socket = socket;
-    this.#socket.onmessage = (e) => {
+  constructor(url: string) {
+    super(url);
+    this.onmessage = (e) => {
       const packet = JSON.parse(e.data);
       const { channel, message } = packet;
       const handler = this.#handlers.get(channel);
@@ -22,35 +21,6 @@ export class WebSocketClient {
         handler(message);
       }
     };
-  }
-
-  /**
-   * Entrypoint to create the client.
-   *
-   * The same as:
-   * ```js
-   * const client = new Websocket(...)
-   * const p = deferred()
-   * client.onopen = () => p.resolve()
-   * await p
-   * ```
-   *
-   * @param url - URL for the websocket server, eg "ws://localhost:3000"
-   *
-   * @returns An instance of the WebSocketClient
-   */
-  public static async create(url: string) {
-    const websocket = new WebSocket(url);
-    const p = deferred();
-    websocket.onopen = () => p.resolve();
-    websocket.onerror = (e) => {
-      // deno-lint-ignore ban-ts-comment
-      // @ts-ignore
-      throw new Error(e.message);
-    };
-    await p;
-    websocket.onerror = null;
-    return new WebSocketClient(websocket);
   }
 
   /**
@@ -79,30 +49,14 @@ export class WebSocketClient {
    * @param channelName - The channel name to send to
    * @param message - The message to send to the channel
    */
-  public to(channelName: string, message: Record<string, unknown>) {
+  public to(channelName: string, message: Record<string, unknown>): void {
+    if (this.readyState === WebSocket.CONNECTING) {
+      return this.to(channelName, message);
+    }
     const packet = JSON.stringify({
       channel: channelName,
       message,
     });
-    this.#socket.send(packet);
-  }
-
-  /**
-   * Close the websocket client
-   */
-  public async close() {
-    const p = deferred();
-    this.#socket.onclose = () => p.resolve();
-    this.#socket.close(1000);
-    await p;
-  }
-
-  /**
-   * Register a custom onerror callback
-   *
-   * @param callback - Function to be called if the client receives an error
-   */
-  public onerror(callback: (e: ErrorEvent | Event) => void | Promise<void>) {
-    this.#socket.onerror = callback;
+    this.send(packet);
   }
 }
