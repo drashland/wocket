@@ -71,8 +71,14 @@ Deno.test("Full fledged end to end test", async () => {
   const client1ReceivedMessages: string[] = [];
   const client2ReceivedMessages: string[] = [];
 
-  const client = await WebSocketClient.create("ws://localhost:1447");
-  const client2 = await WebSocketClient.create(server.address);
+  const client = new WebSocketClient("ws://localhost:1447");
+  const p1 = deferred();
+  client.onopen = () => p1.resolve();
+  await p1;
+  const client2 = new WebSocketClient(server.address);
+  const pTwo = deferred();
+  client2.onopen = () => pTwo.resolve();
+  await pTwo;
   client.on<{ message: string }>("chat-message", (packet) => {
     const { message } = packet;
     client1ReceivedMessages.push(message);
@@ -90,12 +96,18 @@ Deno.test("Full fledged end to end test", async () => {
   });
 
   await p;
-  await client.close();
-  await client2.close();
+  const p2 = deferred();
+  const p3 = deferred();
+  client.onclose = () => p2.resolve();
+  client2.onclose = () => p3.resolve();
+  client.close();
+  client2.close();
+  await p2;
+  await p3;
   await server.close();
   assertEquals(connectCalled, [0, 1]);
   assertEquals(disconnectCalled, {
-    code: 1000,
+    code: 1005,
     id: 1,
     reason: "",
   });

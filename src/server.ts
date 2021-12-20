@@ -14,6 +14,8 @@ export interface IOptions {
   keyFile?: string;
   /** Path to the cert file if using wss */
   certFile?: string;
+  /** The path of which this server will handle connections for. Defaults to "/" */
+  path?: string;
 }
 
 type TRequestHandler = (r: Request) => Promise<Response>;
@@ -187,10 +189,25 @@ export class Server {
   #getHandler(): TRequestHandler {
     const clients = this.clients;
     const channels = this.channels;
+    const options = this.#options;
 
     // deno-lint-ignore require-await
     return async function (r: Request): Promise<Response> {
+      const url = new URL(r.url);
+      const { pathname } = url;
+      console.log(r.url);
+      if (options.path && options.path !== pathname) {
+        console.log("whaa");
+        return new Response(
+          "The client has not specified the correct path that the server is listening on.",
+          {
+            status: 406,
+          },
+        );
+      }
+      console.log(1);
       const { socket, response } = Deno.upgradeWebSocket(r);
+      console.log(2);
 
       // Create the client
       const client = new Client(clients.size, socket);
@@ -232,6 +249,7 @@ export class Server {
 
       // When the socket calls `.close()`, then do the following
       socket.onclose = (ev: CloseEvent) => {
+        console.log("close handler in server");
         // Remove the client
         clients.delete(client.id);
         // Call the disconnect handler if defined
@@ -248,7 +266,6 @@ export class Server {
           disconnectHandler.callback(disconnectEvent);
         }
       };
-
       return response;
     };
   }
