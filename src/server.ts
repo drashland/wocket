@@ -215,6 +215,7 @@ export class Server {
         const connectEvent = new CustomEvent("connect", {
           detail: {
             id: client.id,
+            queryParams: url.searchParams,
           },
         });
         if (channel) channel.callback(connectEvent);

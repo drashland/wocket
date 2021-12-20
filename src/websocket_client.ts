@@ -3,9 +3,9 @@ type Callback = (message: Record<string, unknown>) => void;
 /**
  * A helper class built on top of the native WebSocket, to make it easier to
  * send messages to channels, and listen for messages on channels.
- * 
+ *
  * Specifically built for Drash.
- * 
+ *
  * Only defined an onmessage handler.
  */
 export class WebSocketClient extends WebSocket {
