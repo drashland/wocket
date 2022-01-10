@@ -131,9 +131,9 @@ export class Server {
    * @param channelName - The name of the channel.
    * @param cb - See OnChannelCallback in the `types.ts` file.
    */
-  public on<C extends string, T>(
-    channelName: C,
-    cb: OnChannelCallback<T, C>,
+  public on<T>(
+    channelName: string,
+    cb: OnChannelCallback<T, string>,
   ): void {
     const channel = new Channel(channelName, cb); // even if one exists, overwrite it
     this.channels.set(channelName, channel);
@@ -192,13 +192,15 @@ export class Server {
       clients.set(clients.size, client);
 
       // Call the connect callback if defined by the user
-      const channel = channels.get("connect");
-      const connectEvent = new CustomEvent("connect", {
-        detail: {
-          id: client.id,
-        },
-      });
-      if (channel) channel.callback(connectEvent);
+      socket.onopen = (e) => {
+        const channel = channels.get("connect");
+        const connectEvent = new CustomEvent("connect", {
+          detail: {
+            id: client.id,
+          },
+        });
+        if (channel) channel.callback(connectEvent);
+      };
 
       // When the socket calls `.send()`, then do the following
       socket.onmessage = (message: MessageEvent) => {

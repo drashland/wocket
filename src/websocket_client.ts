@@ -42,7 +42,9 @@ export class WebSocketClient {
   public static async create(url: string) {
     const websocket = new WebSocket(url);
     const p = deferred();
-    websocket.onopen = () => p.resolve();
+    websocket.onopen = () => {
+      p.resolve();
+    };
     websocket.onerror = (e) => {
       // deno-lint-ignore ban-ts-comment
       // @ts-ignore
