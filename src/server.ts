@@ -134,7 +134,7 @@ export class Server {
    * @param cb - See OnChannelCallback in the `types.ts` file.
    */
   public on<
-    CustomProps extends Record<string, unknown>,
+    CustomProps extends Record<string, unknown> | string | Uint8Array,
     // Ignore because we need to use any to pass the channelName parameter to the generic
     // deno-lint-ignore no-explicit-any
     ChannelName extends string = any,
@@ -226,11 +226,17 @@ export class Server {
           if ("data" in message && typeof message.data === "string") {
             const json = JSON.parse(message.data); // TODO wrap in a try catch, if error throw then send error message to client maybe? ie malformed request
             // Get the channel they want to send the msg to
-            const channel = channels.get(json.channel) as Channel; // TODO :: Add check for if channel wasnt found, which just means a user hasn't created a listener for it
+            const channel = channels.get(json.channel);
+            if (!channel) {
+              socket.send(
+                `The channel "${json.channel}" doesn't exist as the server hasn't created a listener for it`,
+              );
+              return;
+            }
             // construct the event
             const customEvent = new CustomEvent(channel.name, {
               detail: {
-                ...json.message,
+                packet: json.message,
                 id: client.id,
               },
             });
