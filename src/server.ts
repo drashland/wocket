@@ -107,7 +107,7 @@ export class Server {
    */
   public to(
     channelName: string,
-    message: Record<string, unknown>,
+    message: Record<string, unknown> | string,
     onlySendTo?: number,
   ): void {
     // If sending to a specific client, only do that
@@ -274,7 +274,7 @@ export class Server {
   #send(
     clientId: number,
     channelName: string,
-    message: Record<string, unknown>,
+    message: Record<string, unknown> | string,
   ) {
     const client = this.clients.get(clientId);
     client!.socket.send(JSON.stringify({
