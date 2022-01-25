@@ -206,7 +206,7 @@ export class Server {
       const { socket, response } = Deno.upgradeWebSocket(r);
 
       // Create the client
-      const client = new Client(clients.size, socket);
+      const client = new Client(clients.size + 1, socket);
       clients.set(clients.size, client);
 
       socket.onopen = () => {
