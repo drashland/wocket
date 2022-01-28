@@ -1,4 +1,4 @@
-import { Client, Server } from "../../mod.ts";
+import { Server } from "../../mod.ts";
 import { assertEquals, deferred } from "../deps.ts";
 import { WebSocketClient } from "../../src/websocket_client.ts";
 
