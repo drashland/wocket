@@ -206,14 +206,14 @@ export class Server {
       const { socket, response } = Deno.upgradeWebSocket(r);
 
       // Create the client and find the best available id to use
-      let id = 1
+      let id = 1;
       while (true) {
         if (clients.get(id)) {
-          id ++
-          continue
+          id++;
+          continue;
         }
         // No client exists with `id`, so use that
-        break
+        break;
       }
       const client = new Client(id, socket);
       clients.set(id, client);
