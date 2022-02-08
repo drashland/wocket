@@ -2,8 +2,9 @@ type AlwaysProps = {
   id: number;
 };
 
-type ReservedChannelProps<ChannelName> = ChannelName extends "disconnect"
-  ? { code: number; reason: string }
+type ReservedChannelProps<ChannelName> = ChannelName extends "connect"
+  ? { queryParams: URLSearchParams }
+  : ChannelName extends "disconnect" ? { code: number; reason: string }
   : Record<never, never>;
 
 /**

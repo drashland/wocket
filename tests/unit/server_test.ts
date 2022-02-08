@@ -183,6 +183,32 @@ Rhum.testPlan("unit/server_test.ts", () => {
       await server.close();
     });
   });
+
+  Rhum.testSuite("searchParams", () => {
+    Rhum.testCase("Should set the search params", async () => {
+      const server = new Server({
+        hostname: "localhost",
+        port: 1337,
+        protocol: "ws",
+      });
+      const connected = deferred<URLSearchParams>();
+      server.on("connect", (e) => {
+        connected.resolve(e.detail.queryParams);
+      });
+      server.run();
+      const client = new WebSocket(server.address + "?name=edward");
+      const p = deferred();
+      client.onopen = () => p.resolve();
+      await p;
+      const queryParams = await connected;
+      const p2 = deferred();
+      client.onclose = () => p2.resolve();
+      client.close();
+      await p2;
+      await server.close();
+      assertEquals(queryParams.get("name"), "edward");
+    });
+  });
 });
 
 Rhum.run();

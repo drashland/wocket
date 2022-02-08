@@ -205,9 +205,18 @@ export class Server {
       }
       const { socket, response } = Deno.upgradeWebSocket(r);
 
-      // Create the client
-      const client = new Client(clients.size + 1, socket);
-      clients.set(clients.size, client);
+      // Create the client and find the best available id to use
+      let id = 1;
+      while (true) {
+        if (clients.get(id)) {
+          id++;
+          continue;
+        }
+        // No client exists with `id`, so use that
+        break;
+      }
+      const client = new Client(id, socket);
+      clients.set(id, client);
 
       socket.onopen = () => {
         // Call the connect callback if defined by the user
@@ -215,6 +224,7 @@ export class Server {
         const connectEvent = new CustomEvent("connect", {
           detail: {
             id: client.id,
+            queryParams: url.searchParams,
           },
         });
         if (channel) channel.callback(connectEvent);
