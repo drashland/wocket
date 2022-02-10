@@ -84,7 +84,7 @@ Rhum.testPlan("unit/server_test.ts", () => {
         name: string;
       }>("custom-channel", (e) => {
         e.detail.id;
-        e.detail.name;
+        e.detail.packet.name;
       });
     });
   });

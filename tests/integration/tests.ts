@@ -44,7 +44,7 @@ Deno.test("Full fledged end to end test", async () => {
     id: number; // client socket id
   };
   server.on<UserMessage>("channel", (event) => {
-    const { username, sender, id } = event.detail;
+    const { username, sender, id } = event.detail.packet;
     channelCalled = {
       username,
       sender,

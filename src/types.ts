@@ -12,6 +12,6 @@ type ReservedChannelProps<ChannelName> = ChannelName extends "connect"
  */
 export type OnChannelCallback<CustomProps, ChannelName extends string> = ((
   event: CustomEvent<
-    CustomProps & ReservedChannelProps<ChannelName> & AlwaysProps
+    { packet: CustomProps } & ReservedChannelProps<ChannelName> & AlwaysProps
   >,
 ) => void);

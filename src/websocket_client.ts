@@ -14,11 +14,18 @@ export class WebSocketClient extends WebSocket {
   constructor(url: string) {
     super(url);
     this.onmessage = (e) => {
-      const packet = JSON.parse(e.data);
-      const { channel, message } = packet;
-      const handler = this.#handlers.get(channel);
-      if (handler) {
-        handler(message);
+      try {
+        const packet = JSON.parse(e.data);
+        const { channel, message } = packet;
+        const handler = this.#handlers.get(channel);
+        if (handler) {
+          handler(message);
+        }
+      } catch (err) {
+        if (err instanceof SyntaxError && typeof e.data === "string") { // problem parsing the message, will be us sending an error message
+          throw new Error(e.data);
+        }
+        throw err;
       }
     };
   }
@@ -49,7 +56,10 @@ export class WebSocketClient extends WebSocket {
    * @param channelName - The channel name to send to
    * @param message - The message to send to the channel
    */
-  public to(channelName: string, message: Record<string, unknown>): void {
+  public to(
+    channelName: string,
+    message: Record<string, unknown> | string | Uint8Array,
+  ): void {
     if (this.readyState === WebSocket.CONNECTING) {
       return this.to(channelName, message);
     }
