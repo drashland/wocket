@@ -21,7 +21,7 @@ export class Client {
    * ```js
    * server.on('connect', e => {
    *   const client = server.clients.get(e.detail.id)
-   *   client.uuid = v4.randomUuid(); // anytime uuid is used, there will be no type errors
+   *   client.uuid = crypto.randomUUID(); // anytime uuid is used, there will be no type errors
    * })
    * ```
    */
