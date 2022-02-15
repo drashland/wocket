@@ -4,6 +4,21 @@ import { deferred } from "../deps.ts";
 import { Client } from "../../src/client.ts";
 import { assertEquals } from "../deps.ts";
 
+Deno.test("uuid", async (t) => {
+  await t.step("Should set the uuid on the clients", () => {
+    const server = new Server({
+      hostname: "localhost",
+      port: 1337,
+      protocol: "ws",
+    });
+    server.clients.set(1, new Client(1, null as unknown as WebSocket));
+    let client = server.clients.get(1) as Client;
+    client.uuid = "hello world";
+    client = server.clients.get(1) as Client;
+    assertEquals(client.uuid, "hello world");
+  });
+});
+
 Rhum.testPlan("unit/server_test.ts", () => {
   Rhum.testSuite("close()", () => {
     Rhum.testCase("Should close the server", async () => {

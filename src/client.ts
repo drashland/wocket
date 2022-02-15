@@ -13,6 +13,21 @@ export class Client {
   public id: number;
 
   /**
+   * Not used internally, added to allow users to assign
+   * uuids to clients if they wanted to, mainly to remove any
+   * possible type errors
+   *
+   * @example
+   * ```js
+   * server.on('connect', e => {
+   *   const client = server.clients.get(e.detail.id)
+   *   client.uuid = crypto.randomUUID(); // anytime uuid is used, there will be no type errors
+   * })
+   * ```
+   */
+  public uuid = "";
+
+  /**
    * This client's WebSocket instance.
    */
   public socket: WebSocket;
