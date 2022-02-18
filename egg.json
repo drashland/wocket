@@ -1,7 +1,7 @@
 {
   "name": "wocket",
   "description": "A WebSocket library for Deno.",
-  "version": "0.6.3",
+  "version": "1.0.0",
   "stable": true,
   "repository": "https://github.com/drashland/wocket",
   "files": [
