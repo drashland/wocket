@@ -1,6 +1,6 @@
 export { Rhum } from "https://deno.land/x/rhum@v1.1.13/mod.ts";
-export { deferred, delay } from "https://deno.land/std@0.126.0/async/mod.ts";
+export { deferred, delay } from "https://deno.land/std@0.127.0/async/mod.ts";
 export {
   assertEquals,
   assertRejects,
-} from "https://deno.land/std@0.126.0/testing/asserts.ts";
+} from "https://deno.land/std@0.127.0/testing/asserts.ts";
