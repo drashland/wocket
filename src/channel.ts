@@ -1,7 +1,6 @@
-type Cb = (
+type Cb =
   | ((event: CustomEvent) => void)
-  | ((event: CustomEvent) => Promise<void>)
-);
+  | ((event: CustomEvent) => Promise<void>);
 
 /**
  * This class represents channels, also known as "rooms" to some, and is
